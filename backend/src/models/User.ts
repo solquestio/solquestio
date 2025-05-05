@@ -4,7 +4,8 @@ import mongoose, { Schema, Document } from 'mongoose';
 export interface IUser extends Document {
   walletAddress: string;
   username?: string; // Optional username
-  completedQuests: string[]; // Array of completed quest IDs (or identifiers)
+  completedQuestIds: string[]; // Array to store IDs of completed quests
+  xp: number; // Experience points earned by the user
   createdAt: Date;
   updatedAt: Date;
 }
@@ -25,9 +26,15 @@ const UserSchema: Schema = new Schema(
       sparse: true, // Allows multiple null/undefined values for uniqueness
       trim: true,
     },
-    completedQuests: {
-      type: [String], // Simple array of strings for now
-      default: [],
+    completedQuestIds: {
+      type: [String], // Defines an array of strings
+      required: true,
+      default: [], // Defaults to an empty array
+    },
+    xp: {
+        type: Number,
+        required: true,
+        default: 0, // Start users with 0 XP
     },
   },
   {

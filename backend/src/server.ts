@@ -4,6 +4,7 @@ import mongoose from 'mongoose';
 import cors from 'cors'; // Import cors
 import authRoutes from './routes/auth'; // Import the auth routes
 import userRoutes from './routes/user'; // Import user routes
+import questRoutes from './routes/quests'; // Import quest routes
 
 dotenv.config(); // Load environment variables from .env file
 
@@ -40,6 +41,7 @@ app.use(express.json()); // Middleware to parse JSON bodies
 // --- API Routes ---
 app.use('/api/auth', authRoutes); // Mount the auth routes
 app.use('/api/users', userRoutes); // Mount user routes
+app.use('/api/quests', questRoutes); // Mount quest routes
 // TODO: app.use('/api/quests', questRoutes);
 // ------------------
 
