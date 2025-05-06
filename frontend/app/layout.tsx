@@ -5,6 +5,11 @@ import Link from 'next/link'
 import { WalletProviderClient } from '@/components/WalletProviderClient'
 import { Logo } from '@/components/Logo'
 import { HeaderWalletButton } from '@/components/HeaderWalletButton'
+import { Inter } from "next/font/google";
+import '@solana/wallet-adapter-react-ui/styles.css';
+import 'react-loading-skeleton/dist/skeleton.css'
+
+const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
   title: 'SolQuest.io',

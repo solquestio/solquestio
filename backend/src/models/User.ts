@@ -6,6 +6,9 @@ export interface IUser extends Document {
   username?: string; // Optional username
   completedQuestIds: string[]; // Array to store IDs of completed quests
   xp: number; // Experience points earned by the user
+  lastCheckedInAt?: Date; // Add lastCheckedInAt field
+  checkInStreak?: number; // Add checkInStreak field
+  ownsOgNft?: boolean; // Add ownsOgNft field
   createdAt: Date;
   updatedAt: Date;
 }
@@ -36,6 +39,20 @@ const UserSchema: Schema = new Schema(
         required: true,
         default: 0, // Start users with 0 XP
     },
+    lastCheckedInAt: {
+      type: Date,
+      required: false,
+    },
+    checkInStreak: {
+        type: Number,
+        required: true,
+        default: 0, // Default streak is 0
+    },
+    ownsOgNft: {
+        type: Boolean,
+        required: true,
+        default: false, // Default to false
+    }
   },
   {
     timestamps: true, // Automatically add createdAt and updatedAt fields

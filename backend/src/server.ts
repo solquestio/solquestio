@@ -41,7 +41,7 @@ app.use(express.json()); // Middleware to parse JSON bodies
 // --- API Routes ---
 app.use('/api/auth', authRoutes); // Mount the auth routes
 app.use('/api/users', userRoutes); // Mount user routes
-app.use('/api/quests', questRoutes); // Mount quest routes
+app.use('/api/quests', questRoutes); // Mount quest routes (handles /api/quests/paths as well)
 // TODO: app.use('/api/quests', questRoutes);
 // ------------------
 
