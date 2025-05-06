@@ -14,9 +14,8 @@ export default function MainLayoutClient({ children }: MainLayoutClientProps) {
         <div className="relative z-10 flex flex-col min-h-screen">
             <header className="py-4 px-6 bg-dark-card/50 backdrop-blur-sm border-b border-white/10 sticky top-0 z-20">
               <nav className="flex justify-between items-center max-w-6xl mx-auto">
-                <Link href="/" className="flex items-center space-x-2">
+                <Link href="/" className="flex items-center">
                   <Logo />
-                  <span className="font-bold text-xl">SolQuest.io</span>
                 </Link>
                 <div className="flex items-center space-x-6">
                   <Link href="/" className="text-gray-300 hover:text-white transition-colors">Home</Link>
