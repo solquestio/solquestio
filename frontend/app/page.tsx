@@ -3,6 +3,9 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import { useWallet } from '@solana/wallet-adapter-react'; // Need wallet hook for connect state
+import { Logo } from '@/components/Logo';
+import { useWallet as useWalletMultiButton } from '@solana/wallet-adapter-react';
+import dynamic from 'next/dynamic';
 
 // --- Interfaces --- 
 interface LearningPath {
@@ -40,39 +43,44 @@ const QuestCircles: React.FC<{ count: number; completed?: number }> = ({ count, 
   );
 };
 
-// Learning Path Card Component
-const LearningPathCard: React.FC<{ path: LearningPath }> = ({ path }) => {
-    const cardClasses = [
-        "block p-5 bg-dark-card border border-white/10 rounded-lg shadow-lg", // Slightly less padding
-        "transition-all duration-300 h-full flex flex-col", // Added h-full for consistent height
-        path.isLocked
-            ? "opacity-60 cursor-not-allowed border-gray-700"
-            : "hover:bg-dark-card/80 hover:shadow-solana-glow cursor-pointer"
-    ].join(' ');
+interface LearningPathCardProps {
+    title: string;
+    description: string;
+    isLocked: boolean;
+    pathSlug?: string; // Make slug optional for locked cards
+}
 
-    const content = (
-        <div className="flex flex-col flex-grow"> {/* Added flex-grow */} 
-            <div className="flex justify-between items-start mb-2"> {/* Adjusted alignment */} 
-                 <h3 className="text-lg font-bold tracking-tight text-white">{path.title}</h3>
-                 {path.isLocked && <span className="text-xs bg-gray-600 text-gray-200 px-2 py-0.5 rounded-full ml-2">Coming Soon</span>}
-             </div>
-            <p className="font-normal text-gray-400 text-sm mb-3 flex-grow">{path.description}</p> {/* Added flex-grow */} 
-            <div className="mt-auto pt-3 border-t border-white/10 flex justify-between items-center"> {/* Footer section */} 
-                <QuestCircles count={path.questCount || 0} />
-                <p className={`text-sm font-semibold ${path.isLocked ? 'text-gray-500' : 'text-yellow-400'}`}>
-                    {path.totalXp || 0} XP
-                </p>
+const LearningPathCard: React.FC<LearningPathCardProps> = ({ title, description, isLocked, pathSlug }) => {
+    const cardClasses = isLocked
+        ? "bg-dark-card-secondary border-gray-700 cursor-not-allowed opacity-60"
+        : "bg-dark-card border-white/10 hover:border-solana-purple transition-colors";
+
+    // Define the inner content separately
+    const cardContent = (
+        <div className={`p-6 rounded-lg border ${cardClasses}`}>
+            <h3 className="text-xl font-semibold mb-2 text-gray-100">{title}</h3>
+            <p className="text-gray-400 text-sm mb-4">{description}</p>
+            <div className="flex justify-end items-center">
+                {isLocked ? (
+                    <span className="text-xs text-gray-500 italic">Coming Soon</span>
+                ) : (
+                    <span className="text-sm font-medium text-solana-purple">Start Path &rarr;</span>
+                )}
             </div>
         </div>
     );
 
-    return path.isLocked ? (
-        <div className={cardClasses}>{content}</div>
-    ) : (
-        <Link href={`/path/${path.id}`} className={cardClasses}>
-            {content}
-        </Link>
-    );
+    // Conditionally wrap with Link
+    if (!isLocked && pathSlug) {
+        return (
+            <Link href={`/paths/${pathSlug}`} legacyBehavior={false} className="block"> {/* Wrap content with Link */}
+                {cardContent}
+            </Link>
+        );
+    } else {
+        // Return plain div if locked or no slug
+        return cardContent; 
+    }
 };
 
 // --- Main Homepage Component --- 
@@ -206,7 +214,7 @@ export default function HomePage() {
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     {learningPaths.length > 0 ? (
                         learningPaths.map(path => (
-                            <LearningPathCard key={path.id} path={path} />
+                            <LearningPathCard key={path.id} title={path.title} description={path.description} isLocked={path.isLocked || false} pathSlug={path.id} />
                         ))
                     ) : (
                          <p className="text-gray-500 md:col-span-2 lg:col-span-3 text-center">No learning paths available.</p>
