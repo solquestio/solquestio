@@ -2,9 +2,12 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
-import { useWallet } from '@solana/wallet-adapter-react';
+import { useWallet, WalletNotSelectedError } from '@solana/wallet-adapter-react';
+import { useWalletModal } from '@solana/wallet-adapter-react-ui';
 import { SparklesIcon, TrophyIcon, UserCircleIcon, ArrowRightIcon } from '@heroicons/react/24/solid';
 import Image from 'next/image'; // For NFT image
+import { AuthPromptModal } from '@/components/AuthPromptModal';
+import bs58 from 'bs58';
 
 // --- Interfaces --- 
 interface LearningPath {
@@ -14,6 +17,7 @@ interface LearningPath {
     questCount: number;
     isLocked?: boolean;
     totalXp?: number; // Added totalXp
+    imageUrl?: string; // Optional: For card image
 }
 
 interface UserProfile { 
@@ -35,6 +39,7 @@ interface LeaderboardUser {
 // --- Constants --- 
 const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:5000';
 const AUTH_TOKEN_KEY = 'solquest_auth_token';
+const SIGN_IN_MESSAGE = "Sign this message to verify your wallet and log in to SolQuest.io. This does not cost any SOL.";
 
 // --- Helper Components --- 
 
@@ -45,16 +50,25 @@ interface LearningPathCardProps {
     pathSlug?: string;
     totalXp?: number; // Added totalXp
     questCount: number;
+    isAuthenticated: boolean; // Added
+    promptLogin: () => void; // Added
+    imageUrl?: string; // Optional: For card image
 }
 
-const LearningPathCard: React.FC<LearningPathCardProps> = ({ title, description, isLocked, pathSlug, totalXp, questCount }) => {
+const LearningPathCard: React.FC<LearningPathCardProps> = ({ title, description, isLocked, pathSlug, totalXp, questCount, isAuthenticated, promptLogin, imageUrl }) => {
     const cardClasses = isLocked
         ? "bg-dark-card-secondary border-gray-700 cursor-not-allowed opacity-60"
         : "bg-dark-card border-gray-800 hover:border-solana-purple transition-all duration-200 ease-in-out transform hover:-translate-y-1 shadow-lg hover:shadow-solana-purple/30";
 
     const cardContent = (
-        <div className={`p-6 rounded-xl border ${cardClasses} flex flex-col h-full`}>
-            <h3 className="text-xl font-semibold mb-2 text-gray-100">{title}</h3>
+        <div className={`p-6 rounded-xl border ${cardClasses} flex flex-col h-full relative overflow-hidden`}>
+            {imageUrl && (
+                <div className="relative h-32 w-full mb-4 rounded-md overflow-hidden">
+                    <Image src={imageUrl} alt={`${title} illustration`} layout="fill" objectFit="cover" className="opacity-70 group-hover:opacity-100 transition-opacity" />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent"></div>
+                </div>
+            )}
+            <h3 className={`text-xl font-semibold mb-2 text-gray-100 ${imageUrl ? 'mt-2' : ''}`}>{title}</h3>
             <p className="text-gray-400 text-sm mb-4 flex-grow">{description}</p>
             <div className="flex justify-between items-center mt-auto pt-4 border-t border-gray-700/50">
                 <div className="text-xs text-gray-500">
@@ -67,6 +81,13 @@ const LearningPathCard: React.FC<LearningPathCardProps> = ({ title, description,
                 </div>
                 {isLocked ? (
                     <span className="text-xs text-gray-500 italic">Coming Soon</span>
+                ) : !isAuthenticated ? (
+                    <button 
+                        onClick={(e) => { e.preventDefault(); e.stopPropagation(); promptLogin(); }}
+                        className="text-sm font-medium text-solana-green hover:text-solana-green-light flex items-center focus:outline-none"
+                    >
+                        Login to Start <ArrowRightIcon className="w-4 h-4 ml-1" />
+                    </button>
                 ) : (
                     <span className="text-sm font-medium text-solana-purple group-hover:text-solana-purple-light flex items-center">
                         Start Path <ArrowRightIcon className="w-4 h-4 ml-1 transition-transform group-hover:translate-x-1" />
@@ -76,47 +97,57 @@ const LearningPathCard: React.FC<LearningPathCardProps> = ({ title, description,
         </div>
     );
 
-    if (!isLocked && pathSlug) {
+    if (!isLocked && pathSlug && isAuthenticated) {
         return (
             <Link href={`/paths/${pathSlug}`} legacyBehavior={false} className="block group h-full">
                 {cardContent}
             </Link>
         );
     } else {
-        return <div className="h-full">{cardContent}</div>; 
+        return <div className="block group h-full">{cardContent}</div>; 
     }
 };
 
-const OgNftShowcase: React.FC = () => {
-    // Placeholder for OG NFT details
+interface OgNftShowcaseProps {
+    isAuthenticated: boolean;
+    promptLogin: () => void;
+}
+
+const OgNftShowcase: React.FC<OgNftShowcaseProps> = ({ isAuthenticated, promptLogin }) => {
     const nftName = "SolQuest OG Pass";
     const nftBenefit = "Unlock exclusive XP boosts, early access to new paths, and special community perks.";
-    // Replace with actual image path or a more sophisticated image component
-    const nftImageUrl = "/placeholder-nft.png"; // Make sure you have a placeholder in /public
+    const nftImageUrl = "/placeholder-nft.png"; 
 
     return (
         <div className="relative bg-gradient-to-br from-purple-600/80 via-solana-purple to-solana-green/80 p-8 md:p-12 rounded-xl shadow-2xl overflow-hidden mb-16">
-            <div className="absolute inset-0 opacity-20" style={{ backgroundImage: `url('/grid-pattern.svg')`, backgroundSize: 'cover'}}></div> {/* Optional pattern overlay */}
+            <div className="absolute inset-0 opacity-20" style={{ backgroundImage: `url('/grid-pattern.svg')`, backgroundSize: 'cover'}}></div>
             <div className="relative z-10 flex flex-col md:flex-row items-center">
                 <div className="md:w-2/3 mb-8 md:mb-0 md:pr-10">
-                    <h2 className="text-3xl md:text-4xl font-bold text-white mb-4 leading-tight">
+                     <h2 className="text-3xl md:text-4xl font-bold text-white mb-4 leading-tight">
                         Hold the <span className="bg-clip-text text-transparent bg-gradient-to-r from-yellow-300 to-orange-400">{nftName}</span>
                     </h2>
                     <p className="text-purple-100 text-lg mb-6">
                         {nftBenefit}
                     </p>
-                    <Link 
-                        href="/mint" 
-                        legacyBehavior={false} 
-                        className="inline-block bg-white text-solana-purple font-semibold px-8 py-3 rounded-lg shadow-md hover:bg-gray-100 transition-colors duration-200"
-                    > 
-                        Learn More & Mint (Soon)
-                    </Link>
+                    {!isAuthenticated ? (
+                        <button 
+                            onClick={promptLogin}
+                            className="inline-block bg-white text-solana-purple font-semibold px-8 py-3 rounded-lg shadow-md hover:bg-gray-100 transition-colors duration-200 focus:outline-none"
+                        > 
+                            Login to Learn More
+                        </button>
+                    ) : (
+                        <Link 
+                            href="/mint" // Assuming /mint page might require auth or show different content
+                            legacyBehavior={false} 
+                            className="inline-block bg-white text-solana-purple font-semibold px-8 py-3 rounded-lg shadow-md hover:bg-gray-100 transition-colors duration-200"
+                        > 
+                            Learn More & Mint (Soon)
+                        </Link>
+                    )}
                 </div>
                 <div className="md:w-1/3 flex justify-center md:justify-end">
-                    {/* Basic Image - replace with Next/Image for optimization if in /public */}
                     <div className="w-48 h-48 md:w-60 md:h-60 bg-black/20 rounded-lg shadow-xl flex items-center justify-center overflow-hidden animate-float">
-                         {/* Using a simple div as placeholder, replace with actual <Image> */}
                         <img src={nftImageUrl} alt={nftName} className="object-cover w-full h-full opacity-80 hover:opacity-100 transition-opacity" /> 
                     </div>
                 </div>
@@ -265,45 +296,175 @@ const LeaderboardSnippet: React.FC = () => {
 
 // --- Main Homepage Component --- 
 export default function HomePage() {
+    const { publicKey: hookPublicKey, signMessage, connected, wallet } = useWallet();
+    const { setVisible: setWalletModalVisible } = useWalletModal();
     const [learningPaths, setLearningPaths] = useState<LearningPath[]>([]);
     const [isLoadingPaths, setIsLoadingPaths] = useState(true);
-    const [pathError, setPathError] = useState<string | null>(null);
+    const [pathFetchError, setPathFetchError] = useState<string | null>(null); // Specific error for path fetching
+    const [userProfile, setUserProfile] = useState<UserProfile | null>(null); // To store user profile after auth
+    const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+    const [isAuthLoading, setIsAuthLoading] = useState(false);
+    const [authError, setAuthError] = useState<string | null>(null);
+    const [isAuthenticated, setIsAuthenticated] = useState(false); // Added for passing to children
 
+    // Effect to update isAuthenticated based on token in localStorage
     useEffect(() => {
-        const fetchPaths = async () => {
-            setIsLoadingPaths(true);
-            setPathError(null);
-            try {
-                const response = await fetch(`${BACKEND_URL}/api/quests/paths`);
-                if (!response.ok) throw new Error('Failed to fetch learning paths');
-                setLearningPaths(await response.json());
-            } catch (err: any) {
-                console.error(err);
-                setPathError(err.message || 'Could not load paths.');
-            } finally {
-                setIsLoadingPaths(false);
+        const token = localStorage.getItem(AUTH_TOKEN_KEY);
+        setIsAuthenticated(!!token);
+        // Simple listener for storage changes to keep this state somewhat reactive
+        const handleStorageChange = (event: StorageEvent) => {
+            if (event.key === AUTH_TOKEN_KEY) {
+                setIsAuthenticated(!!event.newValue);
             }
         };
-        fetchPaths();
+        window.addEventListener('storage', handleStorageChange);
+        return () => window.removeEventListener('storage', handleStorageChange);
+    }, []); // Runs once on mount and sets up listener
+
+    const fetchPaths = useCallback(async (token?: string | null) => {
+        setIsLoadingPaths(true);
+        setPathFetchError(null);
+        try {
+            const headers: HeadersInit = { 'Content-Type': 'application/json' };
+            if (token) {
+                headers['Authorization'] = `Bearer ${token}`;
+            }
+            const response = await fetch(`${BACKEND_URL}/api/quests/paths`, { headers });
+            if (!response.ok) {
+                const errorData = await response.json().catch(() => ({})); 
+                throw new Error(errorData.message || `Failed to fetch learning paths (status: ${response.status})`);
+            }
+            const data = await response.json();
+            setLearningPaths(Array.isArray(data) ? data : data.paths || []); 
+        } catch (error: any) {
+            console.error("Failed to fetch learning paths:", error);
+            setLearningPaths([]);
+            setPathFetchError(error.message || "Could not load learning paths.");
+        } finally {
+            setIsLoadingPaths(false);
+        }
     }, []);
 
+    useEffect(() => {
+        const currentToken = localStorage.getItem(AUTH_TOKEN_KEY);
+        setIsAuthenticated(!!currentToken); // Ensure isAuthenticated state is current
+
+        if (!currentToken) {
+            // No longer automatically open modal
+            fetchPaths(); // Fetch public paths
+        } else {
+            fetchPaths(currentToken);
+        }
+    }, [wallet, fetchPaths]); // Simplified dependencies
+
+    const handleRequestAuthentication = async () => {
+        setAuthError(null);
+        setIsAuthLoading(true);
+
+        // If not connected, open the standard wallet modal
+        if (!connected) {
+            console.log("Wallet not connected, opening standard wallet modal.");
+            setWalletModalVisible(true); // Open the wallet selection modal
+            setIsAuthLoading(false); // Stop loading, user needs to interact with wallet modal
+            return; // Stop here
+        }
+
+        // If connected, proceed. Check for public key.
+        const currentPublicKey = hookPublicKey; // Use the reactive value from the hook
+        if (!currentPublicKey) {
+             setAuthError("Wallet connected, but failed to get public key. Please try disconnecting and reconnecting.");
+             setIsAuthLoading(false);
+             return;
+        }
+
+        // Check for signMessage support
+        if (!signMessage) {
+            setAuthError('The selected wallet does not support message signing.');
+            setIsAuthLoading(false);
+            return;
+        }
+
+        // Proceed with signing and verification
+        try {
+            const messageToSign = SIGN_IN_MESSAGE;
+            const messageBytes = new TextEncoder().encode(messageToSign);
+            const signatureBytes = await signMessage(messageBytes);
+            const signature = bs58.encode(signatureBytes);
+
+            const response = await fetch(`${BACKEND_URL}/api/auth/verify`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ walletAddress: currentPublicKey.toBase58(), signature, message: messageToSign }),
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json().catch(() => ({}));
+                throw new Error(errorData.message || `Authentication failed (status: ${response.status}). Please try again.`);
+            }
+
+            const { token, user } = await response.json();
+            localStorage.setItem(AUTH_TOKEN_KEY, token);
+            setUserProfile(user);
+            setIsAuthenticated(true); 
+            setIsAuthModalOpen(false); 
+            setAuthError(null); 
+            console.log("Successfully authenticated and token stored.");
+            fetchPaths(token); // Re-fetch paths with token
+
+        } catch (error: any) {
+            console.error("Authentication error:", error);
+            let errorMessage = "An unexpected error occurred during sign-in.";
+            // Simplified error check for user rejection
+            if (error.message && (error.message.toLowerCase().includes('user rejected') || 
+                 error.message.toLowerCase().includes('cancelled') || 
+                 error.message.toLowerCase().includes('declined'))) {
+                errorMessage = "Sign message request was cancelled or rejected in your wallet. Please try again.";
+            } else if (error.message) {
+                errorMessage = error.message;
+            } else if (typeof error === 'string') {
+                 errorMessage = error;
+            }
+            setAuthError(errorMessage);
+        } finally {
+            setIsAuthLoading(false);
+        }
+    };
+
+    // Function to open the auth modal (called by external buttons)
+    const openAuthModal = () => {
+        setAuthError(null); 
+        setIsAuthModalOpen(true);
+    }
+    
     return (
         <div className="space-y-12 md:space-y-16 py-8 px-4 md:px-6 lg:px-8 min-h-screen bg-dark-background text-gray-200">
             
-            {/* Combined Showcase and Leaderboard Section */}
+            <AuthPromptModal 
+                isOpen={isAuthModalOpen}
+                onClose={() => {
+                    setIsAuthModalOpen(false);
+                    setAuthError(null); 
+                }}
+                onAuthenticate={handleRequestAuthentication} // Modal button triggers the full handler
+                loading={isAuthLoading}
+            />
+            {authError && (
+                <div className="fixed top-20 left-1/2 -translate-x-1/2 bg-red-600/90 text-white p-4 rounded-md shadow-lg z-50 max-w-md w-auto text-center">
+                    <p>{authError}</p>
+                    <button onClick={() => setAuthError(null)} className="text-xs underline hover:text-red-200 mt-1">Dismiss</button>
+                </div>
+            )}
+
             <section className="flex flex-col lg:flex-row gap-8 lg:gap-12 items-start">
-                {/* OG NFT Showcase (Left Side on Large Screens) */}
                 <div className="w-full lg:w-2/3">
-                    <OgNftShowcase />
+                    <OgNftShowcase isAuthenticated={isAuthenticated} promptLogin={openAuthModal} />
                 </div>
                 
-                {/* Leaderboard Snippet (Right Side on Large Screens) */}
                 <div className="w-full lg:w-1/3">
                      <LeaderboardSnippet />
                 </div>
             </section>
 
-            {/* Learning Paths Section */}
             <section>
                 <div className="text-center mb-10">
                     <h1 className="text-4xl font-bold mb-3 bg-gradient-to-r from-solana-purple to-solana-green bg-clip-text text-transparent">
@@ -315,29 +476,34 @@ export default function HomePage() {
                 </div>
 
                 {isLoadingPaths && <div className="text-center text-gray-400 py-8">Loading paths... <SparklesIcon className="w-5 h-5 inline animate-pulse" /></div>}
-                {pathError && <p className="text-center text-red-500 py-8">Error loading paths: {pathError}</p>}
-                {!isLoadingPaths && !pathError && (
+                {pathFetchError && !isLoadingPaths && (
+                    <p className="text-center text-red-400 py-8">
+                        Error loading learning paths: {pathFetchError}
+                    </p>
+                )}
+                {!isLoadingPaths && !pathFetchError && learningPaths.length === 0 && (
+                     <p className="text-gray-500 md:col-span-2 text-center py-8">No learning paths available currently. Check back soon!</p>
+                )}
+                {!isLoadingPaths && !pathFetchError && learningPaths.length > 0 && (
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-8 max-w-4xl mx-auto">
-                        {learningPaths.length > 0 ? (
-                            learningPaths.map(path => (
-                                <LearningPathCard 
-                                    key={path.id} 
-                                    title={path.title} 
-                                    description={path.description} 
-                                    isLocked={path.isLocked || false} 
-                                    pathSlug={path.id} 
-                                    totalXp={path.totalXp}
-                                    questCount={path.questCount}
-                                />
-                            ))
-                        ) : (
-                             <p className="text-gray-500 md:col-span-2 text-center py-8">No learning paths available currently. Check back soon!</p>
-                        )}
+                        {learningPaths.map((path) => (
+                            <LearningPathCard
+                                key={path.id}
+                                title={path.title}
+                                description={path.description}
+                                isLocked={path.isLocked || false}
+                                pathSlug={path.id} 
+                                totalXp={path.totalXp}
+                                questCount={path.questCount}
+                                isAuthenticated={isAuthenticated} 
+                                promptLogin={openAuthModal} 
+                                imageUrl={path.imageUrl}
+                            />
+                        ))}
                     </div>
                 )}
             </section>
 
-            {/* Footer Placeholder */}
             <footer className="text-center mt-16 py-8 border-t border-gray-800">
                 <p className="text-sm text-gray-600">&copy; {new Date().getFullYear()} SolQuest.io - Embark on your Solana Adventure.</p>
             </footer>

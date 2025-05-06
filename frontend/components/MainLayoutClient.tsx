@@ -1,25 +1,48 @@
 'use client';
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { Logo } from '@/components/Logo';
 import { HeaderWalletButton } from '@/components/HeaderWalletButton';
+
+const AUTH_TOKEN_KEY = 'solquest_auth_token';
 
 interface MainLayoutClientProps {
     children: React.ReactNode;
 }
 
 export default function MainLayoutClient({ children }: MainLayoutClientProps) {
+    const [isAuthenticated, setIsAuthenticated] = useState(false);
+
+    useEffect(() => {
+        const token = localStorage.getItem(AUTH_TOKEN_KEY);
+        setIsAuthenticated(!!token);
+        
+        const handleStorageChange = (event: StorageEvent) => {
+            if (event.key === AUTH_TOKEN_KEY) {
+                setIsAuthenticated(!!event.newValue);
+            }
+        };
+        window.addEventListener('storage', handleStorageChange);
+        return () => {
+            window.removeEventListener('storage', handleStorageChange);
+        };
+    }, []);
+
     return (
         <div className="relative z-10 flex flex-col min-h-screen">
             <header className="py-4 px-6 bg-dark-card/50 backdrop-blur-sm border-b border-white/10 sticky top-0 z-20">
               <nav className="flex justify-between items-center max-w-6xl mx-auto">
                 <Link href="/" className="flex items-center">
-                  <Logo />
+                  <Logo iconHeight={40}/>
                 </Link>
                 <div className="flex items-center space-x-6">
                   <Link href="/" className="text-gray-300 hover:text-white transition-colors">Home</Link>
-                  <Link href="/profile" className="text-gray-300 hover:text-white transition-colors">Profile</Link>
+                  {isAuthenticated ? (
+                    <Link href="/profile" className="text-gray-300 hover:text-white transition-colors">Profile</Link>
+                  ) : (
+                    <Link href="/" className="text-gray-300 hover:text-white transition-colors">Login</Link>
+                  )}
                   <Link href="/leaderboard" className="text-gray-300 hover:text-white transition-colors">Leaderboard</Link>
                   <HeaderWalletButton />
                 </div>
