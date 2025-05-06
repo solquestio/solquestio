@@ -1,0 +1,534 @@
+'use client';
+
+import { FC, useEffect, useState, useCallback } from 'react';
+import { useConnection, useWallet } from '@solana/wallet-adapter-react';
+import { LAMPORTS_PER_SOL } from '@solana/web3.js';
+import dynamic from 'next/dynamic';
+import { useRouter } from 'next/navigation';
+// Adjusted import path for Logo
+import { Logo } from '@/components/Logo'; // Assuming Logo is in components directory relative to app
+import bs58 from 'bs58';
+import { PencilIcon, CheckIcon, XMarkIcon } from '@heroicons/react/24/solid'; // Add Check/X icons
+
+// Dynamically import the WalletMultiButton with no SSR
+const WalletMultiButtonDynamic = dynamic(
+  async () => (await import('@solana/wallet-adapter-react-ui')).WalletMultiButton,
+  { ssr: false, loading: () => <button className="px-4 py-2 bg-gray-600 rounded-md">Loading Wallet...</button> }
+);
+
+// Define the expected user structure from backend
+interface UserProfile {
+  id: string;
+  walletAddress: string;
+  username?: string;
+  completedQuestIds: string[];
+  xp: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+// Define the Quest structure from backend
+interface Quest {
+    id: string;
+    title: string;
+    description: string;
+    path: string;
+    order: number;
+    isCompleted: boolean;
+    xpReward: number;
+}
+
+// Define the backend API endpoint
+const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:5000';
+const AUTH_TOKEN_KEY = 'solquest_auth_token'; // Key for localStorage
+
+// Quest IDs (match backend)
+const FUND_WALLET_QUEST_ID = 'fund-wallet';
+
+// Renamed component to ProfilePage (default export)
+export default function ProfilePage() { 
+  // Hooks
+  const { connection } = useConnection();
+  const { publicKey, connected, signMessage, disconnect } = useWallet();
+  const router = useRouter();
+
+  // State (Copied from Profile component)
+  const [balance, setBalance] = useState<number | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [isLoadingBalance, setIsLoadingBalance] = useState(false);
+  const [isMounted, setIsMounted] = useState(false);
+  const [authToken, setAuthToken] = useState<string | null>(null);
+  const [isAuthenticating, setIsAuthenticating] = useState(false);
+  const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
+  const [quests, setQuests] = useState<Quest[]>([]);
+  const [isLoadingQuests, setIsLoadingQuests] = useState(false);
+  const [questError, setQuestError] = useState<string | null>(null);
+  const [isVerifyingQuest, setIsVerifyingQuest] = useState<string | null>(null);
+
+  // State for username editing
+  const [isEditingUsername, setIsEditingUsername] = useState(false);
+  const [newUsername, setNewUsername] = useState('');
+  const [usernameError, setUsernameError] = useState<string | null>(null);
+  const [isUpdatingUsername, setIsUpdatingUsername] = useState(false);
+
+  // Derived state: Define isAuthenticated before using it in effects or render logic
+  const isAuthenticated = !!authToken && !!userProfile;
+
+  // Check for existing token on mount (Copied)
+  useEffect(() => {
+    setIsMounted(true);
+    const storedToken = localStorage.getItem(AUTH_TOKEN_KEY);
+    if (storedToken) {
+      console.log('Found existing token, attempting to fetch profile...');
+      setAuthToken(storedToken);
+    } else {
+      setUserProfile(null);
+      setQuests([]);
+    }
+  }, []);
+
+  // Fetch user profile when authToken changes (Copied)
+  const fetchUserProfile = useCallback(async (token: string) => {
+    if (!token) return;
+    console.log('Fetching user profile with token...');
+    setError(null);
+    setQuestError(null);
+    try {
+      const response = await fetch(`${BACKEND_URL}/api/users/me`, {
+        method: 'GET',
+        headers: { 'Authorization': `Bearer ${token}` },
+      });
+      const data = await response.json();
+      if (!response.ok) { throw new Error(data.message || 'Failed to fetch profile'); }
+      console.log('User profile fetched:', data);
+      setUserProfile(data);
+      setNewUsername(data.username || ''); // Initialize edit field
+      setAuthToken(token);
+      localStorage.setItem(AUTH_TOKEN_KEY, token);
+    } catch (error: any) {
+      console.error('Error fetching user profile:', error);
+      setError(`Session Error: ${error.message}. Please verify wallet again.`);
+      localStorage.removeItem(AUTH_TOKEN_KEY);
+      setAuthToken(null);
+      setUserProfile(null);
+      setQuests([]);
+    }
+  }, []);
+
+  // Effect to fetch profile when token is found/set (Copied)
+  useEffect(() => {
+    if (authToken && !userProfile) {
+        fetchUserProfile(authToken);
+    }
+  }, [authToken, userProfile, fetchUserProfile]);
+
+
+  // Fetch quests when user profile is loaded (Copied)
+  const fetchQuests = useCallback(async (token: string) => {
+    if (!token) return;
+    console.log('Fetching quests...');
+    setIsLoadingQuests(true);
+    setQuestError(null);
+    try {
+        const response = await fetch(`${BACKEND_URL}/api/quests`, {
+            method: 'GET',
+            headers: { 'Authorization': `Bearer ${token}` },
+        });
+        const data = await response.json();
+        if (!response.ok) { throw new Error(data.message || 'Failed to fetch quests'); }
+        console.log('Quests fetched:', data);
+        setQuests(data);
+    } catch (error: any) {
+        console.error('Error fetching quests:', error);
+        setQuestError(`Failed to load quests: ${error.message}`);
+        setQuests([]);
+    } finally {
+        setIsLoadingQuests(false);
+    }
+  }, []);
+
+  // Effect to fetch quests AFTER user profile is successfully loaded (Copied)
+  useEffect(() => {
+    if (userProfile && authToken) {
+        fetchQuests(authToken);
+    }
+  }, [userProfile, authToken, fetchQuests]);
+
+  // Effect to reset state if wallet disconnects or changes
+  useEffect(() => {
+    if (!connected && isMounted) { // Check isMounted to avoid resetting on initial load before connection
+        console.log('Wallet disconnected, resetting profile state...');
+        setAuthToken(null);
+        setUserProfile(null);
+        setBalance(null);
+        setQuests([]);
+        setError(null);
+        setQuestError(null);
+        localStorage.removeItem(AUTH_TOKEN_KEY); // Clear token if wallet disconnects
+    }
+    // We could also add logic here to reset if publicKey changes while connected,
+    // but fetching profile based on authToken should handle this implicitly if token is cleared.
+  }, [connected, isMounted]); // Watch connection state and mount status
+
+  // Sign In function - Calls the backend (Copied)
+  const signIn = useCallback(async () => {
+    if (!publicKey || !signMessage) {
+      setError('Wallet not connected or signMessage not available.');
+      return;
+    }
+    setIsAuthenticating(true);
+    setError(null);
+    setQuestError(null);
+    setUserProfile(null);
+    setQuests([]);
+    setAuthToken(null);
+    localStorage.removeItem(AUTH_TOKEN_KEY);
+    try {
+      const messageContent = `Sign in to SolQuest.io\\n\\nWallet: ${publicKey.toString()}\\nTimestamp: ${Date.now()}`;
+      const messageBytes = new TextEncoder().encode(messageContent);
+      const signedMessageBytes = await signMessage(messageBytes);
+      const signature = bs58.encode(signedMessageBytes);
+      const response = await fetch(`${BACKEND_URL}/api/auth/verify`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          walletAddress: publicKey.toString(),
+          signature,
+          message: messageContent
+        }),
+      });
+      const data = await response.json();
+      if (!response.ok) { throw new Error(data.message || 'Authentication failed'); }
+      console.log('Backend verification successful:', data);
+      if (data.token && data.user) {
+        setAuthToken(data.token);
+        setUserProfile(data.user);
+        localStorage.setItem(AUTH_TOKEN_KEY, data.token);
+      } else {
+        throw new Error('Invalid response from backend during authentication');
+      }
+    } catch (error: any) {
+      console.error('Error during sign-in process:', error);
+      setError(`Authentication Error: ${error.message || 'Unknown error'}`);
+      setAuthToken(null);
+      setUserProfile(null);
+      setQuests([]);
+      localStorage.removeItem(AUTH_TOKEN_KEY);
+    } finally {
+      setIsAuthenticating(false);
+    }
+  }, [publicKey, signMessage]);
+
+  // Logout function (Copied)
+  const logout = useCallback(async () => {
+    console.log('Logging out...');
+    localStorage.removeItem(AUTH_TOKEN_KEY);
+    setAuthToken(null);
+    setUserProfile(null);
+    setBalance(null);
+    setQuests([]);
+    setError(null);
+    setQuestError(null);
+    await disconnect(); // Ensure wallet adapter disconnects
+  }, [disconnect]);
+
+  // Function to fetch balance (Copied)
+  const fetchBalance = useCallback(async () => {
+    if (!publicKey || !connection || !userProfile) return;
+    console.log('Attempting to fetch balance (authenticated user)');
+    setIsLoadingBalance(true);
+    try {
+      const balanceLamports = await connection.getBalance(publicKey, 'confirmed');
+      setBalance(balanceLamports / LAMPORTS_PER_SOL);
+      setError(null);
+    } catch (err: any) {
+      console.error('Error fetching balance:', err);
+      setError(`Failed to fetch balance: ${err.message || 'Unknown error'}`);
+      setBalance(null);
+    } finally {
+      setIsLoadingBalance(false);
+    }
+  }, [publicKey, connection, userProfile]);
+
+  // Effect to fetch balance ONLY when user profile is loaded (Copied)
+  useEffect(() => {
+    if (isMounted && connected && publicKey && connection && userProfile) {
+      console.log('Profile loaded, fetching initial balance...');
+      fetchBalance();
+      const subscriptionId = connection.onAccountChange(
+        publicKey,
+        (accountInfo) => {
+          console.log('Account change detected, updating balance...');
+          setBalance(accountInfo.lamports / LAMPORTS_PER_SOL);
+        },
+        'confirmed'
+      );
+      return () => {
+        console.log('Cleaning up balance listener...');
+        connection.removeAccountChangeListener(subscriptionId).catch(console.error);
+      };
+    } else if (isMounted) {
+      setBalance(null);
+    }
+  }, [publicKey, connection, connected, isMounted, userProfile, fetchBalance]);
+
+  // Function to verify balance for Quest 2 (Copied)
+  const verifyBalanceQuest = useCallback(async () => {
+      if (!authToken) {
+          setQuestError('Authentication token not found. Please re-verify wallet.');
+          return;
+      }
+      console.log(`Attempting to verify quest: ${FUND_WALLET_QUEST_ID}`);
+      setIsVerifyingQuest(FUND_WALLET_QUEST_ID);
+      setQuestError(null);
+      try {
+          const response = await fetch(`${BACKEND_URL}/api/quests/check-balance`, {
+              method: 'POST',
+              headers: {
+                  'Authorization': `Bearer ${authToken}`,
+                  'Content-Type': 'application/json'
+              },
+          });
+          const data = await response.json();
+          if (!response.ok) { throw new Error(data.message || 'Failed to verify balance quest'); }
+          console.log('Balance quest verification response:', data);
+          if (data.user) {
+            setUserProfile(data.user);
+            fetchQuests(authToken);
+          }
+      } catch (error: any) {
+          console.error('Error verifying balance quest:', error);
+          setQuestError(`Quest Verification Error: ${error.message}`);
+      } finally {
+          setIsVerifyingQuest(null);
+      }
+  }, [authToken, fetchQuests]);
+
+  // --- Username Update Handler ---
+  const handleUpdateUsername = useCallback(async () => {
+    if (!authToken || !newUsername) return;
+    if (newUsername.trim().length < 3 || newUsername.trim().length > 15) {
+        setUsernameError('Username must be 3-15 characters.');
+        return;
+    }
+    if (newUsername.trim() === userProfile?.username) {
+        setIsEditingUsername(false); // No change, just exit edit mode
+        setUsernameError(null);
+        return;
+    }
+
+    setIsUpdatingUsername(true);
+    setUsernameError(null);
+    setError(null); // Clear general errors
+
+    try {
+        const response = await fetch(`${BACKEND_URL}/api/users/me`, {
+            method: 'PUT',
+            headers: {
+                'Authorization': `Bearer ${authToken}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ username: newUsername.trim() })
+        });
+        const data = await response.json();
+
+        if (!response.ok) {
+            throw new Error(data.message || 'Failed to update username');
+        }
+
+        console.log('Username updated:', data);
+        setUserProfile(data); // Update profile state with response
+        setNewUsername(data.username || ''); // Update input field state
+        setIsEditingUsername(false); // Exit edit mode
+
+    } catch (err: any) {
+        console.error('Error updating username:', err);
+        setUsernameError(err.message || 'Could not update username.');
+        // Optionally clear general error if only username update failed
+        // setError(null);
+    } finally {
+        setIsUpdatingUsername(false);
+    }
+  }, [authToken, newUsername, userProfile?.username]); // Added dependencies
+
+  // Handler to start editing
+  const handleEditUsername = () => {
+      setNewUsername(userProfile?.username || ''); // Pre-fill with current
+      setIsEditingUsername(true);
+      setUsernameError(null);
+  };
+
+  // Handler to cancel editing
+  const handleCancelEdit = () => {
+      setIsEditingUsername(false);
+      setUsernameError(null);
+      setNewUsername(userProfile?.username || ''); // Reset to original
+  };
+
+  // --- Redirect Effect ---
+  useEffect(() => {
+    // Only redirect if mounted AND wallet is not connected
+    if (isMounted && !connected) {
+      console.log('Wallet not connected, redirecting to homepage...');
+      router.push('/');
+    }
+    // Depend on isMounted and connected status
+  }, [isMounted, connected, router]);
+
+  // --- Render Logic ---
+  if (!isMounted) {
+    // Render placeholder or spinner until mounted
+    return (
+        <div className="flex justify-center items-center min-h-[calc(100vh-200px)]"> {/* Adjusted min height */} 
+            <p className="text-gray-400">Loading Profile...</p>
+        </div>
+    );
+  }
+
+  // If authenticated, proceed to render the profile content
+  // Calculate completed quests count ONLY if authenticated and quests are loaded
+  const completedQuestsCount = isAuthenticated ? quests.filter(q => q.isCompleted).length : 0;
+
+  return (
+    <div className="max-w-4xl mx-auto py-8"> {/* Add some padding */} 
+      <div className="bg-dark-card shadow-lg rounded-lg backdrop-blur-lg border border-white/10 overflow-hidden">
+        <div className="p-6 border-b border-white/10 flex justify-end">
+           {/* Wallet Connect Button moved to top right for consistency */}
+           <div className="flex-shrink-0">
+               <WalletMultiButtonDynamic className="!bg-gradient-to-r from-sol-gradient-from to-sol-gradient-to hover:opacity-90 transition-opacity !rounded-md !h-10" />
+           </div>
+        </div>
+
+        {/* --- Main Content: Conditional Rendering based on Connection & Auth --- */} 
+        <div className="p-6">
+            {error && <p className="text-red-500 mb-4 text-sm text-center">Error: {error}</p>} 
+            {/* Removed !isLoadingBalance check from error display */} 
+
+            {!connected ? (
+                // State 1: Wallet Not Connected
+                <p className="text-center text-gray-400 py-8">Please connect your wallet to view your profile.</p>
+            ) : !isAuthenticated ? (
+                // State 2: Wallet Connected, Not Authenticated
+                <div className="text-center py-8">
+                     <p className="text-gray-400 mb-4">Please sign the message to authenticate and view your full profile.</p>
+                     <button 
+                        onClick={signIn} 
+                        disabled={isAuthenticating} 
+                        className="bg-gradient-to-r from-sol-gradient-from to-sol-gradient-to text-white px-6 py-2 rounded-md hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                         {isAuthenticating ? 'Verifying...' : 'Authenticate / Verify Ownership'}
+                     </button>
+                 </div>
+            ) : (
+                // State 3: Wallet Connected AND Authenticated (userProfile exists)
+                <> 
+                    {/* User Info Header */} 
+                    <div className="flex items-center gap-3 mb-6">
+                        <div className="w-12 h-12 bg-gradient-to-br from-solana-purple to-solana-green rounded-full flex items-center justify-center text-xl font-bold">
+                            {userProfile.username ? userProfile.username.charAt(0).toUpperCase() : '?'}
+                        </div>
+                        <div>
+                            {/* Username Display/Edit */} 
+                            {isEditingUsername ? ( /* ... editing input JSX ... */ 
+                                <div className="relative">
+                                    <input 
+                                        type="text" 
+                                        value={newUsername} 
+                                        onChange={(e) => setNewUsername(e.target.value)}
+                                        className="w-full px-3 py-1.5 bg-dark-input border border-gray-600 rounded-md text-white focus:outline-none focus:ring-1 focus:ring-solana-purple text-sm"
+                                        maxLength={15}
+                                        placeholder="Enter username"
+                                    />
+                                    {usernameError && <p className="text-red-500 text-xs mt-1 absolute -bottom-5 left-0">{usernameError}</p>}
+                                    <div className="flex items-center space-x-1 absolute top-1/2 right-2 transform -translate-y-1/2">
+                                        {/* ... save/cancel buttons ... */}
+                                        <button onClick={handleUpdateUsername} /* ... */ > {isUpdatingUsername ? <span className="text-xs">...</span> : <CheckIcon className="h-4 w-4" />} </button>
+                                        <button onClick={handleCancelEdit} /* ... */ > <XMarkIcon className="h-4 w-4" /> </button>
+                                    </div>
+                                </div>
+                             ) : (
+                                <div className="flex items-center gap-2">
+                                    <h2 className="text-xl font-semibold text-gray-100 truncate">{userProfile.username || 'Unnamed User'}</h2>
+                                    <button onClick={handleEditUsername} className="text-xs text-blue-400 hover:text-blue-300" title="Edit Username">
+                                        <PencilIcon className="h-4 w-4" />
+                                    </button>
+                                </div>
+                            )}
+                             {/* Wallet Address */} 
+                            {publicKey && (
+                                <p className="text-xs text-gray-400 font-mono mt-1">{publicKey.toString()}</p>
+                            )}
+                        </div>
+                    </div>
+
+                    {/* Stats Section */} 
+                    <div className="grid grid-cols-2 md:grid-cols-3 gap-px bg-white/10 mb-6 border-t border-b border-white/10"> 
+                         {/* ... XP card ... */} 
+                        <div className="bg-dark-card p-4 text-center">
+                            <p className="text-xs text-gray-400 uppercase mb-1">XP</p>
+                            <p className="text-xl font-bold text-yellow-400">{userProfile.xp ?? 0}</p>
+                        </div>
+                         {/* ... Balance card ... */} 
+                        <div className="bg-dark-card p-4 text-center">
+                            <p className="text-xs text-gray-400 uppercase mb-1">Balance</p>
+                            {isLoadingBalance ? (
+                                <span className="text-gray-400 text-lg">...</span>
+                            ) : (
+                                <p className="text-xl font-bold bg-gradient-to-r from-sol-gradient-from to-sol-gradient-to bg-clip-text text-transparent">
+                                    {balance !== null ? `${balance.toLocaleString(undefined, { minimumFractionDigits: 4, maximumFractionDigits: 4 })} SOL` : 'N/A'}
+                                </p>
+                            )}
+                        </div>
+                         {/* ... Quests Completed card ... */} 
+                         <div className="bg-dark-card p-4 text-center col-span-2 md:col-span-1">
+                            <p className="text-xs text-gray-400 uppercase mb-1">Quests Completed</p>
+                            <p className="text-xl font-bold text-gray-100">{completedQuestsCount}</p>
+                        </div>
+                    </div>
+
+                    {/* Completed Quests History */} 
+                    <div>
+                        <h3 className="text-lg font-semibold mb-4 text-gray-100">Completed Quest History</h3>
+                        {/* Filter quests before mapping */} 
+                        { (() => { // Use IIFE to filter and check length cleanly
+                            const completedQuests = quests.filter(quest => quest.isCompleted);
+
+                            if (questError && !isLoadingQuests) {
+                                return <p className="text-red-500 text-sm">Error loading quest history: {questError}</p>;
+                            }
+                            if (isLoadingQuests) {
+                                return <p className="text-gray-400 text-sm">Loading history...</p>;
+                            }
+                            if (completedQuests.length > 0) {
+                                return (
+                                    <ul className="space-y-3">
+                                        {completedQuests.map((quest) => (
+                                            <li key={quest.id} className="p-3 rounded-lg border border-green-700/50 bg-green-900/20 flex justify-between items-center">
+                                                <div>
+                                                    <h4 className="font-semibold text-green-300">{quest.title}</h4>
+                                                    {/* Optionally show description if needed: <p className="text-xs text-gray-400">{quest.description}</p> */}
+                                                </div>
+                                                <span className="text-sm font-medium text-yellow-500 whitespace-nowrap ml-4">+{quest.xpReward} XP</span>
+                                            </li>
+                                        ))}
+                                    </ul>
+                                );
+                            } else {
+                                return <p className="text-gray-500 text-sm italic">No quests completed yet.</p>;
+                            }
+                        })() } 
+                    </div>
+                </>
+            )}
+        </div> 
+
+        {/* Logout Button - Only show if authenticated */} 
+        {isAuthenticated && (
+            <div className="p-4 border-t border-white/10 text-center">
+                <button onClick={logout} className="px-4 py-2 bg-red-600 hover:bg-red-700 rounded-md text-sm"> Logout </button>
+            </div>
+        )}
+      </div>
+    </div>
+  );
+} 
