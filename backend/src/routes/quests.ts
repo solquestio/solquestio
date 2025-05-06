@@ -149,6 +149,8 @@ router.get('/paths', (req: Request, res: Response) => {
                 questCount: solanaFoundationsDetails.count,
                 totalXp: solanaFoundationsDetails.totalXp,
                 isLocked: false,
+                graphicType: 'image',
+                imageUrl: '/solana_v2_2b.jpg'
             },
             {
                 id: SOLQUEST_OG_PATH_ID,
@@ -156,12 +158,14 @@ router.get('/paths', (req: Request, res: Response) => {
                 description: 'Exclusive quests and learning experiences for SolQuest enthusiasts. Kick off your journey by connecting with our community!',
                 questCount: solquestOgDetails.count,
                 totalXp: solquestOgDetails.totalXp,
-                isLocked: false, // Can be set to true to gate content later
+                isLocked: false,
+                graphicType: 'image',
+                imageUrl: '/Union.svg'
             }
             // Future paths can be added here
         ];
 
-        res.status(200).json(pathsMetadata);
+        res.status(200).json({ paths: pathsMetadata });
 
     } catch (error: any) {
         console.error('Error fetching paths metadata:', error);

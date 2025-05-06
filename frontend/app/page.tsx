@@ -17,7 +17,8 @@ interface LearningPath {
     questCount: number;
     isLocked?: boolean;
     totalXp?: number; // Added totalXp
-    imageUrl?: string; // Optional: For card image
+    graphicType?: 'image' | 'gradient' | 'none'; // Made graphicType optional
+    imageUrl?: string | null; // Allow null
 }
 
 interface UserProfile { 
@@ -52,47 +53,66 @@ interface LearningPathCardProps {
     questCount: number;
     isAuthenticated: boolean; // Added
     promptLogin: () => void; // Added
-    imageUrl?: string; // Optional: For card image
+    graphicType?: 'image' | 'gradient' | 'none'; // Added graphicType
+    imageUrl?: string | null; // Added imageUrl
 }
 
-const LearningPathCard: React.FC<LearningPathCardProps> = ({ title, description, isLocked, pathSlug, totalXp, questCount, isAuthenticated, promptLogin, imageUrl }) => {
+const LearningPathCard: React.FC<LearningPathCardProps> = ({ title, description, isLocked, pathSlug, totalXp, questCount, isAuthenticated, promptLogin, graphicType = 'none', imageUrl }) => {
     const cardClasses = isLocked
         ? "bg-dark-card-secondary border-gray-700 cursor-not-allowed opacity-60"
         : "bg-dark-card border-gray-800 hover:border-solana-purple transition-all duration-200 ease-in-out transform hover:-translate-y-1 shadow-lg hover:shadow-solana-purple/30";
 
     const cardContent = (
-        <div className={`p-6 rounded-xl border ${cardClasses} flex flex-col h-full relative overflow-hidden`}>
-            {imageUrl && (
-                <div className="relative h-32 w-full mb-4 rounded-md overflow-hidden">
-                    <Image src={imageUrl} alt={`${title} illustration`} layout="fill" objectFit="cover" className="opacity-70 group-hover:opacity-100 transition-opacity" />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent"></div>
+        <div className={`rounded-xl border ${cardClasses} flex flex-col h-full overflow-hidden`}>
+            {/* Graphic Area */}            
+            {(graphicType === 'image' && imageUrl) ? (
+                <div className="relative h-36 w-full bg-black/20"> 
+                    <Image 
+                        src={imageUrl} 
+                        alt={`${title} graphic`} 
+                        layout="fill" 
+                        objectFit="contain" // Changed back to contain
+                        className="p-4 opacity-80 group-hover:opacity-100 transition-opacity" // Added p-4 back
+                    />
                 </div>
+            ) : graphicType === 'gradient' ? (
+                // Example gradient for Solana Explorer Path
+                <div className="h-36 w-full bg-gradient-to-br from-emerald-900/70 via-sky-900/60 to-purple-900/70 flex items-center justify-center">
+                    {/* Optional: Add a subtle icon or text here */}
+                     <svg className="w-16 h-16 text-sky-300 opacity-40" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path></svg> 
+                </div>
+            ) : (
+                 <div className="h-8"></div> // Minimal space if no graphic
             )}
-            <h3 className={`text-xl font-semibold mb-2 text-gray-100 ${imageUrl ? 'mt-2' : ''}`}>{title}</h3>
-            <p className="text-gray-400 text-sm mb-4 flex-grow">{description}</p>
-            <div className="flex justify-between items-center mt-auto pt-4 border-t border-gray-700/50">
-                <div className="text-xs text-gray-500">
-                    {questCount} Quests 
-                    {totalXp !== undefined && (
-                        <span className="ml-2 pl-2 border-l border-gray-600">
-                            Up to <span className="font-semibold text-yellow-400">{totalXp} XP</span>
+
+            {/* Content Area */} 
+            <div className="p-6 flex flex-col flex-grow">
+                <h3 className="text-xl font-semibold mb-2 text-gray-100">{title}</h3>
+                <p className="text-gray-400 text-sm mb-4 flex-grow">{description}</p>
+                <div className="flex justify-between items-center mt-auto pt-4 border-t border-gray-700/50">
+                    <div className="text-xs text-gray-500">
+                        {questCount} Quests 
+                        {totalXp !== undefined && (
+                            <span className="ml-2 pl-2 border-l border-gray-600">
+                                Up to <span className="font-semibold text-yellow-400">{totalXp} XP</span>
+                            </span>
+                        )}
+                    </div>
+                    {isLocked ? (
+                        <span className="text-xs text-gray-500 italic">Coming Soon</span>
+                    ) : !isAuthenticated ? (
+                        <button 
+                            onClick={(e) => { e.preventDefault(); e.stopPropagation(); promptLogin(); }}
+                            className="text-sm font-medium text-solana-green hover:text-solana-green-light flex items-center focus:outline-none"
+                        >
+                            Login to Start <ArrowRightIcon className="w-4 h-4 ml-1" />
+                        </button>
+                    ) : (
+                        <span className="text-sm font-medium text-solana-purple group-hover:text-solana-purple-light flex items-center">
+                            Start Path <ArrowRightIcon className="w-4 h-4 ml-1 transition-transform group-hover:translate-x-1" />
                         </span>
                     )}
                 </div>
-                {isLocked ? (
-                    <span className="text-xs text-gray-500 italic">Coming Soon</span>
-                ) : !isAuthenticated ? (
-                    <button 
-                        onClick={(e) => { e.preventDefault(); e.stopPropagation(); promptLogin(); }}
-                        className="text-sm font-medium text-solana-green hover:text-solana-green-light flex items-center focus:outline-none"
-                    >
-                        Login to Start <ArrowRightIcon className="w-4 h-4 ml-1" />
-                    </button>
-                ) : (
-                    <span className="text-sm font-medium text-solana-purple group-hover:text-solana-purple-light flex items-center">
-                        Start Path <ArrowRightIcon className="w-4 h-4 ml-1 transition-transform group-hover:translate-x-1" />
-                    </span>
-                )}
             </div>
         </div>
     );
@@ -497,6 +517,7 @@ export default function HomePage() {
                                 questCount={path.questCount}
                                 isAuthenticated={isAuthenticated} 
                                 promptLogin={openAuthModal} 
+                                graphicType={path.graphicType}
                                 imageUrl={path.imageUrl}
                             />
                         ))}
