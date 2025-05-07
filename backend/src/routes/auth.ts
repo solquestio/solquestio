@@ -3,16 +3,18 @@ import nacl from 'tweetnacl';
 import bs58 from 'bs58';
 import jwt from 'jsonwebtoken'; // Import jwt
 import { PublicKey } from '@solana/web3.js'; // Import PublicKey for validation
-import User from '../models/User'; // Import the User model
+import User, { IUser } from '../models/User'; // Import the User model and IUser interface
 import { QUEST_DEFINITIONS } from './quests'; // Import quest definitions
 import { Helius } from "helius-sdk"; // Import Helius SDK
 import dotenv from 'dotenv';
+import crypto from 'crypto'; // Import crypto for random string generation
+import mongoose from 'mongoose'; // Import mongoose for ObjectId
+import { awardReferralBonus } from '../utils/xpUtils'; // Import from shared util
 
 dotenv.config(); // Load .env variables
 
 const router: Router = express.Router();
 const VERIFY_WALLET_QUEST_ID = 'verify-wallet'; // Define quest ID
-const VERIFY_WALLET_XP_REWARD = 10; // Define reward directly
 
 // --- Helius Setup --- 
 const heliusApiKey = process.env.NEXT_PUBLIC_HELIUS_RPC_URL?.split('/').pop(); // Extract API key from RPC URL
@@ -21,6 +23,13 @@ const helius = new Helius(heliusApiKey || "");
 // --- Constants --- 
 const JWT_SECRET = process.env.JWT_SECRET;
 const OG_NFT_COLLECTION_MINT = process.env.SOLQUEST_OG_NFT_COLLECTION_MINT;
+
+// Helper function to generate a unique referral code
+const generateReferralCode = (length = 8): string => {
+  return crypto.randomBytes(Math.ceil(length / 2))
+    .toString('hex') // convert to hexadecimal format
+    .slice(0, length).toUpperCase(); // return required number of characters
+};
 
 // Helper function to check NFT ownership
 const checkOgNftOwnership = async (walletAddress: string): Promise<boolean> => {
@@ -55,7 +64,7 @@ const checkOgNftOwnership = async (walletAddress: string): Promise<boolean> => {
 
 // POST /api/auth/verify - Verify signature and login/register user
 router.post('/verify', async (req: Request, res: Response) => {
-  const { walletAddress, signature, message } = req.body;
+  const { walletAddress, signature, message, referralCode: incomingReferralCode } = req.body;
 
   // Access directly from process.env
   if (!JWT_SECRET) {
@@ -84,69 +93,109 @@ router.post('/verify', async (req: Request, res: Response) => {
     console.log(`Signature verified successfully for ${walletAddress}`);
 
     // 3. Find or Create User & Award XP
-    let user = await User.findOne({ walletAddress });
-    let updatedUser: any; // Use 'any' temporarily or define a proper type
+    let userDoc: IUser | null = await User.findOne({ walletAddress });
+    let finalUserDataForToken: IUser;
+    let questRewardForVerification = QUEST_DEFINITIONS[VERIFY_WALLET_QUEST_ID]?.xpReward || 0;
 
-    if (!user) {
+    if (!userDoc) {
       console.log(`User not found, creating new user for ${walletAddress}`);
-      // Create user with quest completed and initial XP
-      const questReward = QUEST_DEFINITIONS[VERIFY_WALLET_QUEST_ID]?.xpReward || 0;
-      user = new User({
+      
+      // Step 1: Create user object with referral code
+      let initialNewUserData = {
         walletAddress,
         completedQuestIds: [VERIFY_WALLET_QUEST_ID],
-        xp: questReward,
-        checkInStreak: 0, // Initialize streak
-        ownsOgNft: false, // Default ownership
-      });
-      await user.save();
-      updatedUser = user; // The newly saved user is the updated one
-      console.log(`New user created with ID: ${user._id}. Quest '${VERIFY_WALLET_QUEST_ID}' completed. Awarded ${questReward} XP.`);
+        xp: questRewardForVerification,
+        checkInStreak: 0,
+        ownsOgNft: false,
+        referralCode: generateReferralCode()
+      };
+
+      // Step 2: Save initial user to DB
+      let savedNewUserDoc = await new User(initialNewUserData).save();
+      
+      // Step 3: Use the saved document (which is typed as IUser via Mongoose)
+      // The referral logic will modify this document directly if a referrer is found.
+      let userBeingProcessed = savedNewUserDoc as IUser;
+
+      if (incomingReferralCode && typeof incomingReferralCode === 'string') {
+        console.log(`Processing incoming referral code: ${incomingReferralCode} for new user ${userBeingProcessed._id}`);
+        const referrerUser: IUser | null = await User.findOne({ referralCode: incomingReferralCode.trim().toUpperCase() });
+
+        if (referrerUser && !(userBeingProcessed._id as mongoose.Types.ObjectId).equals(referrerUser._id as mongoose.Types.ObjectId)) {
+          userBeingProcessed.referrer = referrerUser._id as mongoose.Types.ObjectId;
+          referrerUser.referredUsersCount = (referrerUser.referredUsersCount || 0) + 1;
+          await referrerUser.save(); // Save the referrer with updated count
+          // Mark userBeingProcessed as modified if referrer was set, to ensure it saves if this is the only change.
+          // Mongoose usually tracks this, but being explicit can help in complex scenarios.
+          // However, direct assignment to a path (userBeingProcessed.referrer) marks it.
+          console.log(`User ${userBeingProcessed._id} was referred by ${referrerUser._id} (Code: ${incomingReferralCode}). Referrer count updated.`);
+        } else if (referrerUser) {
+          console.warn(`User ${userBeingProcessed._id} self-referral or invalid referrer.`);
+        } else {
+          console.warn(`Referral code '${incomingReferralCode}' not found. New user ${userBeingProcessed._id} will not have a referrer.`);
+        }
+      }
+      
+      // Step 4: Save the user again if it was modified by referral logic (e.g., referrer added)
+      // Mongoose .save() is smart enough to only update if there are changes.
+      await userBeingProcessed.save(); 
+
+      finalUserDataForToken = userBeingProcessed;
+      console.log(`New user created with ID: ${userBeingProcessed._id}. Quest '${VERIFY_WALLET_QUEST_ID}' completed. Awarded ${questRewardForVerification} XP. Referral Code: ${userBeingProcessed.referralCode}`);
+      
+      // Award referral bonus for new user registration quest completion
+      if (questRewardForVerification > 0) {
+          // Ensure _id is correctly typed for awardReferralBonus
+          await awardReferralBonus(finalUserDataForToken._id as mongoose.Types.ObjectId, questRewardForVerification);
+      }
+
     } else {
-      console.log(`Existing user found with ID: ${user._id}`);
-      // Check if quest needs completing for existing user
-      if (!user.completedQuestIds.includes(VERIFY_WALLET_QUEST_ID)) {
-        const questReward = QUEST_DEFINITIONS[VERIFY_WALLET_QUEST_ID]?.xpReward || 0;
-        updatedUser = await User.findByIdAndUpdate(
-          user._id,
+      console.log(`Existing user found with ID: ${userDoc._id}`);
+      let updatedExistingUser = userDoc;
+      let awardedXpThisSession = 0; // Track if XP was awarded in this specific login for this quest
+
+      if (!userDoc.completedQuestIds.includes(VERIFY_WALLET_QUEST_ID)) {
+        const result = await User.findByIdAndUpdate(
+          userDoc._id,
           {
             $push: { completedQuestIds: VERIFY_WALLET_QUEST_ID },
-            $inc: { xp: questReward } // Award XP on completion
+            $inc: { xp: questRewardForVerification }
           },
-          { new: true } // Return the updated document
+          { new: true }
         );
-        if (updatedUser) {
-          console.log(`Quest '${VERIFY_WALLET_QUEST_ID}' completed for existing user ${user._id}. Awarded ${questReward} XP.`);
+        if (result) {
+          updatedExistingUser = result;
+          awardedXpThisSession = questRewardForVerification;
+          console.log(`Quest '${VERIFY_WALLET_QUEST_ID}' completed for existing user ${userDoc._id}. Awarded ${questRewardForVerification} XP.`);
         } else {
-          console.error(`Failed to update user ${user._id} for quest ${VERIFY_WALLET_QUEST_ID}`);
-          // Decide how to handle - maybe proceed without XP update?
-          // For now, we'll use the original user data for JWT
-          updatedUser = user; 
+          console.error(`Failed to update user ${userDoc._id} for quest ${VERIFY_WALLET_QUEST_ID}`);
         }
-      } else {
-        console.log(`Quest '${VERIFY_WALLET_QUEST_ID}' already completed for user ${user._id}`);
-        updatedUser = user; // Use existing user data
+      }
+      finalUserDataForToken = updatedExistingUser;
+      
+      // Award referral bonus if existing user completed the verification quest in this session
+      if (awardedXpThisSession > 0) {
+           // Ensure _id is correctly typed
+          await awardReferralBonus(finalUserDataForToken._id as mongoose.Types.ObjectId, awardedXpThisSession);
       }
     }
 
-    // Ensure we have a user object to proceed
-    if (!updatedUser) {
-      console.error(`User object is null or undefined after find/create/update logic for ${walletAddress}`);
-      return res.status(500).json({ message: 'Internal server error processing user data' });
+    const ownsOgNft = await checkOgNftOwnership(finalUserDataForToken.walletAddress);
+    if (finalUserDataForToken.ownsOgNft !== ownsOgNft) {
+        finalUserDataForToken.ownsOgNft = ownsOgNft;
+        await (finalUserDataForToken as any).save(); // Save if NFT status changed
+    }
+    
+    // Re-fetch to ensure all updates are present and __v is excluded for token/response
+    const userForResponse = await User.findById(finalUserDataForToken._id).select('-__v');
+    if (!userForResponse) {
+        console.error(`Failed to re-fetch user ${finalUserDataForToken._id} before sending response.`);
+        return res.status(500).json({ message: 'Internal server error finalizing user data' });
     }
 
-    // --- Check NFT Ownership --- 
-    const ownsOgNft = await checkOgNftOwnership(walletAddress);
-    updatedUser.ownsOgNft = ownsOgNft;
-
-    // Save user (either new or updated with NFT status/quest completion)
-    await updatedUser.save();
-    const savedUser = await User.findById(updatedUser._id).select('-__v'); // Re-fetch to exclude __v
-    if (!savedUser) throw new Error("Failed to retrieve saved user data");
-
-    // Generate JWT Token using updatedUser data
     const tokenPayload = {
-      userId: updatedUser._id,
-      walletAddress: updatedUser.walletAddress
+      userId: userForResponse._id,
+      walletAddress: userForResponse.walletAddress
     };
     const token = jwt.sign(tokenPayload, JWT_SECRET, { expiresIn: '7d' });
 
@@ -154,7 +203,7 @@ router.post('/verify', async (req: Request, res: Response) => {
     res.status(200).json({
       message: 'Authentication successful',
       token,
-      user: savedUser // Return the saved user data (including ownsOgNft)
+      user: userForResponse // Return the saved user data (including ownsOgNft)
     });
 
   } catch (error: any) {

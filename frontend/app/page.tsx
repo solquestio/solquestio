@@ -8,6 +8,7 @@ import { SparklesIcon, TrophyIcon, UserCircleIcon, ArrowRightIcon } from '@heroi
 import Image from 'next/image'; // For NFT image
 import { AuthPromptModal } from '@/components/AuthPromptModal';
 import bs58 from 'bs58';
+// import OGNftCard from '@/components/nft/OGNftCard'; // Removed import
 
 // --- Interfaces --- 
 interface LearningPath {
@@ -136,7 +137,7 @@ interface OgNftShowcaseProps {
 const OgNftShowcase: React.FC<OgNftShowcaseProps> = ({ isAuthenticated, promptLogin }) => {
     const nftName = "SolQuest OG Pass";
     const nftBenefit = "Unlock exclusive XP boosts, early access to new paths, and special community perks.";
-    const nftImageUrl = "/placeholder-nft.png"; 
+    const nftImageUrl = "/placeholder-nft.png"; // Restored placeholder image
 
     return (
         <div className="relative bg-gradient-to-br from-purple-600/80 via-solana-purple to-solana-green/80 p-8 md:p-12 rounded-xl shadow-2xl overflow-hidden mb-16">
@@ -167,6 +168,7 @@ const OgNftShowcase: React.FC<OgNftShowcaseProps> = ({ isAuthenticated, promptLo
                     )}
                 </div>
                 <div className="md:w-1/3 flex justify-center md:justify-end">
+                    {/* Restored placeholder image div */}
                     <div className="w-48 h-48 md:w-60 md:h-60 bg-black/20 rounded-lg shadow-xl flex items-center justify-center overflow-hidden animate-float">
                         <img src={nftImageUrl} alt={nftName} className="object-cover w-full h-full opacity-80 hover:opacity-100 transition-opacity" /> 
                     </div>

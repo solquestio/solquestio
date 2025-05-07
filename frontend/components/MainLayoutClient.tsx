@@ -1,11 +1,17 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import { Logo } from '@/components/Logo';
 import { HeaderWalletButton } from '@/components/HeaderWalletButton';
+import { AuthPromptModal } from '@/components/AuthPromptModal';
+import { useWallet, WalletNotSelectedError } from '@solana/wallet-adapter-react';
+import { useWalletModal } from '@solana/wallet-adapter-react-ui';
+import bs58 from 'bs58';
 
 const AUTH_TOKEN_KEY = 'solquest_auth_token';
+const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:5000';
+const SIGN_IN_MESSAGE = "Sign this message to verify your wallet and log in to SolQuest.io. This does not cost any SOL.";
 
 interface MainLayoutClientProps {
     children: React.ReactNode;
@@ -13,6 +19,13 @@ interface MainLayoutClientProps {
 
 export default function MainLayoutClient({ children }: MainLayoutClientProps) {
     const [isAuthenticated, setIsAuthenticated] = useState(false);
+    const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+    const [isAuthLoading, setIsAuthLoading] = useState(false);
+    const [authError, setAuthError] = useState<string | null>(null);
+    const [referralCodeInput, setReferralCodeInput] = useState('');
+
+    const { publicKey, signMessage, connected, wallet } = useWallet();
+    const { setVisible: setWalletModalVisible } = useWalletModal();
 
     useEffect(() => {
         const token = localStorage.getItem(AUTH_TOKEN_KEY);
@@ -29,6 +42,80 @@ export default function MainLayoutClient({ children }: MainLayoutClientProps) {
         };
     }, []);
 
+    const handleRequestAuthentication = useCallback(async () => {
+        setAuthError(null);
+        setIsAuthLoading(true);
+
+        if (!connected) {
+            setWalletModalVisible(true);
+            setIsAuthLoading(false);
+            return;
+        }
+        if (!publicKey) {
+             setAuthError("Wallet connected, but public key is not available. Try reconnecting.");
+             setIsAuthLoading(false);
+             return;
+        }
+        if (!signMessage) {
+            setAuthError('The selected wallet does not support message signing.');
+            setIsAuthLoading(false);
+            return;
+        }
+
+        try {
+            const messageToSign = SIGN_IN_MESSAGE;
+            const messageBytes = new TextEncoder().encode(messageToSign);
+            const signatureBytes = await signMessage(messageBytes);
+            const signature = bs58.encode(signatureBytes);
+
+            const requestBody: any = {
+                walletAddress: publicKey.toBase58(),
+                signature,
+                message: messageToSign,
+            };
+
+            if (referralCodeInput.trim()) {
+                requestBody.referralCode = referralCodeInput.trim();
+            }
+
+            const response = await fetch(`${BACKEND_URL}/api/auth/verify`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(requestBody),
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json().catch(() => ({}));
+                throw new Error(errorData.message || `Authentication failed (status: ${response.status})`);
+            }
+
+            const { token } = await response.json();
+            localStorage.setItem(AUTH_TOKEN_KEY, token);
+            setIsAuthenticated(true);
+            setIsAuthModalOpen(false); 
+            setAuthError(null); 
+            setReferralCodeInput('');
+        } catch (error: any) {
+            let errorMessage = "An unexpected error occurred during sign-in.";
+            if (error.message && (error.message.toLowerCase().includes('user rejected') || error.message.toLowerCase().includes('cancelled') || error.message.toLowerCase().includes('declined'))) {
+                errorMessage = "Sign message request was cancelled or rejected.";
+            } else if (error.message) {
+                errorMessage = error.message;
+            }
+            setAuthError(errorMessage);
+            setIsAuthenticated(false);
+            localStorage.removeItem(AUTH_TOKEN_KEY);
+        } finally {
+            setIsAuthLoading(false);
+        }
+    }, [publicKey, signMessage, connected, setWalletModalVisible, referralCodeInput]);
+
+    const openLoginModal = () => {
+        setAuthError(null);
+        setReferralCodeInput('');
+        setIsAuthModalOpen(true);
+    };
+
     return (
         <div className="relative z-10 flex flex-col min-h-screen">
             <header className="py-4 px-6 bg-dark-card/50 backdrop-blur-sm border-b border-white/10 sticky top-0 z-20">
@@ -41,7 +128,7 @@ export default function MainLayoutClient({ children }: MainLayoutClientProps) {
                   {isAuthenticated ? (
                     <Link href="/profile" className="text-gray-300 hover:text-white transition-colors">Profile</Link>
                   ) : (
-                    <Link href="/" className="text-gray-300 hover:text-white transition-colors">Login</Link>
+                    <button onClick={openLoginModal} className="text-gray-300 hover:text-white transition-colors">Login</button>
                   )}
                   <Link href="/leaderboard" className="text-gray-300 hover:text-white transition-colors">Leaderboard</Link>
                   <HeaderWalletButton />
@@ -51,7 +138,18 @@ export default function MainLayoutClient({ children }: MainLayoutClientProps) {
             <main className="flex-grow container mx-auto px-4 py-8">
               {children}
             </main>
-             {/* Optional: Add a footer here if needed within the client layout */}
+            <AuthPromptModal 
+                isOpen={isAuthModalOpen}
+                onClose={() => {
+                    setIsAuthModalOpen(false);
+                    setAuthError(null); 
+                    setReferralCodeInput('');
+                }}
+                onAuthenticate={handleRequestAuthentication}
+                loading={isAuthLoading}
+                referralCode={referralCodeInput}
+                onReferralCodeChange={setReferralCodeInput}
+            />
         </div>
     );
 } 

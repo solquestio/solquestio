@@ -1,0 +1,379 @@
+.nftCard {
+    position: relative;
+    width: 400px;
+    height: 250px;
+    margin: 0 auto;
+    border-radius: 20px;
+    overflow: hidden;
+    box-shadow: 0 0 20px rgba(138, 43, 226, 0.5);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    animation: card-glow 5s ease-in-out infinite;
+    transform-style: preserve-3d;
+    transition: transform 0.1s ease;
+    cursor: move; 
+}
+
+.nftCardInner {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    transform-style: preserve-3d;
+    transition: transform 0.3s ease-out;
+}
+
+@keyframes card-glow {
+    0% { box-shadow: 0 0 20px rgba(138, 43, 226, 0.5); }
+    50% { box-shadow: 0 0 35px rgba(0, 255, 179, 0.7); }
+    100% { box-shadow: 0 0 20px rgba(138, 43, 226, 0.5); }
+}
+
+.cardBg {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(135deg, #8A2BE2, #00FFB3);
+    z-index: 1;
+    opacity: 0.8;
+    animation: gradient-shift 8s ease infinite;
+}
+
+@keyframes gradient-shift {
+    0% {
+        background: linear-gradient(135deg, #8A2BE2, #00FFB3);
+    }
+    50% {
+        background: linear-gradient(135deg, #9747FF, #00D0FF);
+    }
+    100% {
+        background: linear-gradient(135deg, #8A2BE2, #00FFB3);
+    }
+}
+
+.cardOverlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.3);
+    z-index: 2;
+}
+
+.questMap {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 2;
+    opacity: 0.15;
+    transform: scale(0.5);
+    transform-origin: center center;
+}
+
+.logoContainer {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 4;
+    width: 150px;
+    height: auto;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
+.logoShineContainer {
+    animation: float 6s ease-in-out infinite;
+}
+
+.sqLogoSvg {
+    width: 200px;
+    height: 200px;
+    filter: drop-shadow(0 0 15px rgba(255, 255, 255, 0.5));
+}
+
+.ogBadge {
+    position: absolute;
+    top: -15px;
+    right: -40px;
+    background: linear-gradient(135deg, #FFD700, #FFA500);
+    color: #121212;
+    padding: 5px 10px;
+    border-radius: 7px;
+    font-weight: bold;
+    font-size: 18px;
+    box-shadow: 0 0 10px rgba(255, 215, 0, 0.8);
+    z-index: 5;
+    animation: pulse-badge 3s infinite, float 5s ease-in-out infinite 1s;
+}
+
+@keyframes pulse-badge {
+    0% { box-shadow: 0 0 10px rgba(255, 215, 0, 0.8); }
+    50% { box-shadow: 0 0 15px rgba(255, 215, 0, 1); }
+    100% { box-shadow: 0 0 10px rgba(255, 215, 0, 0.8); }
+}
+
+.energyRings {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 3;
+}
+
+.ring {
+    position: absolute;
+    border-width: 1px;
+    border-style: solid;
+    border-color: rgba(255, 255, 255, 0.7);
+    border-radius: 50%;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+}
+
+.ring1 {
+    width: 140px;
+    height: 140px;
+    animation: pulse 4s infinite;
+    border-color: rgba(151, 71, 255, 0.7);
+}
+
+.ring2 {
+    width: 160px;
+    height: 160px;
+    animation: pulse 4s infinite 1s;
+    border-color: rgba(74, 155, 226, 0.7);
+}
+
+.ring3 {
+    width: 180px;
+    height: 180px;
+    animation: pulse 4s infinite 2s;
+    border-color: rgba(0, 255, 179, 0.7);
+}
+
+.ringRotate {
+    position: absolute;
+    border: 1px dashed rgba(255, 255, 255, 0.3);
+    width: 200px;
+    height: 200px;
+    border-radius: 50%;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    animation: rotate 20s linear infinite;
+}
+
+.sparkle {
+    position: absolute;
+    background-color: white;
+    border-radius: 50%;
+    z-index: 3;
+    filter: drop-shadow(0 0 3px rgba(255, 255, 255, 0.8));
+    animation: twinkle 3s infinite;
+}
+
+.title {
+    position: absolute;
+    bottom: 15px;
+    width: 100%;
+    text-align: center;
+    font-size: 16px;
+    letter-spacing: 1px;
+    color: white;
+    z-index: 4;
+    font-weight: bold;
+    text-shadow: 0 0 7px rgba(0, 0, 0, 0.5);
+}
+
+.solquestText {
+    position: absolute;
+    top: 15px;
+    width: 100%;
+    text-align: center;
+    font-size: 22px;
+    letter-spacing: 2px;
+    font-weight: bold;
+    color: white;
+    z-index: 4;
+    text-shadow: 0 0 10px rgba(0, 0, 0, 0.7);
+}
+
+@keyframes pulse {
+    0% { transform: translate(-50%, -50%) scale(1); opacity: 0.7; }
+    50% { transform: translate(-50%, -50%) scale(1.05); opacity: 0.5; }
+    100% { transform: translate(-50%, -50%) scale(1); opacity: 0.7; }
+}
+
+@keyframes twinkle {
+    0% { opacity: 0.3; }
+    50% { opacity: 1; }
+    100% { opacity: 0.3; }
+}
+
+@keyframes rotate {
+    0% { transform: translate(-50%, -50%) rotate(0deg); }
+    100% { transform: translate(-50%, -50%) rotate(360deg); }
+}
+
+@keyframes float {
+    0% { transform: translateY(0px); }
+    50% { transform: translateY(-10px); }
+    100% { transform: translateY(0px); }
+}
+
+.lightRays {
+    /* This class was for an inline styled div, specific styles kept inline in JSX for now */
+}
+
+.ray {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    height: 2px;
+    width: 120px; /* Initial width for animation */
+    background: linear-gradient(90deg, rgba(255,255,255,0.9), rgba(255,255,255,0));
+    transform-origin: 0 0;
+    box-shadow: 0 0 3px rgba(255, 255, 255, 0.7);
+}
+
+.ray1 { transform: rotate(0deg); animation: pulse-ray 2s infinite ease-in-out; }
+.ray2 { transform: rotate(45deg); animation: pulse-ray 2s infinite ease-in-out 0.25s; }
+.ray3 { transform: rotate(90deg); animation: pulse-ray 2s infinite ease-in-out 0.5s; }
+.ray4 { transform: rotate(135deg); animation: pulse-ray 2s infinite ease-in-out 0.75s; }
+.ray5 { transform: rotate(180deg); animation: pulse-ray 2s infinite ease-in-out 1s; }
+.ray6 { transform: rotate(225deg); animation: pulse-ray 2s infinite ease-in-out 1.25s; }
+.ray7 { transform: rotate(270deg); animation: pulse-ray 2s infinite ease-in-out 1.5s; }
+.ray8 { transform: rotate(315deg); animation: pulse-ray 2s infinite ease-in-out 1.75s; }
+
+@keyframes pulse-ray {
+    0% { opacity: 0.2; width: 40px; box-shadow: 0 0 2px rgba(255, 255, 255, 0.5); }
+    50% { opacity: 0.7; width: 60px; box-shadow: 0 0 5px rgba(255, 255, 255, 0.8); }
+    100% { opacity: 0.2; width: 40px; box-shadow: 0 0 2px rgba(255, 255, 255, 0.5); }
+}
+
+.logoGlow {
+    /* This class was for an inline styled div, specific styles kept inline in JSX for now */
+    /* Styles: position, width, height, borderRadius, background, animation: pulse-glow */
+    animation: pulse-glow 3s infinite ease-in-out;
+}
+
+.logoGlowInner {
+    /* This class was for an inline styled div, specific styles kept inline in JSX for now */
+    /* Styles: position, width, height, borderRadius, background, animation: pulse-glow (delayed) */
+    animation: pulse-glow 2s infinite ease-in-out 1s;
+}
+
+@keyframes pulse-glow {
+    0% { opacity: 0.5; transform: scale(1); }
+    50% { opacity: 0.8; transform: scale(1.1); }
+    100% { opacity: 0.5; transform: scale(1); }
+}
+
+.actualLogo {
+    /* This class was for an inline styled img, specific styles kept inline in JSX for now */
+    /* Styles: width, height, position, zIndex, filter, animation: pulse-subtle */
+    animation: pulse-subtle 4s infinite ease-in-out;
+}
+
+@keyframes pulse-subtle {
+    0% { filter: drop-shadow(0 0 10px rgba(255,255,255,0.5)); transform: scale(1); }
+    50% { filter: drop-shadow(0 0 20px rgba(255,255,255,0.7)); transform: scale(1.05); }
+    100% { filter: drop-shadow(0 0 10px rgba(255,255,255,0.5)); transform: scale(1); }
+}
+
+.shine { /* General class for shine spots */
+    /* Common styles: position, background, animation: twinkle */
+    /* Specific styles (size, top, left, animation-delay) kept inline in JSX for now */
+    animation-name: twinkle;
+    animation-iteration-count: infinite;
+    /* spot1: animation-duration: 2s */
+    /* spot2: animation-duration: 1.5s; animation-delay: 0.5s */
+}
+
+.spot1 {
+    animation-duration: 2s;
+}
+
+.spot2 {
+    animation-duration: 1.5s;
+    animation-delay: 0.5s; 
+}
+
+.particleContainer {
+    /* Styles for this dynamically created container will be handled in component logic if needed */
+}
+
+.particle {
+    pointer-events: none;
+    z-index: 4;
+    filter: blur(1px);
+    /* Dynamic styles (size, position, color, animation) will be applied in component */
+}
+
+@keyframes float-particle-1 {
+    0% { transform: translateY(0) translateX(0); opacity: 0; }
+    10% { opacity: 1; }
+    100% { transform: translateY(-400px) translateX(30px); opacity: 0; }
+}
+
+@keyframes float-particle-2 {
+    0% { transform: translateY(0) translateX(0); opacity: 0; }
+    10% { opacity: 1; }
+    100% { transform: translateY(-400px) translateX(-40px); opacity: 0; }
+}
+
+@keyframes float-particle-3 {
+    0% { transform: translateY(0) translateX(0); opacity: 0; }
+    10% { opacity: 1; }
+    100% { transform: translateY(-400px) translateX(20px); opacity: 0; }
+}
+
+.downloadOptions {
+    /* Inline styles (display, gap, justify-content, flex-wrap) kept in JSX for now */
+}
+
+.downloadBtn {
+    margin-top: 30px;
+    padding: 12px 24px;
+    /* background: linear-gradient(...) specific to each button, kept inline */
+    border: none;
+    border-radius: 5px;
+    color: white;
+    font-size: 16px;
+    cursor: pointer;
+    transition: all 0.3s;
+    font-weight: bold;
+}
+
+.downloadBtn:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 5px 15px rgba(138, 43, 226, 0.4);
+}
+
+.hexagonPattern {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 2;
+    opacity: 0.1;
+    animation: rotate-slow 60s linear infinite;
+    transform: scale(0.5);
+    transform-origin: center center;
+}
+
+@keyframes rotate-slow {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* Keyframes that were duplicated or implicitly handled by class animations: */
+/* @keyframes glow - similar to card-glow or others */ 

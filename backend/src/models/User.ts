@@ -9,6 +9,13 @@ export interface IUser extends Document {
   lastCheckedInAt?: Date; // Add lastCheckedInAt field
   checkInStreak?: number; // Add checkInStreak field
   ownsOgNft?: boolean; // Add ownsOgNft field
+
+  // Referral System Fields
+  referralCode?: string; // Unique code for this user to share
+  referrer?: mongoose.Types.ObjectId; // User who referred this user
+  referredUsersCount?: number; // How many users this user has referred
+  xpFromReferrals?: number; // XP earned from their referrals' activities
+
   createdAt: Date;
   updatedAt: Date;
 }
@@ -52,6 +59,27 @@ const UserSchema: Schema = new Schema(
         type: Boolean,
         required: true,
         default: false, // Default to false
+    },
+
+    // Referral System Fields
+    referralCode: {
+        type: String,
+        unique: true,
+        sparse: true, // Allows nulls if not immediately generated, but good for uniqueness
+        index: true,
+    },
+    referrer: {
+        type: Schema.Types.ObjectId,
+        ref: 'User',
+        required: false, // Not all users will have a referrer
+    },
+    referredUsersCount: {
+        type: Number,
+        default: 0,
+    },
+    xpFromReferrals: {
+        type: Number,
+        default: 0,
     }
   },
   {

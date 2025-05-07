@@ -6,6 +6,7 @@ import MainLayoutClient from '@/components/MainLayoutClient'
 import { Inter } from "next/font/google";
 import '@solana/wallet-adapter-react-ui/styles.css';
 import 'react-loading-skeleton/dist/skeleton.css'
+import AnimatedBackground from '@/components/background/AnimatedBackground'
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -28,6 +29,7 @@ export default function RootLayout({
           <div className="absolute inset-0 bg-[radial-gradient(circle_500px_at_50%_200px,rgba(78,70,229,0.1),transparent)]" />
         </div>
         <WalletProviderClient>
+          <AnimatedBackground />
           <MainLayoutClient>{children}</MainLayoutClient>
         </WalletProviderClient>
       </body>
