@@ -54,6 +54,12 @@ app.get('/', (req: Request, res: Response) => {
 // TODO: Add user profile routes (e.g., /users/me)
 // TODO: Add quest routes (e.g., /quests)
 
-app.listen(port, () => {
-  console.log(`Backend server listening on port ${port}`);
-}); 
+// --- Conditional Listen for Local Development ---
+// Only run app.listen if not in a Vercel environment
+if (!process.env.VERCEL) {
+    app.listen(port, () => {
+        console.log(`Backend server listening locally on port ${port}`);
+    });
+}
+// --- Export the app for Vercel ---
+export default app; 
