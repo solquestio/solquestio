@@ -2,11 +2,17 @@
   "version": 2,
   "builds": [
     {
-      "src": "api/index.ts", 
+      "src": "api/**/*.ts",
       "use": "@vercel/node"
     }
   ],
   "routes": [
-    { "src": "/(.*)", "dest": "/api" }
+    { "src": "/api/quests/paths", "dest": "/api/quests/paths" },
+    { "src": "/api/users/leaderboard", "dest": "/api/users/leaderboard" },
+    { "src": "/api/users/me", "dest": "/api/users/me" },
+    { "src": "/api/minimal", "dest": "/api/minimal" },
+    { "src": "/api/auth/verify", "dest": "/api/auth/verify" },
+    { "src": "/api", "dest": "/api/index" },
+    { "src": "/(.*)", "dest": "/api/index" }
   ]
 } 
