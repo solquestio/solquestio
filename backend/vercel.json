@@ -2,7 +2,14 @@
   "version": 2,
   "builds": [
     {
-      "src": "api/**/*.js",
+      "src": "package.json",
+      "use": "@vercel/static-build",
+      "config": {
+        "outputDirectory": "dist"
+      }
+    },
+    {
+      "src": "dist/api/**/*.js",
       "use": "@vercel/node"
     }
   ],
