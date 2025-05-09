@@ -11,6 +11,7 @@ dotenv.config(); // Load environment variables from .env file
 const app = express();
 const port = process.env.PORT || 5000;
 const mongoUri = process.env.MONGO_URI;
+const frontendUrl = process.env.FRONTEND_URL;
 
 // --- Database Connection ---
 const connectDB = async () => {
@@ -32,9 +33,12 @@ connectDB(); // Attempt to connect to the database on startup
 // -------------------------
 
 // --- Middleware ---
-// Enable CORS for all origins (for development)
-// TODO: Configure specific origins for production
-app.use(cors()); 
+// Configure CORS
+const corsOptions = {
+  origin: frontendUrl || '*', // Allow specific frontend URL or all if not set
+};
+app.use(cors(corsOptions));
+
 app.use(express.json()); // Middleware to parse JSON bodies
 // ------------------
 

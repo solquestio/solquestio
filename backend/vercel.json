@@ -2,7 +2,7 @@
   "version": 2,
   "builds": [
     {
-      "src": "api/**/*.ts",
+      "src": "api/**/*.js",
       "use": "@vercel/node"
     }
   ],
@@ -12,7 +12,6 @@
     { "src": "/api/users/me", "dest": "/api/users/me" },
     { "src": "/api/minimal", "dest": "/api/minimal" },
     { "src": "/api/auth/verify", "dest": "/api/auth/verify" },
-    { "src": "/api", "dest": "/api/index" },
-    { "src": "/(.*)", "dest": "/api/index" }
+    { "src": "/api", "dest": "/api/index" }
   ]
 } 
