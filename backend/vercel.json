@@ -7,12 +7,13 @@
       "config": {
         "outputDirectory": "dist"
       }
-    },
-    {
-      "src": "api/**/*.js",
-      "use": "@vercel/node"
     }
   ],
+  "functions": {
+    "api/**/*.js": {
+      "runtime": "@vercel/node@latest"
+    }
+  },
   "routes": [
     { "src": "/api/quests/paths", "dest": "/api/quests/paths" },
     { "src": "/api/users/leaderboard", "dest": "/api/users/leaderboard" },
