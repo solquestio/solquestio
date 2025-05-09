@@ -1,6 +1,5 @@
 {
   "version": 2,
-  "description": "SolQuest.io Backend Configuration",
   "builds": [
     {
       "src": "package.json",
