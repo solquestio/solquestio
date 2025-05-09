@@ -9,12 +9,8 @@
       }
     },
     {
-      "src": "dist/api",
+      "src": "dist/api/**/*.js",
       "use": "@vercel/node"
     }
-  ],
-  "routes": [
-    { "src": "/api/minimal", "dest": "/api/minimal" },
-    { "src": "/api", "dest": "/api" }
   ]
 } 
