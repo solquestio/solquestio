@@ -71,12 +71,30 @@ export default function MainLayoutClient({ children }: MainLayoutClientProps) {
                         throw new Error('No public key available');
                     }
                     
+                    if (!signMessage) {
+                        console.error('Sign message function not available');
+                        throw new Error('Your wallet does not support message signing');
+                    }
+                    
                     const signedMessageBytes = await signMessage(messageBytes);
                     const signature = bs58.encode(signedMessageBytes);
                     
                     // 3. Prepare request to backend for verification
+                    // We've already checked publicKey is not null above, so we can safely assert the type
+                    // Use a proper type for Solana PublicKey
+                    interface SolanaPublicKey {
+                        toBase58(): string;
+                        toString(): string;
+                    }
+                    
+                    // Cast to our interface to satisfy TypeScript
+                    const solanaPublicKey = publicKey as unknown as SolanaPublicKey;
+                    
+                    // Now we can safely get the wallet address
+                    const walletAddress = solanaPublicKey.toBase58();
+                    
                     const requestBody = {
-                        walletAddress: publicKey.toBase58(),
+                        walletAddress: walletAddress,
                         signature: signature,
                         message: messageToSign,
                     };
