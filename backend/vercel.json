@@ -8,8 +8,52 @@
   ],
   "routes": [
     {
-      "src": "/api/(.*)",
-      "dest": "/api/$1"
+      "src": "/api/quests/paths",
+      "dest": "/api/quests/paths.ts"
+    },
+    {
+      "src": "/api/quests/\\[id\\]",
+      "dest": "/api/quests/[id].ts"
+    },
+    {
+      "src": "/api/quests/complete",
+      "dest": "/api/quests/complete.ts"
+    },
+    {
+      "src": "/api/auth/challenge",
+      "dest": "/api/auth/challenge.ts"
+    },
+    {
+      "src": "/api/auth/verify",
+      "dest": "/api/auth/verify.ts"
+    },
+    {
+      "src": "/api/users",
+      "dest": "/api/users/index.ts"
+    },
+    {
+      "src": "/api/utils",
+      "dest": "/api/utils.ts"
+    },
+    {
+      "src": "/api/public",
+      "dest": "/api/public.ts"
+    },
+    {
+      "src": "/api/health",
+      "dest": "/api/health.ts"
+    },
+    {
+      "src": "/api/auth",
+      "dest": "/api/auth/index.ts"
+    },
+    {
+      "src": "/api/quests",
+      "dest": "/api/quests/index.ts"
+    },
+    {
+      "src": "/api",
+      "dest": "/api/index.ts"
     },
     {
       "src": "/(.*)",
