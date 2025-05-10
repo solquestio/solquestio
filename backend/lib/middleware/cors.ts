@@ -5,25 +5,22 @@ import { VercelRequest, VercelResponse } from '@vercel/node';
  * Enables CORS headers to allow requests from the frontend
  */
 export function enableCors(req: VercelRequest, res: VercelResponse): void {
-  const productionFrontendDomain = 'solquest.io';
-  const allowedOrigins = [
-    `https://www.${productionFrontendDomain}`, // For www.solquest.io
-    `https://${productionFrontendDomain}`,   // For solquest.io
-    // Add preview deployment URLs if needed, e.g., using a regex or specific URLs
-    // For local development:
-    // 'http://localhost:3000' 
-  ];
-
   const origin = req.headers.origin;
-  let effectiveOrigin = allowedOrigins[0]; // Default to www if origin is not in the list or not present
+  let effectiveOrigin = 'https://solquest.io'; // Default non-www
 
-  if (origin && allowedOrigins.includes(origin)) {
-    effectiveOrigin = origin;
+  // Explicitly check if the request origin is the www version
+  if (origin === 'https://www.solquest.io') {
+    effectiveOrigin = 'https://www.solquest.io';
+  } else if (origin === 'https://solquest.io') {
+    effectiveOrigin = 'https://solquest.io';
   }
+  // For any other origin, or if origin is not present, it will default to 'https://solquest.io'
+  // or you could choose to not set the ACAO header or block.
+  // For local dev, you'd add: else if (origin === 'http://localhost:3000') effectiveOrigin = 'http://localhost:3000';
 
   res.setHeader('Access-Control-Allow-Credentials', 'true');
   res.setHeader('Access-Control-Allow-Origin', effectiveOrigin);
-  res.setHeader('Vary', 'Origin'); // Important when dynamically setting Allow-Origin
+  res.setHeader('Vary', 'Origin');
 
   res.setHeader(
     'Access-Control-Allow-Methods',
@@ -34,9 +31,11 @@ export function enableCors(req: VercelRequest, res: VercelResponse): void {
     'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version, Authorization'
   );
   
-  // Handle preflight requests
   if (req.method === 'OPTIONS') {
+    console.log(`CORS: OPTIONS request from ${origin}, responding with ACAO: ${effectiveOrigin}`); // Log OPTIONS
     res.status(200).end();
     return;
   }
+  // Log for non-OPTIONS requests too
+  console.log(`CORS: Request from ${origin}, method ${req.method}, responding with ACAO: ${effectiveOrigin}`);
 }
