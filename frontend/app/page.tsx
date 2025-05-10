@@ -218,7 +218,10 @@ const LeaderboardSnippet: React.FC = () => {
             try {
                 const response = await fetch(`${BACKEND_URL}/api/users?path=leaderboard&limit=3`); 
                 if (!response.ok) throw new Error('Failed to fetch leaderboard');
-                let data: LeaderboardUser[] = await response.json();
+                const responseData = await response.json();
+                // The backend may return either an array directly or an object with a users/leaderboard property
+                let data: LeaderboardUser[] = Array.isArray(responseData) ? responseData : 
+                    responseData.users || responseData.leaderboard || [];
                 // Ensure limit if backend doesn't support it
                 if (data.length > 3 && !response.url.includes('limit=3')) {
                     data = data.slice(0, 3);
@@ -370,7 +373,8 @@ export default function HomePage() {
                 throw new Error(errorData.message || `Failed to fetch learning paths (status: ${response.status})`);
             }
             const data = await response.json();
-            fetchedPaths = Array.isArray(data) ? data : data.paths || []; // Assign to fetchedPaths
+            // Backend returns { paths: [...] }, so prioritize checking for the paths property
+            fetchedPaths = data.paths || (Array.isArray(data) ? data : []); // Assign to fetchedPaths
         } catch (error: any) {
             console.error("Failed to fetch learning paths from backend:", error);
             // fetchedPaths will remain empty if there's an error
