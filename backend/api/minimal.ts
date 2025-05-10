@@ -1,5 +1,6 @@
 import { VercelRequest, VercelResponse } from '@vercel/node';
 
+// Triggering redeploy to ensure Vercel picks up the latest changes
 export default function handler(request: VercelRequest, response: VercelResponse) {
   try {
     // Super basic function that doesn't depend on any other code
