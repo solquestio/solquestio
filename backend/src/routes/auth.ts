@@ -9,7 +9,7 @@ import { Helius } from "helius-sdk"; // Import Helius SDK
 import dotenv from 'dotenv';
 import crypto from 'crypto'; // Import crypto for random string generation
 import mongoose from 'mongoose'; // Import mongoose for ObjectId
-import { awardReferralBonus } from '../utils/xpUtils'; // Import from shared util
+// Referral imports removed
 
 dotenv.config(); // Load .env variables
 
@@ -23,13 +23,6 @@ const helius = new Helius(heliusApiKey || "");
 // --- Constants --- 
 const JWT_SECRET = process.env.JWT_SECRET;
 const OG_NFT_COLLECTION_MINT = process.env.SOLQUEST_OG_NFT_COLLECTION_MINT;
-
-// Helper function to generate a unique referral code
-const generateReferralCode = (length = 8): string => {
-  return crypto.randomBytes(Math.ceil(length / 2))
-    .toString('hex') // convert to hexadecimal format
-    .slice(0, length).toUpperCase(); // return required number of characters
-};
 
 // Helper function to check NFT ownership
 const checkOgNftOwnership = async (walletAddress: string): Promise<boolean> => {
@@ -64,7 +57,7 @@ const checkOgNftOwnership = async (walletAddress: string): Promise<boolean> => {
 
 // POST /api/auth/verify - Verify signature and login/register user
 router.post('/verify', async (req: Request, res: Response) => {
-  const { walletAddress, signature, message, referralCode: incomingReferralCode } = req.body;
+  const { walletAddress, signature, message } = req.body;
 
   // Access directly from process.env
   if (!JWT_SECRET) {
@@ -107,47 +100,24 @@ router.post('/verify', async (req: Request, res: Response) => {
         xp: questRewardForVerification,
         checkInStreak: 0,
         ownsOgNft: false,
-        referralCode: generateReferralCode()
+        // Referral code removed
       };
 
       // Step 2: Save initial user to DB
       let savedNewUserDoc = await new User(initialNewUserData).save();
       
       // Step 3: Use the saved document (which is typed as IUser via Mongoose)
-      // The referral logic will modify this document directly if a referrer is found.
       let userBeingProcessed = savedNewUserDoc as IUser;
-
-      if (incomingReferralCode && typeof incomingReferralCode === 'string') {
-        console.log(`Processing incoming referral code: ${incomingReferralCode} for new user ${userBeingProcessed._id}`);
-        const referrerUser: IUser | null = await User.findOne({ referralCode: incomingReferralCode.trim().toUpperCase() });
-
-        if (referrerUser && !(userBeingProcessed._id as mongoose.Types.ObjectId).equals(referrerUser._id as mongoose.Types.ObjectId)) {
-          userBeingProcessed.referrer = referrerUser._id as mongoose.Types.ObjectId;
-          referrerUser.referredUsersCount = (referrerUser.referredUsersCount || 0) + 1;
-          await referrerUser.save(); // Save the referrer with updated count
-          // Mark userBeingProcessed as modified if referrer was set, to ensure it saves if this is the only change.
-          // Mongoose usually tracks this, but being explicit can help in complex scenarios.
-          // However, direct assignment to a path (userBeingProcessed.referrer) marks it.
-          console.log(`User ${userBeingProcessed._id} was referred by ${referrerUser._id} (Code: ${incomingReferralCode}). Referrer count updated.`);
-        } else if (referrerUser) {
-          console.warn(`User ${userBeingProcessed._id} self-referral or invalid referrer.`);
-        } else {
-          console.warn(`Referral code '${incomingReferralCode}' not found. New user ${userBeingProcessed._id} will not have a referrer.`);
-        }
-      }
       
-      // Step 4: Save the user again if it was modified by referral logic (e.g., referrer added)
-      // Mongoose .save() is smart enough to only update if there are changes.
+      // Referral logic removed
+      
+      // Save the user (not needed after removing referral logic, but kept for clarity)
       await userBeingProcessed.save(); 
 
       finalUserDataForToken = userBeingProcessed;
-      console.log(`New user created with ID: ${userBeingProcessed._id}. Quest '${VERIFY_WALLET_QUEST_ID}' completed. Awarded ${questRewardForVerification} XP. Referral Code: ${userBeingProcessed.referralCode}`);
+      console.log(`New user created with ID: ${userBeingProcessed._id}. Quest '${VERIFY_WALLET_QUEST_ID}' completed. Awarded ${questRewardForVerification} XP.`);
       
-      // Award referral bonus for new user registration quest completion
-      if (questRewardForVerification > 0) {
-          // Ensure _id is correctly typed for awardReferralBonus
-          await awardReferralBonus(finalUserDataForToken._id as mongoose.Types.ObjectId, questRewardForVerification);
-      }
+      // Referral bonus logic removed
 
     } else {
       console.log(`Existing user found with ID: ${userDoc._id}`);
@@ -173,11 +143,7 @@ router.post('/verify', async (req: Request, res: Response) => {
       }
       finalUserDataForToken = updatedExistingUser;
       
-      // Award referral bonus if existing user completed the verification quest in this session
-      if (awardedXpThisSession > 0) {
-           // Ensure _id is correctly typed
-          await awardReferralBonus(finalUserDataForToken._id as mongoose.Types.ObjectId, awardedXpThisSession);
-      }
+      // Referral bonus logic removed
     }
 
     const ownsOgNft = await checkOgNftOwnership(finalUserDataForToken.walletAddress);

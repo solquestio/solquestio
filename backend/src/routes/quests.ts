@@ -3,7 +3,7 @@ import { protect } from '../middleware/authMiddleware'; // Import protect middle
 import { Connection, PublicKey, LAMPORTS_PER_SOL } from '@solana/web3.js';
 import User, { IUser } from '../models/User';
 import mongoose from 'mongoose'; // Import mongoose for Types.ObjectId
-import { awardReferralBonus } from '../utils/xpUtils'; // Import from shared util
+// Referral utils import removed
 
 const router: Router = express.Router();
 
@@ -22,7 +22,7 @@ const JOIN_DISCORD_SE_QUEST_ID = 'join-discord-se';
 const VISIT_X_OG_QUEST_ID = 'visit-x-og';
 const JOIN_DISCORD_OG_QUEST_ID = 'join-discord-og';
 const MINT_OG_NFT_QUEST_ID = 'mint-og-nft';
-const REFER_FRIEND_OG_QUEST_ID = 'refer-friend-og';
+// Referral quest ID removed
 
 // Define Path IDs
 const SOLANA_FOUNDATIONS_PATH_ID = 'solana-foundations';
@@ -127,15 +127,7 @@ export const QUEST_DEFINITIONS = {
         verificationType: 'input_answer',
         correctAnswer: 'PENDING_REAL_MINT_VALIDATION'
     },
-    [REFER_FRIEND_OG_QUEST_ID]: {
-        id: REFER_FRIEND_OG_QUEST_ID,
-        title: 'Refer a Friend to SolQuest',
-        description: "Help grow the SolQuest community! Invite a friend to join SolQuest. Once they\'ve signed up and verified their wallet, ask them for their SolQuest username (or the wallet address they used to sign up with) and enter it below to claim your referral XP. (Note: For now, we\'ll take your word for it! Full referral tracking is coming soon.)",
-        pathId: SOLQUEST_OG_PATH_ID,
-        order: 4,
-        xpReward: 750,
-        verificationType: 'input_answer' // correctAnswer will be handled by backend logic (any non-empty input)
-    }
+    // Referral quest definition removed
 };
 
 // TODO: Configure RPC connection (potentially move to a config file)
@@ -249,12 +241,6 @@ router.post('/check-balance', protect, async (req: Request, res: Response) => {
                 const updatedUser = updatedUserDoc as IUser; // Cast for type safety
                 console.log(`Quest ${FUND_WALLET_QUEST_ID} completed by ${userId}. BaseXP: ${baseReward}. NFT Boost: ${updatedUser.ownsOgNft}. Final XP: ${finalReward}.`);
                 
-                // --- Award Referral Bonus ---
-                if (finalReward > 0) {
-                    await awardReferralBonus(updatedUser._id as mongoose.Types.ObjectId, finalReward);
-                }
-                // ---------------------------
-
                 return res.status(200).json({
                     message: 'Balance verified and quest completed.',
                     balance: balanceSOL,
@@ -457,25 +443,9 @@ router.post('/verify-answer', protect, async (req: Request, res: Response) => {
         let isCorrect = false;
         let specificErrorMessage: string | null = null;
 
-        // Specific validation for REFER_FRIEND_OG_QUEST_ID
-        if (questId === REFER_FRIEND_OG_QUEST_ID) {
-            try {
-                new PublicKey(answer); // Validate if it's a correct public key format
-                const friendUser = await User.findOne({ walletAddress: answer });
-                if (!friendUser) {
-                    specificErrorMessage = "The wallet address you entered does not belong to an existing SolQuest user.";
-                } else if (friendUser.walletAddress === user.walletAddress) {
-                    specificErrorMessage = "You cannot refer yourself.";
-                } else {
-                    isCorrect = true; // All checks passed for referral
-                    console.log(`Referral validation passed for user ${userId} referring wallet ${answer}`);
-                }
-            } catch (e) {
-                specificErrorMessage = "Invalid wallet address format provided for referral.";
-            }
-        } 
+        // Referral validation logic removed 
         // Check for quests with a specific correctAnswer defined
-        else if ('correctAnswer' in questDefinition && typeof questDefinition.correctAnswer === 'string') {
+        if ('correctAnswer' in questDefinition && typeof questDefinition.correctAnswer === 'string') {
             isCorrect = answer.trim().toLowerCase() === questDefinition.correctAnswer.toLowerCase();
             if (!isCorrect && questId === MINT_OG_NFT_QUEST_ID) {
                  specificErrorMessage = "NFT Mint verification is not yet active or your input is incorrect.";
@@ -509,9 +479,6 @@ router.post('/verify-answer', protect, async (req: Request, res: Response) => {
         
         const updatedUser = updatedUserDoc as IUser;
         console.log(`Quest ${questId} completed. XP: ${finalReward}.`);
-        if (finalReward > 0) {
-            await awardReferralBonus(updatedUser._id as mongoose.Types.ObjectId, finalReward);
-        }
         res.status(200).json({ message: 'Quest completed!', xpAwarded: finalReward, questCompleted: true, user: updatedUser });
 
     } catch (error: any) {

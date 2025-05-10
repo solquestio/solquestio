@@ -2,12 +2,19 @@ import { VercelRequest, VercelResponse } from '@vercel/node';
 import jwt from 'jsonwebtoken';
 import { IUser } from '../models/User';
 
-// Extend the VercelRequest interface to include user property
-declare module '@vercel/node' {
-  interface VercelRequest {
-    user?: IUser;
-    userId?: string;
+// Define environment variables type
+declare global {
+  namespace NodeJS {
+    interface ProcessEnv {
+      JWT_SECRET?: string;
+    }
   }
+}
+
+// Extend the request type
+export interface ExtendedRequest extends VercelRequest {
+  user?: IUser;
+  userId?: string;
 }
 
 // Interface for JWT payload
@@ -23,7 +30,7 @@ interface JwtPayload {
  * Adds the user ID to the request object if authenticated
  */
 export const authenticateToken = async (
-  req: VercelRequest,
+  req: ExtendedRequest,
   res: VercelResponse,
   next: () => void
 ) => {

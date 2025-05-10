@@ -6,57 +6,87 @@
       "use": "@vercel/node"
     }
   ],
+  "headers": [
+    {
+      "source": "/(.*)",
+      "headers": [
+        { "key": "Access-Control-Allow-Credentials", "value": "true" },
+        { "key": "Access-Control-Allow-Origin", "value": "https://solquest.io" },
+        { "key": "Access-Control-Allow-Methods", "value": "GET,OPTIONS,PATCH,DELETE,POST,PUT" },
+        { "key": "Access-Control-Allow-Headers", "value": "X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version, Authorization" }
+      ]
+    }
+  ],
   "routes": [
     {
-      "src": "/api/quests/paths",
+      "src": "/quests/paths",
       "dest": "/api/quests/paths.ts"
     },
     {
-      "src": "/api/quests/\\[id\\]",
+      "src": "/quests/\\[id\\]",
       "dest": "/api/quests/[id].ts"
     },
     {
-      "src": "/api/quests/complete",
+      "src": "/quests/complete",
       "dest": "/api/quests/complete.ts",
       "methods": ["POST"]
     },
     {
-      "src": "/api/auth/challenge",
+      "src": "/auth/challenge",
       "dest": "/api/auth/challenge.ts",
       "methods": ["GET", "POST"]
     },
     {
-      "src": "/api/auth/verify",
+      "src": "/auth/verify",
       "dest": "/api/auth/verify.ts",
       "methods": ["GET", "POST"]
     },
     {
-      "src": "/api/users",
+      "src": "/users",
       "dest": "/api/users/index.ts",
       "methods": ["GET", "POST", "PUT"]
     },
     {
-      "src": "/api/utils",
+      "src": "/users/check-in",
+      "dest": "/api/users/check-in.ts",
+      "methods": ["POST"]
+    },
+    {
+      "src": "/quests/check-balance",
+      "dest": "/api/quests/check-balance.ts", 
+      "methods": ["POST"]
+    },
+    {
+      "src": "/quests/verify-answer",
+      "dest": "/api/quests/verify-answer.ts",
+      "methods": ["POST"]
+    },
+    {
+      "src": "/quests/path/(.*)",
+      "dest": "/api/quests/path/[pathId].ts"
+    },
+    {
+      "src": "/utils",
       "dest": "/api/utils.ts"
     },
     {
-      "src": "/api/public",
+      "src": "/public",
       "dest": "/api/public.ts"
     },
     {
-      "src": "/api/health",
+      "src": "/health",
       "dest": "/api/utils.ts?path=health"
     },
     {
-      "src": "/api/auth",
+      "src": "/auth",
       "dest": "/api/auth/index.ts"
     },
     {
-      "src": "/api/quests",
+      "src": "/quests",
       "dest": "/api/quests/index.ts"
     },
     {
-      "src": "/api",
+      "src": "/",
       "dest": "/api/index.ts"
     },
     {
