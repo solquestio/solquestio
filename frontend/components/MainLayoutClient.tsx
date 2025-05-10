@@ -52,17 +52,108 @@ export default function MainLayoutClient({ children }: MainLayoutClientProps) {
             return;
         }
         if (!publicKey) {
-             setAuthError("Wallet connected, but public key is not available. Try reconnecting.");
-             setIsAuthLoading(false);
-             return;
-        }
-        if (!signMessage) {
+            // Function to handle wallet connection and authentication
+            const connectWallet = async () => {
+                console.log('Connecting wallet...', 'API URL:', BACKEND_URL);
+                if (!wallet) return; // Safety check
+
+                try {
+                    setIsAuthLoading(true);
+                    setAuthError(null);
+
+                    // 1. Generate message for signing
+                    const messageToSign = SIGN_IN_MESSAGE;
+                    const messageBytes = new TextEncoder().encode(messageToSign);
+                    
+                    // 2. Request signature from wallet
+                    if (!publicKey) {
+                        console.error('No public key available');
+                        throw new Error('No public key available');
+                    }
+                    
+                    const signedMessageBytes = await signMessage(messageBytes);
+                    const signature = bs58.encode(signedMessageBytes);
+                    
+                    // 3. Prepare request to backend for verification
+                    const requestBody = {
+                        walletAddress: publicKey.toBase58(),
+                        signature: signature,
+                        message: messageToSign,
+                    };
+                    
+                    console.log('Sending auth request to:', `${BACKEND_URL}/auth/verify`);
+                    console.log('Request payload:', JSON.stringify(requestBody));
+
+                    // 4. Send verification request to backend
+                    const response = await fetch(`${BACKEND_URL}/auth/verify`, {
+                        method: 'POST',
+                        headers: { 
+                            'Content-Type': 'application/json',
+                            'Accept': 'application/json'
+                        },
+                        body: JSON.stringify(requestBody),
+                        mode: 'cors',
+                        credentials: 'include'
+                    });
+
+                    console.log('Auth response status:', response.status);
+                    
+                    if (!response.ok) {
+                        const errorText = await response.text();
+                        console.error('Auth error response:', errorText);
+                        let errorMessage = 'Authentication failed';
+                        try {
+                            const errorData = JSON.parse(errorText);
+                            errorMessage = errorData.message || `Authentication failed (status: ${response.status})`;
+                        } catch (e) {
+                            errorMessage = `Auth error (${response.status}): ${errorText.substring(0, 100)}`;
+                        }
+                        throw new Error(errorMessage);
+                    }
+
+                    // 5. Handle successful authentication
+                    const responseText = await response.text();
+                    console.log('Auth success response text:', responseText);
+                    
+                    let data;
+                    try {
+                        data = JSON.parse(responseText);
+                        console.log('Auth success data:', data);
+                    } catch (e) {
+                        console.error('Failed to parse auth response as JSON:', e);
+                        throw new Error('Invalid response format from server');
+                    }
+                    
+                    localStorage.setItem(AUTH_TOKEN_KEY, data.token);
+                    setIsAuthenticated(true);
+                    setIsAuthModalOpen(false); 
+                    setAuthError(null); 
+                } catch (error: any) {
+                    let errorMessage = "An unexpected error occurred during sign-in.";
+                    if (error.message && (error.message.toLowerCase().includes('user rejected') || error.message.toLowerCase().includes('cancelled') || error.message.toLowerCase().includes('declined'))) {
+                        errorMessage = "Sign message request was cancelled or rejected.";
+                    } else if (error.message) {
+                        errorMessage = error.message;
+                    }
+                    setAuthError(errorMessage);
+                    setIsAuthenticated(false);
+                    localStorage.removeItem(AUTH_TOKEN_KEY);
+                } finally {
+                    setIsAuthLoading(false);
+                }
+            };
+            await connectWallet();
+        } else if (!signMessage) {
             setAuthError('The selected wallet does not support message signing.');
             setIsAuthLoading(false);
             return;
         }
 
         try {
+            if (!signMessage || !publicKey) {
+                throw new Error('Wallet not properly connected');
+            }
+            
             const messageToSign = SIGN_IN_MESSAGE;
             const messageBytes = new TextEncoder().encode(messageToSign);
             const signatureBytes = await signMessage(messageBytes);
@@ -74,11 +165,21 @@ export default function MainLayoutClient({ children }: MainLayoutClientProps) {
                 message: messageToSign,
             };
 
+            console.log('Sending auth request to:', `${BACKEND_URL}/auth/verify`);
+            console.log('Request payload:', JSON.stringify(requestBody));
+            
             const response = await fetch(`${BACKEND_URL}/auth/verify`, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: { 
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json'
+                },
                 body: JSON.stringify(requestBody),
+                mode: 'cors',
+                credentials: 'omit' // Don't send credentials for now
             });
+            
+            console.log('Auth response status:', response.status);
 
             if (!response.ok) {
                 const errorData = await response.json().catch(() => ({}));
