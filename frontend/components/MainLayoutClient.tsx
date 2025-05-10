@@ -89,11 +89,12 @@ export default function MainLayoutClient({ children }: MainLayoutClientProps) {
                         method: 'POST',
                         headers: { 
                             'Content-Type': 'application/json',
-                            'Accept': 'application/json'
+                            'Accept': 'application/json',
+                            'Authorization': 'Bearer null' // Add empty authorization header to avoid wildcard issue
                         },
                         body: JSON.stringify(requestBody),
                         mode: 'cors',
-                        credentials: 'include'
+                        credentials: 'same-origin' // Change to same-origin since we're using specific origin
                     });
 
                     console.log('Auth response status:', response.status);
