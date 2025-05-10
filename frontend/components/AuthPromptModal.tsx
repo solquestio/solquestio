@@ -8,11 +8,9 @@ interface AuthPromptModalProps {
   onClose: () => void;
   onAuthenticate: () => void;
   loading?: boolean;
-  referralCode?: string;
-  onReferralCodeChange?: (code: string) => void;
 }
 
-export const AuthPromptModal: React.FC<AuthPromptModalProps> = ({ isOpen, onClose, onAuthenticate, loading, referralCode, onReferralCodeChange }) => {
+export const AuthPromptModal: React.FC<AuthPromptModalProps> = ({ isOpen, onClose, onAuthenticate, loading }) => {
   if (!isOpen) {
     return null;
   }
@@ -32,24 +30,6 @@ export const AuthPromptModal: React.FC<AuthPromptModalProps> = ({ isOpen, onClos
         <p className="text-gray-300 mb-6 text-sm">
           To track your progress, earn XP, and unlock the full learning experience, please connect your Solana wallet and sign in.
         </p>
-        
-        {onReferralCodeChange && (
-            <div className="mb-6">
-                <label htmlFor="referralCodeInput" className="block text-xs font-medium text-gray-400 mb-1">
-                    Have a Referral Code? (Optional)
-                </label>
-                <input 
-                    type="text"
-                    id="referralCodeInput"
-                    name="referralCode"
-                    value={referralCode || ''}
-                    onChange={(e) => onReferralCodeChange(e.target.value)}
-                    placeholder="Enter referral code"
-                    className="w-full px-3 py-2 bg-dark-card-secondary border border-gray-600 rounded-md text-white placeholder-gray-500 focus:ring-solana-purple focus:border-solana-purple text-sm"
-                    disabled={loading}
-                />
-            </div>
-        )}
         
         <div className="space-y-3">
           <button

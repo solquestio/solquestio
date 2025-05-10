@@ -1,0 +1,423 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SolQuestio API Debug Console</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background-color: #121212;
+      color: #e0e0e0;
+      margin: 0;
+      padding: 20px;
+    }
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+    h1 {
+      color: #8b5cf6;
+      margin-bottom: 20px;
+    }
+    .card {
+      background-color: #1e1e1e;
+      border-radius: 8px;
+      padding: 16px;
+      margin-bottom: 20px;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+    .controls {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+    }
+    input, select, button {
+      padding: 8px 12px;
+      border-radius: 4px;
+      border: 1px solid #444;
+      background-color: #333;
+      color: #fff;
+    }
+    button {
+      background-color: #8b5cf6;
+      cursor: pointer;
+      border: none;
+    }
+    button:hover {
+      background-color: #7c3aed;
+    }
+    .output {
+      background-color: #121212;
+      border: 1px solid #444;
+      border-radius: 4px;
+      padding: 10px;
+      overflow-x: auto;
+      white-space: pre-wrap;
+    }
+    .success {
+      color: #34d399;
+    }
+    .error {
+      color: #f87171;
+    }
+    .warning {
+      color: #fbbf24;
+    }
+    .info {
+      color: #60a5fa;
+    }
+    .endpoint-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 10px;
+    }
+    .status-badge {
+      padding: 2px 8px;
+      border-radius: 12px;
+      font-size: 12px;
+      font-weight: bold;
+    }
+    .status-success {
+      background-color: #065f46;
+      color: #34d399;
+    }
+    .status-error {
+      background-color: #7f1d1d;
+      color: #f87171;
+    }
+    .test-all-btn {
+      background-color: #2563eb;
+      padding: 10px 16px;
+      font-weight: bold;
+      margin-bottom: 20px;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-bottom: 20px;
+    }
+    th, td {
+      padding: 8px 12px;
+      text-align: left;
+      border-bottom: 1px solid #444;
+    }
+    th {
+      background-color: #333;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>SolQuestio API Debug Console</h1>
+    
+    <div class="card">
+      <h3>Backend URL Configuration</h3>
+      <div class="controls">
+        <input type="text" id="backendUrl" placeholder="Backend URL" value="https://solquestio.vercel.app" style="width: 300px;">
+        <button id="updateUrlBtn">Update URL</button>
+      </div>
+      
+      <button id="testAllBtn" class="test-all-btn">Run All Tests</button>
+      
+      <h3>Test Results</h3>
+      <div id="resultsTable">
+        <table>
+          <thead>
+            <tr>
+              <th>Endpoint</th>
+              <th>Status</th>
+              <th>Response Time</th>
+              <th>CORS</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="resultsBody">
+            <!-- Results will be populated here -->
+          </tbody>
+        </table>
+      </div>
+    </div>
+    
+    <div class="card">
+      <h3>Manual API Test</h3>
+      <div class="controls">
+        <select id="method">
+          <option value="GET">GET</option>
+          <option value="POST">POST</option>
+          <option value="PUT">PUT</option>
+          <option value="DELETE">DELETE</option>
+        </select>
+        <input type="text" id="endpoint" placeholder="/api/endpoint" style="flex-grow: 1;">
+        <button id="testBtn">Test Endpoint</button>
+      </div>
+      
+      <div class="controls">
+        <input type="text" id="originHeader" placeholder="Origin header" value="https://solquest.io" style="flex-grow: 1;">
+      </div>
+      
+      <div id="jsonInputContainer" style="display: none; margin-top: 10px;">
+        <h4>Request Body (JSON)</h4>
+        <textarea id="jsonInput" style="width: 100%; height: 100px; background-color: #333; color: #fff; border: 1px solid #444; padding: 8px; border-radius: 4px;"></textarea>
+      </div>
+      
+      <h4>Response</h4>
+      <div id="responseOutput" class="output">No response yet.</div>
+    </div>
+    
+    <div class="card">
+      <h3>Network Diagnostics</h3>
+      <div id="networkInfo">
+        <p>Click the button below to run network diagnostics.</p>
+        <button id="runDiagnosticsBtn">Run Diagnostics</button>
+      </div>
+      <div id="diagnosticsOutput" class="output">No diagnostics run yet.</div>
+    </div>
+  </div>
+  
+  <script>
+    // Define standard endpoints to test
+    const standardEndpoints = [
+      '/api',
+      '/api/utils?path=health',
+      '/api/debug',
+      '/api/quests/paths',
+      '/api/users?path=leaderboard&limit=3'
+    ];
+    
+    document.addEventListener('DOMContentLoaded', function() {
+      // Initialize methods that need DOM elements
+      initializeControls();
+      initializeEndpointTests();
+    });
+    
+    function initializeControls() {
+      // Method selector changes JSON input visibility
+      document.getElementById('method').addEventListener('change', function(e) {
+        const method = e.target.value;
+        const jsonContainer = document.getElementById('jsonInputContainer');
+        if (method === 'POST' || method === 'PUT') {
+          jsonContainer.style.display = 'block';
+        } else {
+          jsonContainer.style.display = 'none';
+        }
+      });
+      
+      // Test button handler
+      document.getElementById('testBtn').addEventListener('click', testEndpoint);
+      
+      // Update URL button handler
+      document.getElementById('updateUrlBtn').addEventListener('click', function() {
+        alert('Backend URL updated for testing. Re-run tests to see results.');
+      });
+      
+      // Run all tests button handler
+      document.getElementById('testAllBtn').addEventListener('click', runAllTests);
+      
+      // Run diagnostics button handler
+      document.getElementById('runDiagnosticsBtn').addEventListener('click', runNetworkDiagnostics);
+    }
+    
+    function initializeEndpointTests() {
+      // Initialize results table with standard endpoints
+      const tbody = document.getElementById('resultsBody');
+      tbody.innerHTML = '';
+      
+      standardEndpoints.forEach(endpoint => {
+        const row = document.createElement('tr');
+        row.innerHTML = `
+          <td>${endpoint}</td>
+          <td>Not tested</td>
+          <td>-</td>
+          <td>-</td>
+          <td><button class="test-endpoint-btn" data-endpoint="${endpoint}">Test</button></td>
+        `;
+        tbody.appendChild(row);
+      });
+      
+      // Add event listeners to test buttons
+      document.querySelectorAll('.test-endpoint-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+          const endpoint = this.getAttribute('data-endpoint');
+          testStandardEndpoint(endpoint);
+        });
+      });
+    }
+    
+    async function testStandardEndpoint(endpoint) {
+      const backendUrl = document.getElementById('backendUrl').value;
+      const row = Array.from(document.querySelectorAll('#resultsBody tr')).find(
+        row => row.cells[0].textContent === endpoint
+      );
+      
+      if (!row) return;
+      
+      // Update status to testing
+      row.cells[1].innerHTML = '<span class="info">Testing...</span>';
+      row.cells[2].textContent = '-';
+      row.cells[3].textContent = '-';
+      
+      try {
+        const startTime = Date.now();
+        const response = await fetch(`${backendUrl}${endpoint}`, {
+          headers: {
+            'Content-Type': 'application/json',
+            'Origin': document.getElementById('originHeader').value
+          }
+        });
+        const endTime = Date.now();
+        const responseTime = endTime - startTime;
+        
+        let corsStatus = 'No CORS headers';
+        if (response.headers.get('access-control-allow-origin')) {
+          const origin = response.headers.get('access-control-allow-origin');
+          corsStatus = origin === '*' ? 'Allows all origins' : `Allows: ${origin}`;
+        }
+        
+        // Update row with results
+        row.cells[1].innerHTML = response.ok ? 
+          `<span class="status-badge status-success">${response.status} ${response.statusText}</span>` : 
+          `<span class="status-badge status-error">${response.status} ${response.statusText}</span>`;
+        row.cells[2].textContent = `${responseTime}ms`;
+        row.cells[3].textContent = corsStatus;
+        
+      } catch (error) {
+        row.cells[1].innerHTML = `<span class="status-badge status-error">Error</span>`;
+        row.cells[2].textContent = '-';
+        row.cells[3].textContent = error.message;
+      }
+    }
+    
+    async function runAllTests() {
+      for (const endpoint of standardEndpoints) {
+        await testStandardEndpoint(endpoint);
+      }
+    }
+    
+    async function testEndpoint() {
+      const backendUrl = document.getElementById('backendUrl').value;
+      const method = document.getElementById('method').value;
+      const endpoint = document.getElementById('endpoint').value;
+      const outputElement = document.getElementById('responseOutput');
+      
+      outputElement.innerHTML = '<span class="info">Testing...</span>';
+      
+      const options = {
+        method,
+        headers: {
+          'Content-Type': 'application/json',
+          'Origin': document.getElementById('originHeader').value
+        }
+      };
+      
+      // Add body for POST/PUT
+      if (method === 'POST' || method === 'PUT') {
+        const jsonInput = document.getElementById('jsonInput').value;
+        if (jsonInput) {
+          try {
+            options.body = jsonInput;
+          } catch (e) {
+            outputElement.innerHTML = '<span class="error">Invalid JSON in request body</span>';
+            return;
+          }
+        }
+      }
+      
+      try {
+        const startTime = Date.now();
+        const response = await fetch(`${backendUrl}${endpoint}`, options);
+        const endTime = Date.now();
+        const responseTime = endTime - startTime;
+        
+        // Get response headers
+        const headers = {};
+        response.headers.forEach((value, name) => {
+          headers[name] = value;
+        });
+        
+        // Format response data
+        let responseData;
+        let responseText;
+        
+        try {
+          responseData = await response.json();
+          responseText = JSON.stringify(responseData, null, 2);
+        } catch (e) {
+          responseText = await response.text();
+        }
+        
+        // Build output HTML
+        let outputHtml = '';
+        outputHtml += `<div class="${response.ok ? 'success' : 'error'}">Status: ${response.status} ${response.statusText}</div>`;
+        outputHtml += `<div class="info">Response time: ${responseTime}ms</div>`;
+        outputHtml += `<div class="warning">Headers:</div>`;
+        outputHtml += `<pre>${JSON.stringify(headers, null, 2)}</pre>`;
+        outputHtml += `<div class="warning">Response body:</div>`;
+        outputHtml += `<pre>${responseText}</pre>`;
+        
+        outputElement.innerHTML = outputHtml;
+      } catch (error) {
+        outputElement.innerHTML = `<span class="error">Error: ${error.message}</span>`;
+      }
+    }
+    
+    function runNetworkDiagnostics() {
+      const outputElement = document.getElementById('diagnosticsOutput');
+      const backendUrl = document.getElementById('backendUrl').value;
+      
+      outputElement.innerHTML = '<span class="info">Running diagnostics...</span>';
+      
+      // Check navigator.onLine
+      const onlineStatus = navigator.onLine ? 
+        '<span class="success">Online</span>' : 
+        '<span class="error">Offline</span>';
+      
+      // Get network information if available
+      let connectionInfo = 'Not available';
+      if ('connection' in navigator) {
+        const conn = navigator.connection;
+        connectionInfo = `
+          Effective Type: ${conn.effectiveType || 'unknown'}<br>
+          Downlink: ${conn.downlink || 'unknown'} Mbps<br>
+          RTT: ${conn.rtt || 'unknown'} ms<br>
+          Save Data: ${conn.saveData ? 'enabled' : 'disabled'}<br>
+        `;
+      }
+      
+      // Check browser CORS support
+      const corsSupport = 'fetch' in window && 'Headers' in window ? 
+        '<span class="success">Supported</span>' : 
+        '<span class="error">Not fully supported</span>';
+      
+      // Check if the domain is properly resolved
+      checkDomainResolution(backendUrl).then(domainStatus => {
+        // Build final output
+        let outputHtml = '';
+        outputHtml += `<div><strong>Online Status:</strong> ${onlineStatus}</div>`;
+        outputHtml += `<div><strong>Connection Info:</strong><br>${connectionInfo}</div>`;
+        outputHtml += `<div><strong>CORS Support:</strong> ${corsSupport}</div>`;
+        outputHtml += `<div><strong>Domain Resolution:</strong> ${domainStatus}</div>`;
+        outputHtml += `<div><strong>Browser:</strong> ${navigator.userAgent}</div>`;
+        
+        outputElement.innerHTML = outputHtml;
+      });
+    }
+    
+    async function checkDomainResolution(url) {
+      try {
+        const fetchUrl = new URL(url);
+        // Just perform a HEAD request to check if the domain resolves
+        const response = await fetch(`${fetchUrl.origin}/favicon.ico`, { 
+          method: 'HEAD',
+          mode: 'no-cors' // This will allow the request even if CORS is not enabled
+        });
+        return '<span class="success">Domain resolves successfully</span>';
+      } catch (error) {
+        return `<span class="error">Domain resolution failed: ${error.message}</span>`;
+      }
+    }
+  </script>
+</body>
+</html>

@@ -39,7 +39,7 @@ export function HeaderWalletButton() {
     const fetchUserProfile = useCallback(async (token: string) => {
         if (!token) return;
         try {
-            const response = await fetch(`${BACKEND_URL}/api/users/me`, { 
+            const response = await fetch(`${BACKEND_URL}/users/me`, { 
                 headers: { 'Authorization': `Bearer ${token}` } 
             });
             if (!response.ok) {

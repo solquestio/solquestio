@@ -277,18 +277,7 @@ const getLearningContent = (questId: string, verificationType?: string): { intro
                                 Web3 is built on community and network effects. Growing the SolQuest ecosystem means more learners, more content, and a richer experience for everyone.
                             </span>
                         </div>
-                        <div style={paragraphStyle}>
-                            <span style={greenBulletStyle}></span>
-                            <span style={textSpanStyle}>
-                                <strong>Share the Knowledge:</strong> This quest encourages you to invite friends to join SolQuest. When they sign up or complete a certain action using your referral, it helps our community grow.
-                            </span>
-                        </div>
-                        <div style={paragraphStyle}>
-                            <span style={greenBulletStyle}></span>
-                            <span style={textSpanStyle}>
-                                This often involves sharing a unique referral link or code. It's a way to foster shared discovery and reward community participation. Let's build SolQuest together!
-                            </span>
-                        </div>
+                        {/* Referral-related paragraphs removed */}
                     </div>
                 ),
             };
@@ -331,7 +320,7 @@ export default function QuestPathPage() {
         try {
             // Assuming the paths endpoint can give basic info by ID, or fetch all and filter
             // Adjust endpoint if needed
-            const response = await fetch(`${BACKEND_URL}/api/quests/paths`); 
+            const response = await fetch(`${BACKEND_URL}/quests/paths`); 
             if (!response.ok) throw new Error('Failed to fetch path metadata');
             const data = await response.json();
             const paths = data.paths || (Array.isArray(data) ? data : []);
@@ -353,7 +342,7 @@ export default function QuestPathPage() {
         setIsLoading(true);
         setError(null);
         try {
-            const response = await fetch(`${BACKEND_URL}/api/quests/path/${pathId}`, {
+            const response = await fetch(`${BACKEND_URL}/quests/path/${pathId}`, {
                 method: 'GET',
                 headers: { 'Authorization': `Bearer ${token}` },
             });
@@ -407,7 +396,7 @@ export default function QuestPathPage() {
         setQuestActionError(prev => ({ ...prev, [questId]: null }));
 
         try {
-            const response = await fetch(`${BACKEND_URL}/api/quests/check-balance`, {
+            const response = await fetch(`${BACKEND_URL}/quests/check-balance`, {
                 method: 'POST',
                 headers: {
                     'Authorization': `Bearer ${authToken}`,
@@ -445,7 +434,7 @@ export default function QuestPathPage() {
         setQuestActionError(prev => ({ ...prev, [questId]: null }));
         
         try {
-            const response = await fetch(`${BACKEND_URL}/api/quests/verify-answer`, {
+            const response = await fetch(`${BACKEND_URL}/quests/verify-answer`, {
                 method: 'POST',
                 headers: {
                     'Authorization': `Bearer ${authToken}`,

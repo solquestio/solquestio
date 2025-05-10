@@ -29,11 +29,6 @@ interface UserProfile {
   createdAt: string;
   updatedAt: string;
   ownsOgNft?: boolean; // Ensure this is here
-  // Referral System Fields
-  referralCode?: string;
-  referrer?: string; // ObjectId of referrer, typically string from JSON
-  referredUsersCount?: number;
-  xpFromReferrals?: number;
 }
 
 // Define the Quest structure from backend
@@ -118,7 +113,7 @@ export default function ProfilePage() {
   const [isCheckingIn, setIsCheckingIn] = useState(false);
   const [checkInError, setCheckInError] = useState<string | null>(null);
   const [lastXpAwarded, setLastXpAwarded] = useState<number | null>(null); // To show temporary message
-  const [copiedReferralCode, setCopiedReferralCode] = useState(false); // Correctly define as state
+  // Referral state removed
 
   // Derived state: Define isAuthenticated before using it in effects or render logic
   const isAuthenticated = !!authToken && !!userProfile;
@@ -149,7 +144,7 @@ export default function ProfilePage() {
     setError(null);
     setQuestError(null);
     try {
-      const response = await fetch(`${BACKEND_URL}/api/users?path=me`, {
+      const response = await fetch(`${BACKEND_URL}/users?path=me`, {
         method: 'GET',
         headers: { 'Authorization': `Bearer ${token}` },
       });
@@ -190,7 +185,7 @@ export default function ProfilePage() {
     setIsLoadingQuests(true);
     setQuestError(null);
     try {
-        const response = await fetch(`${BACKEND_URL}/api/quests`, {
+        const response = await fetch(`${BACKEND_URL}/quests`, {
             method: 'GET',
             headers: { 'Authorization': `Bearer ${token}` },
         });
@@ -248,7 +243,7 @@ export default function ProfilePage() {
       const messageBytes = new TextEncoder().encode(messageContent);
       const signedMessageBytes = await signMessage(messageBytes);
       const signature = bs58.encode(signedMessageBytes);
-      const response = await fetch(`${BACKEND_URL}/api/auth/verify`, {
+      const response = await fetch(`${BACKEND_URL}/auth/verify`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -361,7 +356,7 @@ export default function ProfilePage() {
     setError(null); // Clear general errors
 
     try {
-        const response = await fetch(`${BACKEND_URL}/api/users?path=me`, {
+        const response = await fetch(`${BACKEND_URL}/users?path=me`, {
             method: 'PUT',
             headers: {
                 'Authorization': `Bearer ${authToken}`,
@@ -398,7 +393,7 @@ export default function ProfilePage() {
         setCheckInError(null);
         setLastXpAwarded(null);
         try {
-            const response = await fetch(`${BACKEND_URL}/api/users/check-in`, {
+            const response = await fetch(`${BACKEND_URL}/users/check-in`, {
                 method: 'POST',
                 headers: { 'Authorization': `Bearer ${authToken}` }
             });
@@ -463,23 +458,10 @@ export default function ProfilePage() {
   // Calculate completed quests count ONLY if authenticated and quests are loaded
   const completedQuestsCount = isAuthenticated ? quests.filter(q => q.isCompleted).length : 0;
 
-  const copyToClipboard = (text: string) => {
-    navigator.clipboard.writeText(text).then(() => {
-        setCopiedReferralCode(true);
-        setTimeout(() => setCopiedReferralCode(false), 2000); // Hide message after 2s
-    }, (err) => {
-        console.error('Failed to copy referral code: ', err);
-        // Optionally, show an error message to the user
-    });
-  };
+  // copyToClipboard function removed (referral feature)
 
   // Add console log here to inspect userProfile before render
   console.log("ProfilePage - userProfile state:", userProfile);
-  if (userProfile) {
-    console.log("ProfilePage - userProfile.referralCode:", userProfile.referralCode);
-    console.log("ProfilePage - userProfile.referredUsersCount:", userProfile.referredUsersCount);
-    console.log("ProfilePage - userProfile.xpFromReferrals:", userProfile.xpFromReferrals);
-  }
 
   if (isLoadingProfile && !userProfile) { return <div className="max-w-4xl mx-auto p-4 md:p-6"><Skeleton height={300}/></div>; }
 
@@ -675,70 +657,9 @@ export default function ProfilePage() {
                       </div>
                   </>
               )}
-          </div> 
+          </div>
 
-          {/* --- New Referral Section (Arkada Style) --- */} 
-          {userProfile && userProfile.referralCode && (
-              <div className="mt-8 mb-8 p-6 md:p-8 bg-dark-card-secondary rounded-lg shadow-xl mx-4 md:mx-0">
-                  <div className="flex flex-col md:flex-row items-center md:gap-8">
-                      {/* Left Column: Text & Decorative Image */} 
-                      <div className="md:w-1/2 mb-6 md:mb-0 text-center md:text-left">
-                          <h2 className="text-3xl font-bold text-white mb-3">
-                              Invite users and get rewards
-                          </h2>
-                          <p className="text-gray-300 mb-6">
-                              Build your SolQuest reputation. Accumulate rewards, including exclusive XP boosts for referred user activity.
-                          </p>
-                          {/* Placeholder for decorative image like Arkada's user icons */} 
-                          <div className="flex justify-center md:justify-start">
-                              <div className="w-32 h-32 bg-gradient-to-br from-solana-purple via-pink-500 to-orange-500 rounded-full opacity-30 flex items-center justify-center">
-                                  <ShareIcon className="w-16 h-16 text-white/70"/>
-                              </div>
-                          </div>
-                      </div>
-
-                      {/* Right Column: Referral Code & Stats */} 
-                      <div className="md:w-1/2 w-full">
-                          <div className="bg-dark-card p-4 rounded-lg border border-gray-700/50">
-                              <label className="block text-sm font-medium text-gray-400 mb-1">Your Referral Code:</label>
-                              <div className="flex items-center space-x-2 mb-3">
-                                  <input 
-                                      type="text" 
-                                      value={userProfile.referralCode} 
-                                      readOnly 
-                                      className="flex-grow px-3 py-2.5 bg-gradient-to-r from-solana-purple/80 to-solana-teal/80 border-0 rounded-md text-white font-mono text-lg tracking-wider focus:ring-0 focus:border-0"
-                                  />
-                                  <button 
-                                      onClick={() => copyToClipboard(userProfile.referralCode!)}
-                                      className="p-2.5 bg-gray-600 text-white rounded-md hover:bg-gray-500 transition-colors flex items-center"
-                                      title="Copy code"
-                                  >
-                                      {copiedReferralCode ? <CheckCircleIcon className="w-5 h-5 text-solana-green" /> : <ClipboardDocumentIcon className="w-5 h-5" />}
-                                  </button>
-                              </div>
-                              {copiedReferralCode && <p className="text-xs text-solana-green mb-3 text-right">Copied!</p>}
-
-                              <div className="flex items-center justify-around gap-2 text-center">
-                                  <div className="flex-1">
-                                      <p className="text-2xl font-bold text-white">{userProfile.xpFromReferrals || 0}</p>
-                                      <p className="text-xs text-gray-400 flex items-center justify-center">
-                                          <XpIcon className="w-3.5 h-3.5 mr-1 text-yellow-400" /> XP from Referrals
-                                      </p>
-                                  </div>
-                                  <div className="border-l border-gray-700 h-10"></div> {/* Vertical Divider */} 
-                                  <div className="flex-1">
-                                      <p className="text-2xl font-bold text-white">{userProfile.referredUsersCount || 0}</p>
-                                      <p className="text-xs text-gray-400 flex items-center justify-center">
-                                          <UsersIcon className="w-3.5 h-3.5 mr-1 text-blue-400" /> Friends Referred
-                                      </p>
-                                  </div>
-                              </div>
-                          </div>
-                      </div>
-                  </div>
-              </div>
-          )}
-          {/* --- End New Referral Section --- */}
+          {/* Referral section removed */}
 
           {/* Logout Button - Only show if authenticated */} 
           {isAuthenticated && (

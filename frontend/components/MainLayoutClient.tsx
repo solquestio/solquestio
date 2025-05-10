@@ -22,7 +22,6 @@ export default function MainLayoutClient({ children }: MainLayoutClientProps) {
     const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
     const [isAuthLoading, setIsAuthLoading] = useState(false);
     const [authError, setAuthError] = useState<string | null>(null);
-    const [referralCodeInput, setReferralCodeInput] = useState('');
 
     const { publicKey, signMessage, connected, wallet } = useWallet();
     const { setVisible: setWalletModalVisible } = useWalletModal();
@@ -68,17 +67,13 @@ export default function MainLayoutClient({ children }: MainLayoutClientProps) {
             const signatureBytes = await signMessage(messageBytes);
             const signature = bs58.encode(signatureBytes);
 
-            const requestBody: any = {
+            const requestBody = {
                 walletAddress: publicKey.toBase58(),
                 signature,
                 message: messageToSign,
             };
 
-            if (referralCodeInput.trim()) {
-                requestBody.referralCode = referralCodeInput.trim();
-            }
-
-            const response = await fetch(`${BACKEND_URL}/api/auth/verify`, {
+            const response = await fetch(`${BACKEND_URL}/auth/verify`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(requestBody),
@@ -94,7 +89,6 @@ export default function MainLayoutClient({ children }: MainLayoutClientProps) {
             setIsAuthenticated(true);
             setIsAuthModalOpen(false); 
             setAuthError(null); 
-            setReferralCodeInput('');
         } catch (error: any) {
             let errorMessage = "An unexpected error occurred during sign-in.";
             if (error.message && (error.message.toLowerCase().includes('user rejected') || error.message.toLowerCase().includes('cancelled') || error.message.toLowerCase().includes('declined'))) {
@@ -108,11 +102,10 @@ export default function MainLayoutClient({ children }: MainLayoutClientProps) {
         } finally {
             setIsAuthLoading(false);
         }
-    }, [publicKey, signMessage, connected, setWalletModalVisible, referralCodeInput]);
+    }, [publicKey, signMessage, connected, setWalletModalVisible]);
 
     const openLoginModal = () => {
         setAuthError(null);
-        setReferralCodeInput('');
         setIsAuthModalOpen(true);
     };
 
@@ -143,12 +136,11 @@ export default function MainLayoutClient({ children }: MainLayoutClientProps) {
                 onClose={() => {
                     setIsAuthModalOpen(false);
                     setAuthError(null); 
-                    setReferralCodeInput('');
+                    // Modal closed
                 }}
                 onAuthenticate={handleRequestAuthentication}
                 loading={isAuthLoading}
-                referralCode={referralCodeInput}
-                onReferralCodeChange={setReferralCodeInput}
+                // Referral functionality removed
             />
         </div>
     );

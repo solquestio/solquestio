@@ -70,7 +70,7 @@ export default function PathDetailPage({ params }: { params: { pathId: string } 
         setIsLoading(true);
         setError(null);
         try {
-            const response = await fetch(`${BACKEND_URL}/api/quests/path/${pathId}`, {
+            const response = await fetch(`${BACKEND_URL}/quests/path/${pathId}`, {
                 method: 'GET',
                 headers: { 'Authorization': `Bearer ${token}` },
             });
@@ -118,7 +118,7 @@ export default function PathDetailPage({ params }: { params: { pathId: string } 
         setQuestInputError(prev => ({...prev, [FUND_WALLET_QUEST_ID]: null}));
 
         try {
-            const response = await fetch(`${BACKEND_URL}/api/quests/check-balance`, {
+            const response = await fetch(`${BACKEND_URL}/quests/check-balance`, {
                 method: 'POST',
                 headers: {
                     'Authorization': `Bearer ${authToken}`,
@@ -161,7 +161,7 @@ export default function PathDetailPage({ params }: { params: { pathId: string } 
         setQuestInputError(prev => ({...prev, [questId]: null})); // Clear previous input error
 
         try {
-            const response = await fetch(`${BACKEND_URL}/api/quests/verify-transaction`, {
+            const response = await fetch(`${BACKEND_URL}/quests/verify-transaction`, {
                 method: 'POST',
                 headers: {
                     'Authorization': `Bearer ${authToken}`,

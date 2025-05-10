@@ -216,7 +216,7 @@ const LeaderboardSnippet: React.FC = () => {
             setIsLoading(true);
             setError(null);
             try {
-                const response = await fetch(`${BACKEND_URL}/api/users?path=leaderboard&limit=3`); 
+                const response = await fetch(`${BACKEND_URL}/users?path=leaderboard&limit=3`); 
                 if (!response.ok) throw new Error('Failed to fetch leaderboard');
                 const responseData = await response.json();
                 // The backend may return either an array directly or an object with a users/leaderboard property
@@ -367,7 +367,7 @@ export default function HomePage() {
             if (token) {
                 headers['Authorization'] = `Bearer ${token}`;
             }
-            const response = await fetch(`${BACKEND_URL}/api/quests/paths`, { headers });
+            const response = await fetch(`${BACKEND_URL}/quests/paths`, { headers });
             if (!response.ok) {
                 const errorData = await response.json().catch(() => ({})); 
                 throw new Error(errorData.message || `Failed to fetch learning paths (status: ${response.status})`);
@@ -435,7 +435,7 @@ export default function HomePage() {
             const signatureBytes = await signMessage(messageBytes);
             const signature = bs58.encode(signatureBytes);
 
-            const response = await fetch(`${BACKEND_URL}/api/auth/verify`, {
+            const response = await fetch(`${BACKEND_URL}/auth/verify`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ walletAddress: currentPublicKey.toBase58(), signature, message: messageToSign }),
