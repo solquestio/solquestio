@@ -96,10 +96,16 @@ async function handleMe(request: VercelRequest, response: VercelResponse) {
 // Handler for leaderboard endpoint
 async function handleLeaderboard(request: VercelRequest, response: VercelResponse) {
   try {
+    // Ensure database connection
+    await connectDB();
+    
+    // Get limit from query parameter or default to 20
+    const limit = request.query.limit ? parseInt(request.query.limit as string) : 20;
+    
     // Get top users sorted by XP
     const users = await UserModel.find({})
       .sort({ xp: -1 }) // Sort by XP in descending order
-      .limit(20) // Limit to top 20 users
+      .limit(limit) // Limit to requested number or default
       .select('walletAddress username xp ownsOgNft'); // Only select needed fields
     
     // Transform data and add ranks
@@ -112,11 +118,14 @@ async function handleLeaderboard(request: VercelRequest, response: VercelRespons
       ownsOgNft: user.ownsOgNft || false
     }));
 
+    // Log successful response for debugging
+    console.log(`Leaderboard data fetched successfully. ${leaderboard.length} users returned.`);
+    
     return response.status(200).json(leaderboard);
   } catch (error) {
     console.error('Error in leaderboard endpoint:', error);
     response.status(500).json({ 
-      error: 'An unexpected error occurred',
+      error: 'Failed to fetch leaderboard data',
       message: error instanceof Error ? error.message : 'Unknown error'
     });
   }
