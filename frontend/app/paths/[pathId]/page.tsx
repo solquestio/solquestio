@@ -36,50 +36,261 @@ const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:500
 const AUTH_TOKEN_KEY = 'solquest_auth_token';
 
 // --- Helper Function for Learning Content ---
-const getLearningContent = (questId: string, verificationType?: string): { intro: string; imageUrl?: string } => {
-    // Handle new community quest IDs specifically if different content is needed for different paths
-    // For now, generic messages for these types:
+const getLearningContent = (questId: string, verificationType?: string): { intro: React.ReactNode; imageUrl?: string } => {
+    // Style for green bullet points
+    const greenBulletStyle: React.CSSProperties = {
+        flexShrink: 0,
+        display: 'inline-block',
+        width: '8px',
+        height: '8px',
+        backgroundColor: '#4CAF50', // Green color
+        borderRadius: '50%',
+        marginRight: '12px',
+        marginTop: '7px', // Adjusted for alignment with text
+    };
+    const paragraphStyle: React.CSSProperties = {
+        display: 'flex',
+        alignItems: 'flex-start',
+        marginBottom: '10px',
+        lineHeight: '1.6',
+    };
+    const textSpanStyle: React.CSSProperties = {
+        color: '#D1D5DB', // Tailwind gray-300 for better readability on dark bg
+    };
+
     if (verificationType === 'community_link_click') {
         if (questId.startsWith('visit-x')) {
             return {
-                intro: "Follow us on X (formerly Twitter) to stay up-to-date with the latest SolQuest news, announcements, and alpha. Your engagement helps our community grow!"
+                intro: (
+                    <div>
+                        <div style={paragraphStyle}>
+                            <span style={greenBulletStyle}></span>
+                            <span style={textSpanStyle}>
+                                Stay connected and informed! Following SolQuest on X (formerly Twitter) is the best way to get the latest news, announcements, and alpha drops.
+                            </span>
+                        </div>
+                        <div style={paragraphStyle}>
+                            <span style={greenBulletStyle}></span>
+                            <span style={textSpanStyle}>
+                                Your engagement—likes, retweets, and replies—helps boost our visibility and grow our vibrant learning community. Click the link, follow our page, then confirm here!
+                            </span>
+                        </div>
+                    </div>
+                )
             };
         }
         if (questId.startsWith('join-discord')) {
             return {
-                intro: "Join our official Discord server to connect with other SolQuesters, ask questions, share your progress, and participate in community events. We're excited to have you!"
+                intro: (
+                    <div>
+                        <div style={paragraphStyle}>
+                            <span style={greenBulletStyle}></span>
+                            <span style={textSpanStyle}>
+                                Become an active member of the SolQuest community by joining our official Discord server! It's the central hub for discussions, support, and collaboration.
+                            </span>
+                        </div>
+                        <div style={paragraphStyle}>
+                            <span style={greenBulletStyle}></span>
+                            <span style={textSpanStyle}>
+                                Connect with fellow SolQuesters, ask questions about quests, share your learning journey, participate in events, and get direct support from the team. We're excited to welcome you!
+                            </span>
+                        </div>
+                    </div>
+                )
             };
         }
+        // Fallback for other community_link_click quests if any, or remove if not needed
+        return { 
+            intro: (
+                <div>
+                    <div style={paragraphStyle}>
+                        <span style={greenBulletStyle}></span>
+                        <span style={textSpanStyle}>Engage with our community! Click the link and follow the instructions, then confirm completion.</span>
+                    </div>
+                </div>
+            ) 
+        };
     }
 
     switch (questId) {
         case 'verify-wallet':
             return {
-                intro: "Verifying wallet ownership proves you control the private keys associated with your public wallet address. It's a fundamental step in interacting securely with decentralized applications (dApps). This is usually done by signing a unique message provided by the dApp, demonstrating your key ownership without revealing the keys themselves.",
+                intro: (
+                    <div>
+                        <div style={paragraphStyle}>
+                            <span style={greenBulletStyle}></span>
+                            <span style={textSpanStyle}>
+                                Wallet verification is a cornerstone of secure Web3 interactions. This process confirms that you are the true owner of your Solana wallet address.
+                            </span>
+                        </div>
+                        <div style={paragraphStyle}>
+                            <span style={greenBulletStyle}></span>
+                            <span style={textSpanStyle}>
+                                <strong>How does it work?</strong> Decentralized applications (dApps) like SolQuest will ask you to "sign" a unique, human-readable message. Signing uses your wallet's private key to create a cryptographic signature for that specific message.
+                            </span>
+                        </div>
+                        <div style={paragraphStyle}>
+                            <span style={greenBulletStyle}></span>
+                            <span style={textSpanStyle}>
+                                This signature proves you possess the private key associated with your public address, without ever revealing the private key itself. It's a secure handshake confirming your identity on the blockchain. Completing this step is fundamental for most dApp interactions.
+                            </span>
+                        </div>
+                    </div>
+                ),
             };
         case 'fund-wallet':
             return {
-                intro: "SOL is the native cryptocurrency of the Solana blockchain. It's used to pay for transaction fees (like sending tokens or interacting with programs) and for staking to secure the network. Having a small amount of SOL (we recommend at least 0.01 SOL for this quest) is essential to perform most actions on Solana. \n\n**How to get SOL?** You can acquire SOL from major cryptocurrency exchanges like Coinbase, Binance, Kraken, or FTX. Alternatively, for small amounts for testing, you might find a 'Solana faucet' online, though mainnet faucets are less common.",
+                intro: (
+                    <div>
+                        <div style={paragraphStyle}>
+                            <span style={greenBulletStyle}></span>
+                            <span style={textSpanStyle}>
+                                SOL is the lifeblood of the Solana blockchain. It's the native cryptocurrency used for all on-chain activities.
+                            </span>
+                        </div>
+                        <div style={paragraphStyle}>
+                            <span style={greenBulletStyle}></span>
+                            <span style={textSpanStyle}>
+                                <strong>Key Uses of SOL:</strong>
+                                <ul style={{ listStyleType: 'disc', marginLeft: '20px', marginTop: '5px' }}>
+                                    <li><strong>Transaction Fees:</strong> Every action, like sending tokens, minting NFTs, or interacting with smart contracts (programs), requires a small SOL fee.</li>
+                                    <li><strong>Staking:</strong> You can stake SOL to help secure the network and earn rewards.</li>
+                                </ul>
+                            </span>
+                        </div>
+                        <div style={paragraphStyle}>
+                            <span style={greenBulletStyle}></span>
+                            <span style={textSpanStyle}>
+                                For this learning path (and most development on Solana), you'll use Devnet SOL, which is free test currency. This quest ensures you have a small amount (e.g., at least 0.01 Devnet SOL) to cover transaction costs for subsequent quests. You can acquire Devnet SOL from a "faucet" – a service that dispenses free test tokens.
+                            </span>
+                        </div>
+                    </div>
+                ),
             };
         case 'explore-transaction-1':
             return {
-                intro: "Block explorers are tools that allow anyone to view the details of blockchain transactions and addresses. They provide transparency into the network. Compute Units (CUs) on Solana measure the computational resources consumed by a transaction. Optimizing CU usage is important for developers to make their applications efficient and cost-effective.",
+                intro: (
+                    <div>
+                        <div style={paragraphStyle}>
+                            <span style={greenBulletStyle}></span>
+                            <span style={textSpanStyle}>
+                                Welcome to the Solana Explorer Path! Block explorers are your window into the blockchain, offering transparency and insight into all on-chain activity.
+                            </span>
+                        </div>
+                        <div style={paragraphStyle}>
+                            <span style={greenBulletStyle}></span>
+                            <span style={textSpanStyle}>
+                                <strong>What are you exploring?</strong> In this quest, you'll examine a Solana transaction to understand its components. You'll look at details like signatures, signers, block information, and program logs.
+                            </span>
+                        </div>
+                        <div style={paragraphStyle}>
+                            <span style={greenBulletStyle}></span>
+                            <span style={textSpanStyle}>
+                                <strong>Compute Units (CUs):</strong> A key concept on Solana is Compute Units. These measure the computational resources a transaction consumes. Developers aim to minimize CU usage to make their applications efficient and keep transaction fees low for users. Understanding CUs is vital for optimizing Solana programs.
+                            </span>
+                        </div>
+                    </div>
+                ),
             };
         case 'find-nft-authority-1':
             return {
-                intro: "NFTs on Solana often belong to a Collection. The Update Authority is a specific wallet address that has permission to change the metadata (like name, image, attributes) for *all* NFTs within that collection. Finding this authority address on a block explorer helps verify the legitimacy of a collection.",
+                intro: (
+                    <div>
+                        <div style={paragraphStyle}>
+                            <span style={greenBulletStyle}></span>
+                            <span style={textSpanStyle}>
+                                Non-Fungible Tokens (NFTs) on Solana often have a hierarchical structure, particularly when they are part of a collection.
+                            </span>
+                        </div>
+                        <div style={paragraphStyle}>
+                            <span style={greenBulletStyle}></span>
+                            <span style={textSpanStyle}>
+                                <strong>The Update Authority:</strong> This is a critical address associated with an NFT or, more commonly, an entire NFT collection. The wallet holding the Update Authority has special privileges, typically including the ability to modify the metadata of the NFT(s) it governs. Metadata includes attributes like the NFT's name, image URL, and other traits.
+                            </span>
+                        </div>
+                        <div style={paragraphStyle}>
+                            <span style={greenBulletStyle}></span>
+                            <span style={textSpanStyle}>
+                                Identifying the Update Authority using a block explorer is a crucial step in verifying an NFT's authenticity and understanding who controls its fundamental properties. This helps protect against counterfeit collections and ensures the NFT's provenance.
+                            </span>
+                        </div>
+                    </div>
+                ),
             };
         case 'find-first-tx-1':
             return {
-                intro: "Every action on Solana is recorded as a transaction. Block explorers provide a complete, publicly accessible history of all transactions associated with a wallet address. By examining this history, you can trace the entire activity of an account back to its creation or first interaction on the network.",
+                intro: (
+                    <div>
+                        <div style={paragraphStyle}>
+                            <span style={greenBulletStyle}></span>
+                            <span style={textSpanStyle}>
+                                The Solana blockchain maintains an immutable and transparent ledger of all transactions. This means every interaction with a wallet address is permanently recorded and publicly viewable.
+                            </span>
+                        </div>
+                        <div style={paragraphStyle}>
+                            <span style={greenBulletStyle}></span>
+                            <span style={textSpanStyle}>
+                                <strong>Tracing Account History:</strong> Using a block explorer, you can delve into the complete history of any Solana account. This includes all incoming and outgoing transactions, token transfers, program interactions, and more.
+                            </span>
+                        </div>
+                        <div style={paragraphStyle}>
+                            <span style={greenBulletStyle}></span>
+                            <span style={textSpanStyle}>
+                                In this quest, you'll learn to navigate this history to find the very first transaction associated with a given wallet address. This skill is useful for understanding an account's origin, its initial funding, or its first interaction with the Solana network.
+                            </span>
+                        </div>
+                    </div>
+                ),
             };
         case 'mint-og-nft':
             return {
-                intro: "Minting an NFT (Non-Fungible Token) means creating a unique digital asset on the blockchain. For the SolQuest OG NFT, this signifies your status as an early supporter and member of our community. The mint transaction itself records your ownership permanently on Solana. This quest helps you understand the practical step of acquiring a unique digital item."
+                intro: (
+                    <div>
+                        <div style={paragraphStyle}>
+                            <span style={greenBulletStyle}></span>
+                            <span style={textSpanStyle}>
+                                Minting an NFT (Non-Fungible Token) is the process of creating and registering a unique digital asset on the blockchain. This makes you its first official owner.
+                            </span>
+                        </div>
+                        <div style={paragraphStyle}>
+                            <span style={greenBulletStyle}></span>
+                            <span style={textSpanStyle}>
+                                <strong>The SolQuest OG NFT:</strong> This special NFT signifies your status as an early supporter and valued member of the SolQuest community. Holding it may unlock future benefits, like XP boosts or early access to new content.
+                            </span>
+                        </div>
+                        <div style={paragraphStyle}>
+                            <span style={greenBulletStyle}></span>
+                            <span style={textSpanStyle}>
+                                This quest guides you through the practical steps of minting. The transaction you approve will permanently record your ownership of this unique digital collectible on the Solana blockchain.
+                            </span>
+                        </div>
+                    </div>
+                ),
             };
         case 'refer-friend-og':
             return {
-                intro: "Web3 communities thrive on growth and network effects. Referring a friend helps expand the SolQuest ecosystem, bringing more users to learn about Solana. This process often involves sharing a unique link or code, and it fosters a sense of shared discovery and participation."
+                intro: (
+                    <div>
+                        <div style={paragraphStyle}>
+                            <span style={greenBulletStyle}></span>
+                            <span style={textSpanStyle}>
+                                Web3 is built on community and network effects. Growing the SolQuest ecosystem means more learners, more content, and a richer experience for everyone.
+                            </span>
+                        </div>
+                        <div style={paragraphStyle}>
+                            <span style={greenBulletStyle}></span>
+                            <span style={textSpanStyle}>
+                                <strong>Share the Knowledge:</strong> This quest encourages you to invite friends to join SolQuest. When they sign up or complete a certain action using your referral, it helps our community grow.
+                            </span>
+                        </div>
+                        <div style={paragraphStyle}>
+                            <span style={greenBulletStyle}></span>
+                            <span style={textSpanStyle}>
+                                This often involves sharing a unique referral link or code. It's a way to foster shared discovery and reward community participation. Let's build SolQuest together!
+                            </span>
+                        </div>
+                    </div>
+                ),
             };
         default:
             return { intro: "Complete the quest objective to earn XP and progress!" };
@@ -363,25 +574,35 @@ export default function QuestPathPage() {
                                 {learningContent?.intro && (
                                     <div className="prose prose-sm prose-invert text-gray-300 max-w-none mb-6 space-y-3">
                                          <h4 className="text-gray-400 font-semibold text-xs uppercase tracking-wider mb-2">Learn More</h4>
-                                         <ReactMarkdown components={{ 
-                                                a: ({node, ...props}) => <a {...props} target="_blank" rel="noopener noreferrer" className="text-solana-purple hover:text-solana-purple-light underline" />,
-                                                code: ({node, className, children, ...props}) => {
-                                                    const isBlock = node?.tagName === 'code' && 
-                                                                    typeof node?.properties?.className === 'string' && 
-                                                                    node.properties.className.includes('language-');
-                                                    return !isBlock ? (
-                                                        <code className={`${className || ''} bg-black/30 rounded px-1 py-0.5 font-mono text-xs`} {...props}>
-                                                            {children}
-                                                        </code>
-                                                    ) : (
-                                                        <code className={`${className || ''} bg-black/30 rounded p-1 font-mono text-xs block overflow-x-auto`} {...props}>
-                                                            {children}
-                                                        </code>
-                                                    )
-                                                }
-                                            }}>
-                                            {learningContent.intro}
-                                         </ReactMarkdown>
+                                         {(() => {
+                                            const introContent = learningContent.intro;
+                                            if (typeof introContent === 'string') {
+                                                return (
+                                                    <ReactMarkdown components={{ 
+                                                        a: ({node, ...props}) => <a {...props} target="_blank" rel="noopener noreferrer" className="text-solana-purple hover:text-solana-purple-light underline" />,
+                                                        code: ({node, className, children, ...props}) => {
+                                                            const isBlock = node?.tagName === 'code' && 
+                                                                            typeof node?.properties?.className === 'string' && 
+                                                                            node.properties.className.includes('language-');
+                                                            return !isBlock ? (
+                                                                <code className={`${className || ''} bg-black/30 rounded px-1 py-0.5 font-mono text-xs`} {...props}>
+                                                                    {children}
+                                                                </code>
+                                                            ) : (
+                                                                <code className={`${className || ''} bg-black/30 rounded p-1 font-mono text-xs block overflow-x-auto`} {...props}>
+                                                                    {children}
+                                                                </code>
+                                                            )
+                                                        }
+                                                    }}>
+                                                        {introContent}
+                                                    </ReactMarkdown>
+                                                );
+                                            } else {
+                                                // Directly render if it's already a ReactNode (JSX)
+                                                return introContent;
+                                            }
+                                         })()}
                                     </div>
                                 )}
                                 

@@ -53,7 +53,7 @@ export default function LeaderboardPage() {
         console.log(`Fetching leaderboard for timeframe: ${selectedTimeframe}`);
         try {
             // TODO: Update backend to accept timeframe query param
-            const response = await fetch(`${BACKEND_URL}/api/users/leaderboard?timeframe=${selectedTimeframe}`);
+            const response = await fetch(`${BACKEND_URL}/api/users?path=leaderboard&limit=3&timeframe=${selectedTimeframe}`);
             if (!response.ok) {
                 const errorData = await response.json();
                 throw new Error(errorData.message || 'Failed to fetch leaderboard');

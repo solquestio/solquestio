@@ -149,7 +149,7 @@ export default function ProfilePage() {
     setError(null);
     setQuestError(null);
     try {
-      const response = await fetch(`${BACKEND_URL}/api/users/me`, {
+      const response = await fetch(`${BACKEND_URL}/api/users?path=me`, {
         method: 'GET',
         headers: { 'Authorization': `Bearer ${token}` },
       });
@@ -361,7 +361,7 @@ export default function ProfilePage() {
     setError(null); // Clear general errors
 
     try {
-        const response = await fetch(`${BACKEND_URL}/api/users/me`, {
+        const response = await fetch(`${BACKEND_URL}/api/users?path=me`, {
             method: 'PUT',
             headers: {
                 'Authorization': `Bearer ${authToken}`,

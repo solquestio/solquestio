@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SolQuest.io - Static Test Page</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+            background-color: #13111C;
+            color: #E6E6E6;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+            text-align: center;
+            line-height: 1.6;
+        }
+        .container {
+            max-width: 800px;
+            padding: 30px;
+            background-color: #1E1B2E;
+            border-radius: 12px;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+        }
+        h1 {
+            color: #9A7FFC;
+            margin-bottom: 20px;
+        }
+        p {
+            margin-bottom: 16px;
+        }
+        .highlight {
+            color: #32CD32;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>SolQuest.io - Static HTML Test</h1>
+        <p>If you can see this page, basic static file serving is working correctly on Vercel.</p>
+        <p>This is a <span class="highlight">static HTML file</span> placed in the <code>public</code> directory to test basic file serving.</p>
+        <p>Next steps would be to investigate why Next.js dynamic routing isn't working.</p>
+        <p>Page generated: <span id="timestamp"></span></p>
+    </div>
+
+    <script>
+        document.getElementById('timestamp').textContent = new Date().toLocaleString();
+    </script>
+</body>
+</html> 

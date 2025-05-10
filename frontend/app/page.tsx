@@ -20,6 +20,7 @@ interface LearningPath {
     totalXp?: number; // Added totalXp
     graphicType?: 'image' | 'gradient' | 'none'; // Made graphicType optional
     imageUrl?: string | null; // Allow null
+    pathSlug?: string; // STEP 1.1: Add pathSlug back to the interface
 }
 
 interface UserProfile { 
@@ -43,19 +44,32 @@ const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:500
 const AUTH_TOKEN_KEY = 'solquest_auth_token';
 const SIGN_IN_MESSAGE = "Sign this message to verify your wallet and log in to SolQuest.io. This does not cost any SOL.";
 
+// STEP 1.2: Define STATIC_LAYER_ZERO_PATH outside the component
+const STATIC_LAYER_ZERO_PATH: LearningPath = {
+  id: 'layerzero-path',
+  title: 'LayerZero Learning Path',
+  description: 'Explore omnichain interactions! Start by funding your Devnet wallet, then dive into sending messages and tokens across blockchains with LayerZero V2.',
+  questCount: 3, // Example: Faucet + Messenger + OFT
+  totalXp: 1500, // Example XP
+  pathSlug: 'layerzero', // Links to /paths/layerzero
+  isLocked: false,
+  graphicType: 'image',
+  imageUrl: '/layerzero.jpg' // Adjusted path to be relative to the public directory root
+};
+
 // --- Helper Components --- 
 
 interface LearningPathCardProps {
     title: string;
     description: string;
     isLocked: boolean;
-    pathSlug?: string;
-    totalXp?: number; // Added totalXp
+    pathSlug?: string; // Ensure this is present
+    totalXp?: number;
     questCount: number;
-    isAuthenticated: boolean; // Added
-    promptLogin: () => void; // Added
-    graphicType?: 'image' | 'gradient' | 'none'; // Added graphicType
-    imageUrl?: string | null; // Added imageUrl
+    isAuthenticated: boolean;
+    promptLogin: () => void;
+    graphicType?: 'image' | 'gradient' | 'none';
+    imageUrl?: string | null;
 }
 
 const LearningPathCard: React.FC<LearningPathCardProps> = ({ title, description, isLocked, pathSlug, totalXp, questCount, isAuthenticated, promptLogin, graphicType = 'none', imageUrl }) => {
@@ -72,8 +86,8 @@ const LearningPathCard: React.FC<LearningPathCardProps> = ({ title, description,
                         src={imageUrl} 
                         alt={`${title} graphic`} 
                         layout="fill" 
-                        objectFit="contain" // Changed back to contain
-                        className="p-4 opacity-80 group-hover:opacity-100 transition-opacity" // Added p-4 back
+                        objectFit="cover"
+                        className="opacity-80 group-hover:opacity-100 transition-opacity"
                     />
                 </div>
             ) : graphicType === 'gradient' ? (
@@ -202,7 +216,7 @@ const LeaderboardSnippet: React.FC = () => {
             setIsLoading(true);
             setError(null);
             try {
-                const response = await fetch(`${BACKEND_URL}/api/users/leaderboard?limit=3`); 
+                const response = await fetch(`${BACKEND_URL}/api/users?path=leaderboard&limit=3`); 
                 if (!response.ok) throw new Error('Failed to fetch leaderboard');
                 let data: LeaderboardUser[] = await response.json();
                 // Ensure limit if backend doesn't support it
@@ -322,18 +336,16 @@ export default function HomePage() {
     const { setVisible: setWalletModalVisible } = useWalletModal();
     const [learningPaths, setLearningPaths] = useState<LearningPath[]>([]);
     const [isLoadingPaths, setIsLoadingPaths] = useState(true);
-    const [pathFetchError, setPathFetchError] = useState<string | null>(null); // Specific error for path fetching
-    const [userProfile, setUserProfile] = useState<UserProfile | null>(null); // To store user profile after auth
+    const [pathFetchError, setPathFetchError] = useState<string | null>(null);
+    const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
     const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
     const [isAuthLoading, setIsAuthLoading] = useState(false);
     const [authError, setAuthError] = useState<string | null>(null);
-    const [isAuthenticated, setIsAuthenticated] = useState(false); // Added for passing to children
+    const [isAuthenticated, setIsAuthenticated] = useState(false);
 
-    // Effect to update isAuthenticated based on token in localStorage
     useEffect(() => {
         const token = localStorage.getItem(AUTH_TOKEN_KEY);
         setIsAuthenticated(!!token);
-        // Simple listener for storage changes to keep this state somewhat reactive
         const handleStorageChange = (event: StorageEvent) => {
             if (event.key === AUTH_TOKEN_KEY) {
                 setIsAuthenticated(!!event.newValue);
@@ -341,11 +353,12 @@ export default function HomePage() {
         };
         window.addEventListener('storage', handleStorageChange);
         return () => window.removeEventListener('storage', handleStorageChange);
-    }, []); // Runs once on mount and sets up listener
+    }, []);
 
     const fetchPaths = useCallback(async (token?: string | null) => {
         setIsLoadingPaths(true);
         setPathFetchError(null);
+        let fetchedPaths: LearningPath[] = []; // Store fetched paths here
         try {
             const headers: HeadersInit = { 'Content-Type': 'application/json' };
             if (token) {
@@ -357,27 +370,32 @@ export default function HomePage() {
                 throw new Error(errorData.message || `Failed to fetch learning paths (status: ${response.status})`);
             }
             const data = await response.json();
-            setLearningPaths(Array.isArray(data) ? data : data.paths || []); 
+            fetchedPaths = Array.isArray(data) ? data : data.paths || []; // Assign to fetchedPaths
         } catch (error: any) {
-            console.error("Failed to fetch learning paths:", error);
-            setLearningPaths([]);
-            setPathFetchError(error.message || "Could not load learning paths.");
+            console.error("Failed to fetch learning paths from backend:", error);
+            // fetchedPaths will remain empty if there's an error
+            setPathFetchError(error.message || "Could not load learning paths from backend.");
         } finally {
+            // Combine fetched paths with the static LayerZero path
+            const combinedPaths = [...fetchedPaths];
+            // Add LayerZero path if it's not already in the fetched list (by id)
+            if (!fetchedPaths.find(p => p.id === STATIC_LAYER_ZERO_PATH.id)) {
+                combinedPaths.push(STATIC_LAYER_ZERO_PATH);
+            }
+            setLearningPaths(combinedPaths);
             setIsLoadingPaths(false);
         }
-    }, []);
+    }, []); // Dependency array remains empty as STATIC_LAYER_ZERO_PATH is stable
 
     useEffect(() => {
         const currentToken = localStorage.getItem(AUTH_TOKEN_KEY);
-        setIsAuthenticated(!!currentToken); // Ensure isAuthenticated state is current
-
+        setIsAuthenticated(!!currentToken);
         if (!currentToken) {
-            // No longer automatically open modal
-            fetchPaths(); // Fetch public paths
+            fetchPaths();
         } else {
             fetchPaths(currentToken);
         }
-    }, [wallet, fetchPaths]); // Simplified dependencies
+    }, [wallet, fetchPaths]);
 
     const handleRequestAuthentication = async () => {
         setAuthError(null);
@@ -501,20 +519,21 @@ export default function HomePage() {
                 {pathFetchError && !isLoadingPaths && (
                     <p className="text-center text-red-400 py-8">
                         Error loading learning paths: {pathFetchError}
+                        <br/>Displaying available offline paths.
                     </p>
                 )}
-                {!isLoadingPaths && !pathFetchError && learningPaths.length === 0 && (
+                {!isLoadingPaths && learningPaths.length === 0 && !pathFetchError && (
                      <p className="text-gray-500 md:col-span-2 text-center py-8">No learning paths available currently. Check back soon!</p>
                 )}
-                {!isLoadingPaths && !pathFetchError && learningPaths.length > 0 && (
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-8 max-w-4xl mx-auto">
+                {!isLoadingPaths && learningPaths.length > 0 && (
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-6 gap-y-8 max-w-6xl mx-auto">
                         {learningPaths.map((path) => (
                             <LearningPathCard
                                 key={path.id}
                                 title={path.title}
                                 description={path.description}
                                 isLocked={path.isLocked || false}
-                                pathSlug={path.id} 
+                                pathSlug={path.pathSlug || path.id}
                                 totalXp={path.totalXp}
                                 questCount={path.questCount}
                                 isAuthenticated={isAuthenticated} 
