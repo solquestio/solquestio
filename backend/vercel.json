@@ -17,19 +17,23 @@
     },
     {
       "src": "/api/quests/complete",
-      "dest": "/api/quests/complete.ts"
+      "dest": "/api/quests/complete.ts",
+      "methods": ["POST"]
     },
     {
       "src": "/api/auth/challenge",
-      "dest": "/api/auth/challenge.ts"
+      "dest": "/api/auth/challenge.ts",
+      "methods": ["GET", "POST"]
     },
     {
       "src": "/api/auth/verify",
-      "dest": "/api/auth/verify.ts"
+      "dest": "/api/auth/verify.ts",
+      "methods": ["GET", "POST"]
     },
     {
       "src": "/api/users",
-      "dest": "/api/users/index.ts"
+      "dest": "/api/users/index.ts",
+      "methods": ["GET", "POST", "PUT"]
     },
     {
       "src": "/api/utils",
