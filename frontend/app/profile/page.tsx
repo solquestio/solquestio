@@ -43,7 +43,8 @@ interface Quest {
 }
 
 // Define the backend API endpoint
-const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:5000';
+// Hardcode API URL temporarily for testing
+const BACKEND_URL = 'https://api.solquest.io';
 const AUTH_TOKEN_KEY = 'solquest_auth_token'; // Key for localStorage
 
 // Quest IDs (match backend)

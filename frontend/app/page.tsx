@@ -40,7 +40,8 @@ interface LeaderboardUser {
 }
 
 // --- Constants --- 
-const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || 'https://solquestio.vercel.app';
+// Hardcode API URL temporarily for testing
+const BACKEND_URL = 'https://api.solquest.io';
 const AUTH_TOKEN_KEY = 'solquest_auth_token';
 const SIGN_IN_MESSAGE = "Sign this message to verify your wallet and log in to SolQuest.io. This does not cost any SOL.";
 

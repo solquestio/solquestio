@@ -10,7 +10,8 @@ import { useWalletModal } from '@solana/wallet-adapter-react-ui';
 import bs58 from 'bs58';
 
 const AUTH_TOKEN_KEY = 'solquest_auth_token';
-const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:5000';
+// Hardcode API URL temporarily for testing
+const BACKEND_URL = 'https://api.solquest.io';
 const SIGN_IN_MESSAGE = "Sign this message to verify your wallet and log in to SolQuest.io. This does not cost any SOL.";
 
 interface MainLayoutClientProps {
