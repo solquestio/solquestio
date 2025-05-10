@@ -1,8 +1,14 @@
 import { VercelRequest, VercelResponse } from '@vercel/node';
+import jwt from 'jsonwebtoken';
+import { connectDB } from '../../lib/database';
+import UserModel from '../../lib/models/User';
 
-export default function handler(request: VercelRequest, response: VercelResponse) {
+export default async function handler(request: VercelRequest, response: VercelResponse) {
   try {
-    // Check for authorization header (would validate JWT in production)
+    // Connect to database
+    await connectDB();
+    
+    // Check for authorization header
     const authHeader = request.headers.authorization;
     
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
@@ -11,20 +17,33 @@ export default function handler(request: VercelRequest, response: VercelResponse
         message: 'Authentication required'
       });
     }
-
-    // For testing/development, just return a mock user profile
-    // In production, this would decode the JWT and fetch the user from MongoDB
-    const mockUser = {
-      id: "user123",
-      walletAddress: "YourWalletAddressHere",
-      username: "SolQuestUser",
-      xp: 450,
-      checkInStreak: 3,
-      ownsOgNft: false,
-      completedQuestIds: ["visit-x-se", "join-discord-se", "check-balance-1"]
-    };
-
-    response.status(200).json(mockUser);
+    
+    // Get the token
+    const token = authHeader.split(' ')[1];
+    
+    // Verify the token
+    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'default_secret') as { id: string };
+    
+    // Find the user
+    const user = await UserModel.findById(decoded.id);
+    
+    if (!user) {
+      return response.status(404).json({
+        error: 'Not Found',
+        message: 'User not found'
+      });
+    }
+    
+    // Return user data
+    response.status(200).json({
+      id: user._id,
+      walletAddress: user.walletAddress,
+      username: user.username || null,
+      xp: user.xp || 0,
+      checkInStreak: user.checkInStreak || 0,
+      ownsOgNft: user.ownsOgNft || false,
+      completedQuestIds: user.completedQuestIds || []
+    });
   } catch (error) {
     console.error('Error in users/me endpoint:', error);
     response.status(500).json({ 

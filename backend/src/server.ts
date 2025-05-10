@@ -42,11 +42,103 @@ app.use(cors(corsOptions));
 app.use(express.json()); // Middleware to parse JSON bodies
 // ------------------
 
-// --- API Routes ---
+// --- Public API Routes ---
+// Define a middleware that intercepts '/api/quests' GET requests before they hit the protected routes
+app.get('/api/quests', (req: Request, res: Response) => {
+  // Demo quests for public access
+  const publicQuests = [
+    {
+      id: 'verify-wallet',
+      title: 'Connect Your Wallet',
+      shortDescription: 'Connect your Solana wallet to SolQuest',
+      difficulty: 'beginner',
+      xpReward: 100,
+      path: 'solana-foundations',
+      order: 1
+    },
+    {
+      id: 'explore-transaction-1',
+      title: 'Explore a Transaction',
+      shortDescription: 'Learn how to read Solana transaction details',
+      difficulty: 'beginner',
+      xpReward: 150,
+      path: 'solana-foundations',
+      order: 2
+    },
+    {
+      id: 'visit-x-og',
+      title: 'Follow Us on X',
+      shortDescription: 'Follow SolQuest on X (Twitter)',
+      difficulty: 'beginner',
+      xpReward: 100,
+      path: 'solquest-og',
+      order: 1
+    }
+  ];
+  
+  res.json(publicQuests);
+});
+
+// Define a public endpoint for /api/auth
+app.get('/api/auth', (req: Request, res: Response) => {
+  res.json({
+    message: 'Auth API is running',
+    endpoints: {
+      challenge: 'POST /api/auth/challenge - Get a challenge message to sign',
+      verify: 'POST /api/auth/verify - Verify signature and get JWT token'
+    }
+  });
+});
+
+// --- Protected API Routes ---
 app.use('/api/auth', authRoutes); // Mount the auth routes
-app.use('/api/users', userRoutes); // Mount user routes
+app.use('/api/users', userRoutes); // Mount user routes 
 app.use('/api/quests', questRoutes); // Mount quest routes (handles /api/quests/paths as well)
-// TODO: app.use('/api/quests', questRoutes);
+
+// Add a fallback route for /api/quests that doesn't require authentication
+app.get('/api/quests', (req: Request, res: Response) => {
+  const demoQuests = [
+    {
+      id: 'verify-wallet',
+      title: 'Connect Your Wallet',
+      shortDescription: 'Connect your Solana wallet to SolQuest',
+      difficulty: 'beginner',
+      xpReward: 100,
+      path: 'solana-foundations',
+      order: 1
+    },
+    {
+      id: 'explore-transaction-1',
+      title: 'Explore a Transaction',
+      shortDescription: 'Learn how to read Solana transaction details',
+      difficulty: 'beginner',
+      xpReward: 150,
+      path: 'solana-foundations',
+      order: 2
+    },
+    {
+      id: 'visit-x-og',
+      title: 'Follow Us on X',
+      shortDescription: 'Follow SolQuest on X (Twitter)',
+      difficulty: 'beginner',
+      xpReward: 100,
+      path: 'solquest-og',
+      order: 1
+    }
+  ];
+  res.json(demoQuests);
+});
+
+// Add a fallback route for /api/auth that provides info
+app.get('/api/auth', (req: Request, res: Response) => {
+  res.json({
+    message: 'Auth API is running',
+    endpoints: {
+      challenge: 'POST /api/auth/challenge - Get a challenge message to sign',
+      verify: 'POST /api/auth/verify - Verify signature and get JWT token'
+    }
+  });
+});
 // ------------------
 
 // Basic route

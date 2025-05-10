@@ -10,6 +10,13 @@
     {
       "src": "/api/(.*)",
       "dest": "/api/$1"
+    },
+    {
+      "src": "/(.*)",
+      "dest": "/api/index.ts"
     }
-  ]
-} 
+  ],
+  "env": {
+    "NODE_ENV": "production"
+  }
+}

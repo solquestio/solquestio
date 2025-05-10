@@ -1,35 +1,10 @@
 import { VercelRequest, VercelResponse } from '@vercel/node';
-import mongoose from 'mongoose';
 import jwt from 'jsonwebtoken';
-import UserModel from '../../src/models/User';
+import UserModel from '../../lib/models/User';
+import { connectDB } from '../../lib/database';
+import { verifySignature } from '../../lib/utils/solana';
 
-// Simplified signature verification function (to avoid importing complex dependencies)
-const verifySignature = (walletAddress: string, signature: string, message: string): boolean => {
-  // In a real serverless function, this would contain the full verification logic
-  // For now, we'll assume it's valid to allow testing
-  console.log('Verifying signature for wallet:', walletAddress);
-  console.log('Message:', message);
-  return true;
-};
 
-// Connect to MongoDB immediately for this serverless function
-let isConnected = false;
-const connectDB = async () => {
-  if (isConnected) return;
-  
-  if (!process.env.MONGO_URI) {
-    throw new Error('MONGO_URI is not defined in environment variables');
-  }
-  
-  try {
-    await mongoose.connect(process.env.MONGO_URI);
-    isConnected = true;
-    console.log('MongoDB connected in auth/verify endpoint');
-  } catch (error) {
-    console.error('MongoDB connection error:', error);
-    throw error;
-  }
-};
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   // Only allow POST requests

@@ -1,37 +1,29 @@
 import { VercelRequest, VercelResponse } from '@vercel/node';
+import { connectDB } from '../../lib/database';
+import UserModel from '../../lib/models/User';
 
-export default function handler(request: VercelRequest, response: VercelResponse) {
+export default async function handler(request: VercelRequest, response: VercelResponse) {
   try {
-    // This would normally fetch from MongoDB, but for testing we'll return static data
-    const staticLeaderboard = [
-      {
-        _id: "user1",
-        walletAddress: "AaBbCcDdEeFfGgHhIiJjKkLlMmNnOoPpQq",
-        username: "SolanaLegend",
-        xp: 1250,
-        rank: 1,
-        xpBoost: 1.2,
-        ownsOgNft: true
-      },
-      {
-        _id: "user2",
-        walletAddress: "BbCcDdEeFfGgHhIiJjKkLlMmNnOoPpQqRr",
-        username: "CryptoExplorer",
-        xp: 980,
-        rank: 2,
-        ownsOgNft: false
-      },
-      {
-        _id: "user3",
-        walletAddress: "CcDdEeFfGgHhIiJjKkLlMmNnOoPpQqRrSs",
-        username: "BlockchainWizard",
-        xp: 875,
-        rank: 3,
-        ownsOgNft: false
-      }
-    ];
+    // Connect to database
+    await connectDB();
+    
+    // Get top users sorted by XP
+    const users = await UserModel.find({})
+      .sort({ xp: -1 }) // Sort by XP in descending order
+      .limit(20) // Limit to top 20 users
+      .select('walletAddress username xp ownsOgNft'); // Only select needed fields
+    
+    // Transform data and add ranks
+    const leaderboard = users.map((user, index) => ({
+      _id: user._id,
+      walletAddress: user.walletAddress,
+      username: user.username || null, // Handle null usernames
+      xp: user.xp,
+      rank: index + 1, // Add rank based on order
+      ownsOgNft: user.ownsOgNft || false
+    }));
 
-    response.status(200).json(staticLeaderboard);
+    response.status(200).json(leaderboard);
   } catch (error) {
     console.error('Error in leaderboard endpoint:', error);
     response.status(500).json({ 

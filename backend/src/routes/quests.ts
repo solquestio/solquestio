@@ -284,8 +284,8 @@ router.post('/check-balance', protect, async (req: Request, res: Response) => {
 
 // GET /api/quests - Get list of available quests
 router.get('/', protect, async (req: Request, res: Response) => {
-     if (!req.user) {
-        return res.status(401).json({ message: 'Not authorized' });
+    if (!req.user) {
+        return res.status(401).json({ message: 'Not authorized, no token' });
     }
     const { userId } = req.user;
 
