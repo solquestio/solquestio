@@ -45,7 +45,7 @@
     },
     {
       "src": "/api/health",
-      "dest": "/api/health.ts"
+      "dest": "/api/utils.ts?path=health"
     },
     {
       "src": "/api/auth",
