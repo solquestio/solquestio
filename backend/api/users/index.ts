@@ -1,9 +1,12 @@
 import { VercelRequest, VercelResponse } from '@vercel/node';
+import { enableCors } from '../../lib/middleware/cors';
 import jwt from 'jsonwebtoken';
 import { connectDB } from '../../lib/database';
 import UserModel from '../../lib/models/User';
 
 export default async function handler(request: VercelRequest, response: VercelResponse) {
+  // Enable CORS for this endpoint
+  enableCors(request, response);
   try {
     // Connect to database
     await connectDB();

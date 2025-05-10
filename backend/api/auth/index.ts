@@ -1,6 +1,9 @@
 import { VercelRequest, VercelResponse } from '@vercel/node';
+import { enableCors } from '../../lib/middleware/cors';
 
 export default function handler(request: VercelRequest, response: VercelResponse) {
+  // Enable CORS for this endpoint
+  enableCors(request, response);
   try {
     // Basic information about available auth endpoints
     response.status(200).json({

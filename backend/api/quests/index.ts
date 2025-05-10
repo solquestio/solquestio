@@ -1,8 +1,11 @@
 import { VercelRequest, VercelResponse } from '@vercel/node';
+import { enableCors } from '../../lib/middleware/cors';
 import { connectDB } from '../../lib/database';
 import QuestModel from '../../lib/models/Quest';
 
 export default async function handler(request: VercelRequest, response: VercelResponse) {
+  // Enable CORS for this endpoint
+  enableCors(request, response);
   // Only allow GET requests
   if (request.method !== 'GET') {
     return response.status(405).json({ error: 'Method not allowed' });
