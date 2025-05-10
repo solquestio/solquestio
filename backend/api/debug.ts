@@ -4,10 +4,21 @@ import mongoose from 'mongoose';
 import UserModel from '../lib/models/User';
 import QuestModel from '../lib/models/Quest';
 
+interface DebugInfo {
+  timestamp: string;
+  environment: string;
+  connectionString: string;
+  mongooseState: number;
+  databases: string[];
+  collections: Record<string, number>;
+  models: string[];
+  error: string | null;
+}
+
 export default async function handler(request: VercelRequest, response: VercelResponse) {
   try {
     // Debug information object
-    const debugInfo = {
+    const debugInfo: DebugInfo = {
       timestamp: new Date().toISOString(),
       environment: process.env.NODE_ENV || 'unknown',
       connectionString: process.env.MONGO_URI ? 
@@ -38,7 +49,8 @@ export default async function handler(request: VercelRequest, response: VercelRe
     // List available databases if connected
     if (mongoose.connection.readyState === 1) {
       try {
-        debugInfo.databases = Object.keys(mongoose.connection.client.topology.s.sessionPool.sessions);
+        // Safely get connection info without relying on internal properties
+        debugInfo.databases = ['Connected to MongoDB'];
       } catch (err) {
         debugInfo.databases = ['Error listing databases'];
       }
