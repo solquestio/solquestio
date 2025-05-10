@@ -5,8 +5,8 @@ import { VercelRequest, VercelResponse } from '@vercel/node';
  * Enables CORS headers to allow requests from the frontend
  */
 export function enableCors(req: VercelRequest, res: VercelResponse): void {
-  // Get frontend URL from environment or allow all origins if not set
-  const frontendUrl = process.env.FRONTEND_URL || '*';
+  // Allow all origins during debugging
+  const frontendUrl = '*';
   
   // Set CORS headers
   res.setHeader('Access-Control-Allow-Credentials', 'true');
