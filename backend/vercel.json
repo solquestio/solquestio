@@ -19,74 +19,74 @@
   ],
   "routes": [
     {
-      "src": "/quests/paths",
+      "src": "/api/quests/paths",
       "dest": "/api/quests/paths.ts"
     },
     {
-      "src": "/quests/\\[id\\]",
+      "src": "/api/quests/\\[id\\]",
       "dest": "/api/quests/[id].ts"
     },
     {
-      "src": "/quests/complete",
+      "src": "/api/quests/complete",
       "dest": "/api/quests/complete.ts",
       "methods": ["POST"]
     },
     {
-      "src": "/auth/challenge",
+      "src": "/api/auth/challenge",
       "dest": "/api/auth/challenge.ts",
       "methods": ["GET", "POST"]
     },
     {
-      "src": "/auth/verify",
+      "src": "/api/auth/verify",
       "dest": "/api/auth/verify.ts",
       "methods": ["GET", "POST"]
     },
     {
-      "src": "/users",
+      "src": "/api/users",
       "dest": "/api/users/index.ts",
       "methods": ["GET", "POST", "PUT"]
     },
     {
-      "src": "/users/check-in",
+      "src": "/api/users/check-in",
       "dest": "/api/users/check-in.ts",
       "methods": ["POST"]
     },
     {
-      "src": "/quests/check-balance",
+      "src": "/api/quests/check-balance",
       "dest": "/api/quests/check-balance.ts", 
       "methods": ["POST"]
     },
     {
-      "src": "/quests/verify-answer",
+      "src": "/api/quests/verify-answer",
       "dest": "/api/quests/verify-answer.ts",
       "methods": ["POST"]
     },
     {
-      "src": "/quests/path/(.*)",
+      "src": "/api/quests/path/(.*)",
       "dest": "/api/quests/path/[pathId].ts"
     },
     {
-      "src": "/utils",
+      "src": "/api/utils",
       "dest": "/api/utils.ts"
     },
     {
-      "src": "/public",
+      "src": "/api/public",
       "dest": "/api/public.ts"
     },
     {
-      "src": "/health",
+      "src": "/api/health",
       "dest": "/api/utils.ts?path=health"
     },
     {
-      "src": "/auth",
+      "src": "/api/auth",
       "dest": "/api/auth/index.ts"
     },
     {
-      "src": "/quests",
+      "src": "/api/quests",
       "dest": "/api/quests/index.ts"
     },
     {
-      "src": "/",
+      "src": "/api",
       "dest": "/api/index.ts"
     },
     {
