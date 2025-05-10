@@ -5,19 +5,25 @@ import { VercelRequest, VercelResponse } from '@vercel/node';
  * Enables CORS headers to allow requests from the frontend
  */
 export function enableCors(req: VercelRequest, res: VercelResponse): void {
-  // Define your specific frontend URL
-  const allowedOrigin = 'https://solquest.io'; // Your production frontend
+  const productionFrontendDomain = 'solquest.io';
+  const allowedOrigins = [
+    `https://www.${productionFrontendDomain}`, // For www.solquest.io
+    `https://${productionFrontendDomain}`,   // For solquest.io
+    // Add preview deployment URLs if needed, e.g., using a regex or specific URLs
+    // For local development:
+    // 'http://localhost:3000' 
+  ];
 
-  // Fallback for local development if needed, or manage via ENV VAR
-  // const allowedOrigin = process.env.NODE_ENV === 'development' 
-  //   ? 'http://localhost:3000' 
-  //   : 'https://solquest.io';
+  const origin = req.headers.origin;
+  let effectiveOrigin = allowedOrigins[0]; // Default to www if origin is not in the list or not present
+
+  if (origin && allowedOrigins.includes(origin)) {
+    effectiveOrigin = origin;
+  }
 
   res.setHeader('Access-Control-Allow-Credentials', 'true');
-  res.setHeader('Access-Control-Allow-Origin', allowedOrigin); 
-  // If you need to support multiple origins (e.g. previews), you'll need more logic here
-  // to check req.headers.origin and set it dynamically if it's in an allowed list.
-  // For now, hardcoding the production one is the most direct fix.
+  res.setHeader('Access-Control-Allow-Origin', effectiveOrigin);
+  res.setHeader('Vary', 'Origin'); // Important when dynamically setting Allow-Origin
 
   res.setHeader(
     'Access-Control-Allow-Methods',
