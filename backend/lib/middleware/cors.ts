@@ -5,6 +5,8 @@ import { VercelRequest, VercelResponse } from '@vercel/node';
  * Enables CORS headers to allow requests from the frontend
  */
 export function enableCors(req: VercelRequest, res: VercelResponse): void {
+  console.log('<<<<<< RUNNING LATEST CORS MIDDLEWARE - VERSION 001 >>>>>>'); // Version marker
+
   const origin = req.headers.origin;
   let effectiveOrigin = 'https://solquest.io'; // Default to non-www as a fallback
 
@@ -20,7 +22,9 @@ export function enableCors(req: VercelRequest, res: VercelResponse): void {
     effectiveOrigin = 'http://localhost:3000';
     console.log(`[CORS Logic] Matched localhost:3000, setting effectiveOrigin to: ${effectiveOrigin}`);
   } else {
-    console.log(`[CORS Logic] Origin ${origin} did not match specific cases, defaulting to: ${effectiveOrigin}`);
+    // For any other origin, or if origin is not present, it will default to 'https://solquest.io'
+    // This ensures that if origin is undefined, we still set a default ACAO to avoid errors if strict checking is off
+    console.log(`[CORS Logic] Origin ${origin} did not match specific cases or was undefined, defaulting to: ${effectiveOrigin}`);
   }
 
   res.setHeader('Access-Control-Allow-Credentials', 'true');
