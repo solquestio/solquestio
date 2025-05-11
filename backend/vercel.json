@@ -6,17 +6,6 @@
       "use": "@vercel/node"
     }
   ],
-  "headers": [
-    {
-      "source": "/(.*)",
-      "headers": [
-        { "key": "Access-Control-Allow-Credentials", "value": "true" },
-        { "key": "Access-Control-Allow-Methods", "value": "GET,OPTIONS,PATCH,DELETE,POST,PUT" },
-        { "key": "Access-Control-Allow-Headers", "value": "X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version, Authorization" },
-        { "key": "Content-Security-Policy", "value": "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; connect-src 'self' https://*.solquest.io https://solquest.io; img-src 'self' data: https:; style-src 'self' 'unsafe-inline';" }
-      ]
-    }
-  ],
   "rewrites": [
     { "source": "/api/quests/paths", "destination": "/api/quests/paths.ts" },
     { "source": "/api/quests/\\[id\\]", "destination": "/api/quests/[id].ts" },
@@ -33,8 +22,7 @@
     { "source": "/api/health", "destination": "/api/utils.ts?path=health" },
     { "source": "/api/auth", "destination": "/api/auth/index.ts" },
     { "source": "/api/quests", "destination": "/api/quests/index.ts" },
-    { "source": "/api", "destination": "/api/index.ts" },
-    { "source": "/(.*)", "destination": "/api/index.ts" }
+    { "source": "/api", "destination": "/api/index.ts" }
   ],
   "env": {
     "NODE_ENV": "production"
