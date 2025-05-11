@@ -7,6 +7,27 @@ import UserModel from '../../lib/models/User';
 export default async function handler(request: VercelRequest, response: VercelResponse) {
   // Enable CORS for this endpoint
   enableCors(request, response);
+  
+  // Direct CORS headers as backup to ensure they're set properly
+  const origin = request.headers.origin;
+  
+  // Handle different origins directly
+  if (origin === 'https://www.solquest.io' || origin === 'https://solquest.io' || origin === 'http://localhost:3000') {
+    response.setHeader('Access-Control-Allow-Origin', origin);
+  } else {
+    // Default fallback
+    response.setHeader('Access-Control-Allow-Origin', 'https://solquest.io');
+  }
+  
+  response.setHeader('Access-Control-Allow-Credentials', 'true');
+  response.setHeader('Access-Control-Allow-Methods', 'GET,OPTIONS,PATCH,DELETE,POST,PUT');
+  response.setHeader('Access-Control-Allow-Headers', 'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version, Authorization');
+  
+  // Handle preflight OPTIONS request
+  if (request.method === 'OPTIONS') {
+    return response.status(200).end();
+  }
+  
   try {
     // Connect to database
     await connectDB();

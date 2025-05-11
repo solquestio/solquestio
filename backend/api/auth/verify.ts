@@ -3,10 +3,32 @@ import jwt from 'jsonwebtoken';
 import UserModel from '../../lib/models/User';
 import { connectDB } from '../../lib/database';
 import { verifySignature } from '../../lib/utils/solana';
-
-
+import { enableCors } from '../../lib/middleware/cors';
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
+  // Enable CORS for this endpoint
+  enableCors(req, res);
+  
+  // Direct CORS headers as backup to ensure they're set properly
+  const origin = req.headers.origin;
+  
+  // Handle different origins directly
+  if (origin === 'https://www.solquest.io' || origin === 'https://solquest.io' || origin === 'http://localhost:3000') {
+    res.setHeader('Access-Control-Allow-Origin', origin);
+  } else {
+    // Default fallback
+    res.setHeader('Access-Control-Allow-Origin', 'https://solquest.io');
+  }
+  
+  res.setHeader('Access-Control-Allow-Credentials', 'true');
+  res.setHeader('Access-Control-Allow-Methods', 'GET,OPTIONS,PATCH,DELETE,POST,PUT');
+  res.setHeader('Access-Control-Allow-Headers', 'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version, Authorization');
+  
+  // Handle preflight OPTIONS request
+  if (req.method === 'OPTIONS') {
+    return res.status(200).end();
+  }
+  
   // Only allow POST requests
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
