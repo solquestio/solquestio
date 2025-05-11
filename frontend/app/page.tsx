@@ -58,6 +58,30 @@ const STATIC_LAYER_ZERO_PATH: LearningPath = {
   imageUrl: '/layerzero.jpg' // Adjusted path to be relative to the public directory root
 };
 
+const STATIC_SOLANA_FOUNDATIONS_PATH: LearningPath = {
+  id: 'solana-foundations',
+  title: 'Solana Explorer Path',
+  description: "Dive deep into Solana\'s core concepts, learn to navigate the ecosystem, and complete foundational quests, starting with community engagement.",
+  questCount: 7,
+  totalXp: 1650,
+  pathSlug: 'solana-foundations',
+  isLocked: false,
+  graphicType: 'image',
+  imageUrl: '/solana_v2_2b.jpg'
+};
+
+const STATIC_ZK_COMPRESSION_PATH: LearningPath = {
+  id: 'zk-compression-path',
+  title: 'ZK Compression Innovators Path',
+  description: "Learn about ZK Compression on Solana. Discover how to build scalable, private, and secure applications using compressed tokens and accounts, as featured in the 1000x Hackathon.",
+  questCount: 7, // Updated from 3
+  totalXp: 1000, // Updated from 300
+  pathSlug: 'zk-compression',
+  isLocked: false,
+  graphicType: 'image',
+  imageUrl: '/zk-compression.jpg' // Placeholder
+};
+
 // --- Helper Components --- 
 
 interface LearningPathCardProps {
@@ -387,7 +411,30 @@ export default function HomePage() {
             if (!fetchedPaths.find(p => p.id === STATIC_LAYER_ZERO_PATH.id)) {
                 combinedPaths.push(STATIC_LAYER_ZERO_PATH);
             }
-            setLearningPaths(combinedPaths);
+            // Add Solana Foundations path if it's not already in the fetched list (by id)
+            if (!combinedPaths.find(p => p.id === STATIC_SOLANA_FOUNDATIONS_PATH.id)) {
+                combinedPaths.push(STATIC_SOLANA_FOUNDATIONS_PATH);
+            }
+            // Add ZK Compression path if it's not already in the fetched list (by id)
+            if (!combinedPaths.find(p => p.id === STATIC_ZK_COMPRESSION_PATH.id)) {
+                combinedPaths.push(STATIC_ZK_COMPRESSION_PATH);
+            }
+            
+            // Deduplicate paths by ID, giving preference to fetched (backend) paths if IDs match
+            // This ensures that if the backend sends an updated version of a "static" path, it's used.
+            const uniquePathsMap = new Map<string, LearningPath>();
+
+            // Add static paths first (they might be overridden by fetched ones with the same ID)
+            uniquePathsMap.set(STATIC_LAYER_ZERO_PATH.id, STATIC_LAYER_ZERO_PATH);
+            uniquePathsMap.set(STATIC_SOLANA_FOUNDATIONS_PATH.id, STATIC_SOLANA_FOUNDATIONS_PATH);
+            uniquePathsMap.set(STATIC_ZK_COMPRESSION_PATH.id, STATIC_ZK_COMPRESSION_PATH);
+
+            // Add fetched paths, potentially overwriting static ones if IDs match
+            fetchedPaths.forEach(path => {
+                uniquePathsMap.set(path.id, path);
+            });
+
+            setLearningPaths(Array.from(uniquePathsMap.values()));
             setIsLoadingPaths(false);
         }
     }, []); // Dependency array remains empty as STATIC_LAYER_ZERO_PATH is stable

@@ -1,0 +1,12 @@
+{
+  "name": "solquestio-api-tests",
+  "version": "1.0.0",
+  "description": "API testing scripts for SolQuestio",
+  "main": "api-test.js",
+  "scripts": {
+    "test": "node api-test.js"
+  },
+  "dependencies": {
+    "node-fetch": "^2.6.7"
+  }
+}
