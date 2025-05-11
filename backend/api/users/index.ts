@@ -1,40 +1,30 @@
 import { VercelRequest, VercelResponse } from '@vercel/node';
-import { enableCors } from '../../lib/middleware/cors';
 import jwt from 'jsonwebtoken';
 import { connectDB } from '../../lib/database';
 import UserModel from '../../lib/models/User';
 
 export default async function handler(request: VercelRequest, response: VercelResponse) {
-  // Enable CORS for this endpoint
-  enableCors(request, response);
-  
-  // Direct CORS headers as backup to ensure they're set properly
-  const origin = request.headers.origin;
-  
-  // Handle different origins directly
-  if (origin === 'https://www.solquest.io' || origin === 'https://solquest.io' || origin === 'http://localhost:3000') {
-    response.setHeader('Access-Control-Allow-Origin', origin);
-  } else {
-    // Default fallback
-    response.setHeader('Access-Control-Allow-Origin', 'https://solquest.io');
-  }
-  
+  // --- CORS HEADERS ---
+  const origin = request.headers.origin || '';
+  const allowedOrigins = ['https://www.solquest.io', 'https://solquest.io', 'http://localhost:3000'];
+  const effectiveOrigin = allowedOrigins.includes(origin) ? origin : 'https://solquest.io';
+  response.setHeader('Access-Control-Allow-Origin', effectiveOrigin);
   response.setHeader('Access-Control-Allow-Credentials', 'true');
   response.setHeader('Access-Control-Allow-Methods', 'GET,OPTIONS,PATCH,DELETE,POST,PUT');
   response.setHeader('Access-Control-Allow-Headers', 'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version, Authorization');
-  
-  // Handle preflight OPTIONS request
+  response.setHeader('Vary', 'Origin');
+
+  // --- Handle OPTIONS ---
   if (request.method === 'OPTIONS') {
-    return response.status(200).end();
+    response.status(200).end();
+    return;
   }
-  
+
   try {
     // Connect to database
     await connectDB();
-    
     // Get path from query
     const { path } = request.query;
-    
     // Route to appropriate handler based on path
     switch (path) {
       case 'me':
@@ -53,7 +43,6 @@ export default async function handler(request: VercelRequest, response: VercelRe
         });
     }
   } catch (error) {
-    console.error('Error in users endpoint:', error);
     response.status(500).json({ 
       error: 'An unexpected error occurred',
       message: error instanceof Error ? error.message : 'Unknown error'
