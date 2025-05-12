@@ -8,6 +8,7 @@ import { SparklesIcon, TrophyIcon, UserCircleIcon, ArrowRightIcon } from '@heroi
 import Image from 'next/image'; // For NFT image
 import { AuthPromptModal } from '@/components/AuthPromptModal';
 import bs58 from 'bs58';
+import LandingLayout from './landing-layout'; // Import the new layout
 // import OGNftCard from '@/components/nft/OGNftCard'; // Removed import
 
 // --- Interfaces --- 
@@ -496,377 +497,379 @@ const ExampleQuestCard = ({ title, description, difficulty, xpReward, category, 
 // --- Main Homepage Component --- 
 export default function LandingPage() {
     return (
-        <main className="min-h-screen">
-            {/* Simple Header */}
-            <header className="absolute top-0 left-0 right-0 z-10 py-4">
-                <div className="container mx-auto px-4">
-                    <div className="flex justify-center">
-                        <div className="flex items-center">
-                            <Image 
-                                src="/solana-logo.svg" 
-                                alt="SolQuest Logo" 
-                                width={32} 
-                                height={32} 
-                                className="mr-2"
-                            />
-                            <span className="text-xl font-bold solana-gradient-text">SolQuest.io</span>
-                        </div>
-                    </div>
-                </div>
-            </header>
-
-            {/* Enhanced Hero Section with Web3 Background */}
-            <section className="relative pt-32 pb-40 overflow-hidden web3-grid">
-                <BlockchainNodes />
-                <div className="hero-gradient absolute inset-0" />
-                <div className="container mx-auto px-4 relative">
-                    <div className="text-center max-w-4xl mx-auto">
-                        <div className="mb-8 flex justify-center">
-                            <div className="relative w-24 h-24">
+        <LandingLayout>
+            <main className="min-h-screen">
+                {/* Simple Header */}
+                <header className="absolute top-0 left-0 right-0 z-10 py-4">
+                    <div className="container mx-auto px-4">
+                        <div className="flex justify-center">
+                            <div className="flex items-center">
                                 <Image 
                                     src="/solana-logo.svg" 
-                                    alt="Solana Logo"
-                                    width={96}
-                                    height={96}
-                                    className="token-float"
+                                    alt="SolQuest Logo" 
+                                    width={32} 
+                                    height={32} 
+                                    className="mr-2"
                                 />
+                                <span className="text-xl font-bold solana-gradient-text">SolQuest.io</span>
                             </div>
                         </div>
-                        <h1 className="text-6xl md:text-7xl lg:text-8xl font-bold mb-6">
-                            <span className="solana-gradient-text">SolQuest.io</span>
-                        </h1>
-                        <p className="text-xl md:text-2xl lg:text-3xl text-gray-300 mb-8 leading-relaxed">
-                            Your interactive quest-based learning platform for the Solana ecosystem.
-                            <br />
-                            <span className="text-indigo-400 font-semibold">Coming Soon!</span>
+                    </div>
+                </header>
+
+                {/* Enhanced Hero Section with Web3 Background */}
+                <section className="relative pt-32 pb-40 overflow-hidden web3-grid">
+                    <BlockchainNodes />
+                    <div className="hero-gradient absolute inset-0" />
+                    <div className="container mx-auto px-4 relative">
+                        <div className="text-center max-w-4xl mx-auto">
+                            <div className="mb-8 flex justify-center">
+                                <div className="relative w-24 h-24">
+                                    <Image 
+                                        src="/solana-logo.svg" 
+                                        alt="Solana Logo"
+                                        width={96}
+                                        height={96}
+                                        className="token-float"
+                                    />
+                                </div>
+                            </div>
+                            <h1 className="text-6xl md:text-7xl lg:text-8xl font-bold mb-6">
+                                <span className="solana-gradient-text">SolQuest.io</span>
+                            </h1>
+                            <p className="text-xl md:text-2xl lg:text-3xl text-gray-300 mb-8 leading-relaxed">
+                                Your interactive quest-based learning platform for the Solana ecosystem.
+                                <br />
+                                <span className="text-indigo-400 font-semibold">Coming Soon!</span>
+                            </p>
+                            <div className="flex flex-wrap justify-center gap-6">
+                                <a
+                                    href="https://twitter.com/solquestio"
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="px-8 py-4 bg-indigo-600 hover:bg-indigo-700 rounded-lg font-medium text-lg transition-colors glow-button"
+                                >
+                                    Follow on Twitter
+                                </a>
+                                <a
+                                    href="mailto:hello@solquest.io"
+                                    className="px-8 py-4 bg-gray-800 hover:bg-gray-700 rounded-lg font-medium text-lg transition-colors"
+                                >
+                                    Contact Us
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                {/* Enhanced Stats Section */}
+                <section className="py-16 bg-gray-900/80 relative -mt-20">
+                    <div className="container mx-auto px-4">
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-6 max-w-5xl mx-auto">
+                            <StatCard 
+                                icon="🧭" 
+                                value="3+" 
+                                label="Learning Paths" 
+                                color="bg-indigo-500"
+                            />
+                            <StatCard 
+                                icon="🧩" 
+                                value="20+" 
+                                label="Interactive Quests" 
+                                color="bg-purple-500"
+                            />
+                            <StatCard 
+                                icon="🏆" 
+                                value="1000+" 
+                                label="XP per Path" 
+                                color="bg-yellow-500"
+                            />
+                            <StatCard 
+                                icon="💰" 
+                                value="$SOL" 
+                                label="Rewards" 
+                                color="bg-green-500"
+                            />
+                        </div>
+                    </div>
+                </section>
+
+                {/* Features Section */}
+                <section className="py-20 bg-gray-900/50">
+                    <div className="container mx-auto px-4">
+                        <h2 className="text-3xl md:text-4xl font-bold text-center mb-12">
+                            <span className="solana-gradient-text">Features Coming Soon</span>
+                        </h2>
+                        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+                            {features.map((feature, index) => (
+                                <div key={index} className="feature-card glow-effect">
+                                    <div className="text-2xl mb-4">{feature.icon}</div>
+                                    <h3 className="text-xl font-semibold mb-2">{feature.title}</h3>
+                                    <p className="text-gray-400">{feature.description}</p>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                </section>
+
+                {/* Learning Paths Preview */}
+                <section className="py-20 relative overflow-hidden">
+                    <div className="absolute inset-0 opacity-10">
+                        <div className="absolute inset-0 bg-gradient-to-br from-indigo-600/20 to-purple-600/20" />
+                    </div>
+                    <div className="container mx-auto px-4 relative">
+                        <h2 className="text-3xl md:text-4xl font-bold text-center mb-6">
+                            <span className="gradient-text">Learning Paths</span>
+                        </h2>
+                        <p className="text-center text-gray-300 mb-12 max-w-2xl mx-auto">
+                            Explore our interactive learning paths designed to take you from beginner to expert in the Solana ecosystem.
                         </p>
-                        <div className="flex flex-wrap justify-center gap-6">
-                            <a
-                                href="https://twitter.com/solquestio"
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="px-8 py-4 bg-indigo-600 hover:bg-indigo-700 rounded-lg font-medium text-lg transition-colors glow-button"
-                            >
-                                Follow on Twitter
-                            </a>
-                            <a
-                                href="mailto:hello@solquest.io"
-                                className="px-8 py-4 bg-gray-800 hover:bg-gray-700 rounded-lg font-medium text-lg transition-colors"
-                            >
-                                Contact Us
-                            </a>
-                        </div>
-                    </div>
-                </div>
-            </section>
-
-            {/* Enhanced Stats Section */}
-            <section className="py-16 bg-gray-900/80 relative -mt-20">
-                <div className="container mx-auto px-4">
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-6 max-w-5xl mx-auto">
-                        <StatCard 
-                            icon="🧭" 
-                            value="3+" 
-                            label="Learning Paths" 
-                            color="bg-indigo-500"
-                        />
-                        <StatCard 
-                            icon="🧩" 
-                            value="20+" 
-                            label="Interactive Quests" 
-                            color="bg-purple-500"
-                        />
-                        <StatCard 
-                            icon="🏆" 
-                            value="1000+" 
-                            label="XP per Path" 
-                            color="bg-yellow-500"
-                        />
-                        <StatCard 
-                            icon="💰" 
-                            value="$SOL" 
-                            label="Rewards" 
-                            color="bg-green-500"
-                        />
-                    </div>
-                </div>
-            </section>
-
-            {/* Features Section */}
-            <section className="py-20 bg-gray-900/50">
-                <div className="container mx-auto px-4">
-                    <h2 className="text-3xl md:text-4xl font-bold text-center mb-12">
-                        <span className="solana-gradient-text">Features Coming Soon</span>
-                    </h2>
-                    <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-                        {features.map((feature, index) => (
-                            <div key={index} className="feature-card glow-effect">
-                                <div className="text-2xl mb-4">{feature.icon}</div>
-                                <h3 className="text-xl font-semibold mb-2">{feature.title}</h3>
-                                <p className="text-gray-400">{feature.description}</p>
-                            </div>
-                        ))}
-                    </div>
-                </div>
-            </section>
-
-            {/* Learning Paths Preview */}
-            <section className="py-20 relative overflow-hidden">
-                <div className="absolute inset-0 opacity-10">
-                    <div className="absolute inset-0 bg-gradient-to-br from-indigo-600/20 to-purple-600/20" />
-                </div>
-                <div className="container mx-auto px-4 relative">
-                    <h2 className="text-3xl md:text-4xl font-bold text-center mb-6">
-                        <span className="gradient-text">Learning Paths</span>
-                    </h2>
-                    <p className="text-center text-gray-300 mb-12 max-w-2xl mx-auto">
-                        Explore our interactive learning paths designed to take you from beginner to expert in the Solana ecosystem.
-                    </p>
-                    
-                    <div className="grid md:grid-cols-3 gap-8">
-                        <div className="bg-gray-800/50 backdrop-blur-sm border border-gray-700/50 rounded-xl overflow-hidden">
-                            <div className="h-40 bg-gradient-to-r from-purple-900/80 to-indigo-900/80 flex items-center justify-center">
-                                <Image src="/layerzero.jpg" alt="LayerZero" width={120} height={120} className="rounded-lg" />
-                            </div>
-                            <div className="p-6">
-                                <h3 className="text-xl font-semibold mb-2">LayerZero Path</h3>
-                                <p className="text-gray-400 text-sm mb-4">Master omnichain interactions with LayerZero V2. Send messages and tokens across blockchains.</p>
-                                <div className="flex justify-between text-sm">
-                                    <span className="text-gray-500">3 Quests</span>
-                                    <span className="text-yellow-400">1500 XP</span>
+                        
+                        <div className="grid md:grid-cols-3 gap-8">
+                            <div className="bg-gray-800/50 backdrop-blur-sm border border-gray-700/50 rounded-xl overflow-hidden">
+                                <div className="h-40 bg-gradient-to-r from-purple-900/80 to-indigo-900/80 flex items-center justify-center">
+                                    <Image src="/layerzero.jpg" alt="LayerZero" width={120} height={120} className="rounded-lg" />
+                                </div>
+                                <div className="p-6">
+                                    <h3 className="text-xl font-semibold mb-2">LayerZero Path</h3>
+                                    <p className="text-gray-400 text-sm mb-4">Master omnichain interactions with LayerZero V2. Send messages and tokens across blockchains.</p>
+                                    <div className="flex justify-between text-sm">
+                                        <span className="text-gray-500">3 Quests</span>
+                                        <span className="text-yellow-400">1500 XP</span>
+                                    </div>
                                 </div>
                             </div>
-                        </div>
-                        
-                        <div className="bg-gray-800/50 backdrop-blur-sm border border-gray-700/50 rounded-xl overflow-hidden">
-                            <div className="h-40 bg-gradient-to-r from-green-900/80 to-blue-900/80 flex items-center justify-center">
-                                <Image src="/solana_v2_2b.jpg" alt="Solana Explorer" width={120} height={120} className="rounded-lg" />
-                            </div>
-                            <div className="p-6">
-                                <h3 className="text-xl font-semibold mb-2">Solana Explorer Path</h3>
-                                <p className="text-gray-400 text-sm mb-4">Dive deep into Solana's core concepts and learn to navigate the ecosystem.</p>
-                                <div className="flex justify-between text-sm">
-                                    <span className="text-gray-500">7 Quests</span>
-                                    <span className="text-yellow-400">1650 XP</span>
+                            
+                            <div className="bg-gray-800/50 backdrop-blur-sm border border-gray-700/50 rounded-xl overflow-hidden">
+                                <div className="h-40 bg-gradient-to-r from-green-900/80 to-blue-900/80 flex items-center justify-center">
+                                    <Image src="/solana_v2_2b.jpg" alt="Solana Explorer" width={120} height={120} className="rounded-lg" />
+                                </div>
+                                <div className="p-6">
+                                    <h3 className="text-xl font-semibold mb-2">Solana Explorer Path</h3>
+                                    <p className="text-gray-400 text-sm mb-4">Dive deep into Solana's core concepts and learn to navigate the ecosystem.</p>
+                                    <div className="flex justify-between text-sm">
+                                        <span className="text-gray-500">7 Quests</span>
+                                        <span className="text-yellow-400">1650 XP</span>
+                                    </div>
                                 </div>
                             </div>
-                        </div>
-                        
-                        <div className="bg-gray-800/50 backdrop-blur-sm border border-gray-700/50 rounded-xl overflow-hidden">
-                            <div className="h-40 bg-gradient-to-r from-blue-900/80 to-cyan-900/80 flex items-center justify-center">
-                                <Image src="/zk-compression.svg" alt="ZK Compression" width={120} height={120} className="rounded-lg" />
-                            </div>
-                            <div className="p-6">
-                                <h3 className="text-xl font-semibold mb-2">ZK Compression Path</h3>
-                                <p className="text-gray-400 text-sm mb-4">Build scalable, private, and secure applications using compressed tokens and accounts.</p>
-                                <div className="flex justify-between text-sm">
-                                    <span className="text-gray-500">7 Quests</span>
-                                    <span className="text-yellow-400">1000 XP</span>
+                            
+                            <div className="bg-gray-800/50 backdrop-blur-sm border border-gray-700/50 rounded-xl overflow-hidden">
+                                <div className="h-40 bg-gradient-to-r from-blue-900/80 to-cyan-900/80 flex items-center justify-center">
+                                    <Image src="/zk-compression.svg" alt="ZK Compression" width={120} height={120} className="rounded-lg" />
+                                </div>
+                                <div className="p-6">
+                                    <h3 className="text-xl font-semibold mb-2">ZK Compression Path</h3>
+                                    <p className="text-gray-400 text-sm mb-4">Build scalable, private, and secure applications using compressed tokens and accounts.</p>
+                                    <div className="flex justify-between text-sm">
+                                        <span className="text-gray-500">7 Quests</span>
+                                        <span className="text-yellow-400">1000 XP</span>
+                                    </div>
                                 </div>
                             </div>
                         </div>
                     </div>
-                </div>
-            </section>
+                </section>
 
-            {/* Example Quests Section */}
-            <section className="py-20 bg-gray-900/70">
-                <div className="container mx-auto px-4">
-                    <h2 className="text-3xl md:text-4xl font-bold text-center mb-6">
-                        <span className="gradient-text">Example Quests</span>
-                    </h2>
-                    <p className="text-center text-gray-300 mb-12 max-w-2xl mx-auto">
-                        Our quests range from beginner-friendly tutorials to advanced technical challenges, covering a wide range of Solana topics.
-                    </p>
-                    
-                    <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-                        <ExampleQuestCard 
-                            title="LayerZero Messenger"
-                            description="Build and deploy a cross-chain messaging application using LayerZero's omnichain communication protocol."
-                            difficulty="Advanced"
-                            xpReward={500}
-                            category="Cross-Chain"
-                            icon="🔄"
-                        />
-                        <ExampleQuestCard 
-                            title="Create a Compressed NFT"
-                            description="Learn how to create and mint compressed NFTs using Solana's state compression technology for gas efficiency."
-                            difficulty="Intermediate"
-                            xpReward={350}
-                            category="NFTs"
-                            icon="🗜️"
-                        />
-                        <ExampleQuestCard 
-                            title="Build a Simple dApp"
-                            description="Create your first decentralized application on Solana using the web3.js library and connect it to a wallet."
-                            difficulty="Beginner"
-                            xpReward={200}
-                            category="Development"
-                            icon="🔨"
-                        />
-                        <ExampleQuestCard 
-                            title="Deploy a Solana Program"
-                            description="Write and deploy a Rust-based Solana program to the devnet and interact with it from a frontend."
-                            difficulty="Advanced"
-                            xpReward={450}
-                            category="Smart Contracts"
-                            icon="📦"
-                        />
-                        <ExampleQuestCard 
-                            title="Stake SOL Tokens"
-                            description="Learn how to stake SOL tokens with validators and earn staking rewards while supporting the network."
-                            difficulty="Beginner"
-                            xpReward={150}
-                            category="DeFi"
-                            icon="💰"
-                        />
-                        <ExampleQuestCard 
-                            title="Implement Account Compression"
-                            description="Optimize your Solana application by implementing account compression techniques for better performance."
-                            difficulty="Intermediate"
-                            xpReward={400}
-                            category="Optimization"
-                            icon="⚡"
-                        />
-                    </div>
-                </div>
-            </section>
-
-            {/* NFT Showcase */}
-            <section className="py-20 bg-gray-900/50">
-                <div className="container mx-auto px-4">
-                    <h2 className="text-3xl md:text-4xl font-bold text-center mb-6">
-                        <span className="gradient-text">Exclusive NFT Rewards</span>
-                    </h2>
-                    <p className="text-center text-gray-300 mb-12 max-w-2xl mx-auto">
-                        Complete quests and earn exclusive NFTs that provide special benefits in the SolQuest ecosystem.
-                    </p>
-                    
-                    <div className="grid md:grid-cols-3 gap-8">
-                        <NFTCard 
-                            image="/placeholder-nft.svg"
-                            title="SolQuest OG Pass"
-                            description="Early adopter NFT with exclusive XP boosts and special community perks."
-                        />
-                        <NFTCard 
-                            image="/placeholder-nft.svg"
-                            title="Path Completion Badge"
-                            description="Showcase your achievements and expertise in specific Solana domains."
-                        />
-                        <NFTCard 
-                            image="/placeholder-nft.svg"
-                            title="Quest Master Collection"
-                            description="Rare NFTs for users who complete all quests with perfect scores."
-                        />
-                    </div>
-                </div>
-            </section>
-
-            {/* How It Works */}
-            <section className="py-20 relative overflow-hidden">
-                <div className="container mx-auto px-4">
-                    <h2 className="text-3xl md:text-4xl font-bold text-center mb-12">
-                        <span className="solana-gradient-text">How SolQuest Works</span>
-                    </h2>
-                    
-                    <div className="grid md:grid-cols-4 gap-8 max-w-5xl mx-auto">
-                        <div className="text-center">
-                            <div className="w-16 h-16 bg-indigo-900/50 rounded-full flex items-center justify-center mx-auto mb-4">
-                                <span className="text-2xl">1</span>
-                            </div>
-                            <h3 className="text-lg font-semibold mb-2">Connect Wallet</h3>
-                            <p className="text-gray-400 text-sm">Connect your Solana wallet to get started on your learning journey.</p>
-                        </div>
+                {/* Example Quests Section */}
+                <section className="py-20 bg-gray-900/70">
+                    <div className="container mx-auto px-4">
+                        <h2 className="text-3xl md:text-4xl font-bold text-center mb-6">
+                            <span className="gradient-text">Example Quests</span>
+                        </h2>
+                        <p className="text-center text-gray-300 mb-12 max-w-2xl mx-auto">
+                            Our quests range from beginner-friendly tutorials to advanced technical challenges, covering a wide range of Solana topics.
+                        </p>
                         
-                        <div className="text-center">
-                            <div className="w-16 h-16 bg-indigo-900/50 rounded-full flex items-center justify-center mx-auto mb-4">
-                                <span className="text-2xl">2</span>
-                            </div>
-                            <h3 className="text-lg font-semibold mb-2">Choose a Path</h3>
-                            <p className="text-gray-400 text-sm">Select from various learning paths based on your interests.</p>
-                        </div>
-                        
-                        <div className="text-center">
-                            <div className="w-16 h-16 bg-indigo-900/50 rounded-full flex items-center justify-center mx-auto mb-4">
-                                <span className="text-2xl">3</span>
-                            </div>
-                            <h3 className="text-lg font-semibold mb-2">Complete Quests</h3>
-                            <p className="text-gray-400 text-sm">Follow interactive tutorials and complete on-chain verification tasks.</p>
-                        </div>
-                        
-                        <div className="text-center">
-                            <div className="w-16 h-16 bg-indigo-900/50 rounded-full flex items-center justify-center mx-auto mb-4">
-                                <span className="text-2xl">4</span>
-                            </div>
-                            <h3 className="text-lg font-semibold mb-2">Earn Rewards</h3>
-                            <p className="text-gray-400 text-sm">Gain XP, climb the leaderboard, and earn exclusive NFT rewards.</p>
+                        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+                            <ExampleQuestCard 
+                                title="LayerZero Messenger"
+                                description="Build and deploy a cross-chain messaging application using LayerZero's omnichain communication protocol."
+                                difficulty="Advanced"
+                                xpReward={500}
+                                category="Cross-Chain"
+                                icon="🔄"
+                            />
+                            <ExampleQuestCard 
+                                title="Create a Compressed NFT"
+                                description="Learn how to create and mint compressed NFTs using Solana's state compression technology for gas efficiency."
+                                difficulty="Intermediate"
+                                xpReward={350}
+                                category="NFTs"
+                                icon="🗜️"
+                            />
+                            <ExampleQuestCard 
+                                title="Build a Simple dApp"
+                                description="Create your first decentralized application on Solana using the web3.js library and connect it to a wallet."
+                                difficulty="Beginner"
+                                xpReward={200}
+                                category="Development"
+                                icon="🔨"
+                            />
+                            <ExampleQuestCard 
+                                title="Deploy a Solana Program"
+                                description="Write and deploy a Rust-based Solana program to the devnet and interact with it from a frontend."
+                                difficulty="Advanced"
+                                xpReward={450}
+                                category="Smart Contracts"
+                                icon="📦"
+                            />
+                            <ExampleQuestCard 
+                                title="Stake SOL Tokens"
+                                description="Learn how to stake SOL tokens with validators and earn staking rewards while supporting the network."
+                                difficulty="Beginner"
+                                xpReward={150}
+                                category="DeFi"
+                                icon="💰"
+                            />
+                            <ExampleQuestCard 
+                                title="Implement Account Compression"
+                                description="Optimize your Solana application by implementing account compression techniques for better performance."
+                                difficulty="Intermediate"
+                                xpReward={400}
+                                category="Optimization"
+                                icon="⚡"
+                            />
                         </div>
                     </div>
-                </div>
-            </section>
+                </section>
 
-            {/* CTA Section */}
-            <section className="py-20 bg-gradient-to-br from-gray-900 to-indigo-900/50">
-                <div className="container mx-auto px-4 text-center">
-                    <h2 className="text-3xl md:text-4xl font-bold mb-6">
-                        Ready to Start Your Solana Journey?
-                    </h2>
-                    <p className="text-xl text-gray-300 mb-8 max-w-2xl mx-auto">
-                        Join our community and be the first to know when we launch.
-                        Follow us on Twitter for updates and early access opportunities.
-                    </p>
-                    <a
-                        href="https://twitter.com/solquestio"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="inline-block px-8 py-4 bg-indigo-600 hover:bg-indigo-700 rounded-lg font-medium text-lg transition-colors glow-button"
-                    >
-                        Follow for Updates
-                    </a>
-                    
-                    <div className="mt-12 flex flex-wrap justify-center gap-8">
-                        <div className="flex items-center">
-                            <span className="text-2xl mr-3">📱</span>
-                            <span className="text-gray-300">Mobile Friendly</span>
-                        </div>
-                        <div className="flex items-center">
-                            <span className="text-2xl mr-3">🔒</span>
-                            <span className="text-gray-300">Secure & Non-Custodial</span>
-                        </div>
-                        <div className="flex items-center">
-                            <span className="text-2xl mr-3">🌐</span>
-                            <span className="text-gray-300">Web3 Native</span>
+                {/* NFT Showcase */}
+                <section className="py-20 bg-gray-900/50">
+                    <div className="container mx-auto px-4">
+                        <h2 className="text-3xl md:text-4xl font-bold text-center mb-6">
+                            <span className="gradient-text">Exclusive NFT Rewards</span>
+                        </h2>
+                        <p className="text-center text-gray-300 mb-12 max-w-2xl mx-auto">
+                            Complete quests and earn exclusive NFTs that provide special benefits in the SolQuest ecosystem.
+                        </p>
+                        
+                        <div className="grid md:grid-cols-3 gap-8">
+                            <NFTCard 
+                                image="/placeholder-nft.svg"
+                                title="SolQuest OG Pass"
+                                description="Early adopter NFT with exclusive XP boosts and special community perks."
+                            />
+                            <NFTCard 
+                                image="/placeholder-nft.svg"
+                                title="Path Completion Badge"
+                                description="Showcase your achievements and expertise in specific Solana domains."
+                            />
+                            <NFTCard 
+                                image="/placeholder-nft.svg"
+                                title="Quest Master Collection"
+                                description="Rare NFTs for users who complete all quests with perfect scores."
+                            />
                         </div>
                     </div>
-                </div>
-            </section>
-            
-            {/* Footer */}
-            <footer className="py-8 bg-gray-900 border-t border-gray-800">
-                <div className="container mx-auto px-4">
-                    <div className="flex flex-col md:flex-row justify-between items-center">
-                        <div className="mb-4 md:mb-0">
-                            <h3 className="text-xl font-bold solana-gradient-text">SolQuest.io</h3>
-                            <p className="text-sm text-gray-500">Embark on your Solana Adventure</p>
-                        </div>
-                        <div className="flex gap-4">
-                            <a href="https://twitter.com/solquestio" target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-white">
-                                Twitter
-                            </a>
-                            <a href="https://discord.gg/solquest" target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-white">
-                                Discord
-                            </a>
-                            <a href="mailto:hello@solquest.io" className="text-gray-400 hover:text-white">
-                                Contact
-                            </a>
+                </section>
+
+                {/* How It Works */}
+                <section className="py-20 relative overflow-hidden">
+                    <div className="container mx-auto px-4">
+                        <h2 className="text-3xl md:text-4xl font-bold text-center mb-12">
+                            <span className="solana-gradient-text">How SolQuest Works</span>
+                        </h2>
+                        
+                        <div className="grid md:grid-cols-4 gap-8 max-w-5xl mx-auto">
+                            <div className="text-center">
+                                <div className="w-16 h-16 bg-indigo-900/50 rounded-full flex items-center justify-center mx-auto mb-4">
+                                    <span className="text-2xl">1</span>
+                                </div>
+                                <h3 className="text-lg font-semibold mb-2">Connect Wallet</h3>
+                                <p className="text-gray-400 text-sm">Connect your Solana wallet to get started on your learning journey.</p>
+                            </div>
+                            
+                            <div className="text-center">
+                                <div className="w-16 h-16 bg-indigo-900/50 rounded-full flex items-center justify-center mx-auto mb-4">
+                                    <span className="text-2xl">2</span>
+                                </div>
+                                <h3 className="text-lg font-semibold mb-2">Choose a Path</h3>
+                                <p className="text-gray-400 text-sm">Select from various learning paths based on your interests.</p>
+                            </div>
+                            
+                            <div className="text-center">
+                                <div className="w-16 h-16 bg-indigo-900/50 rounded-full flex items-center justify-center mx-auto mb-4">
+                                    <span className="text-2xl">3</span>
+                                </div>
+                                <h3 className="text-lg font-semibold mb-2">Complete Quests</h3>
+                                <p className="text-gray-400 text-sm">Follow interactive tutorials and complete on-chain verification tasks.</p>
+                            </div>
+                            
+                            <div className="text-center">
+                                <div className="w-16 h-16 bg-indigo-900/50 rounded-full flex items-center justify-center mx-auto mb-4">
+                                    <span className="text-2xl">4</span>
+                                </div>
+                                <h3 className="text-lg font-semibold mb-2">Earn Rewards</h3>
+                                <p className="text-gray-400 text-sm">Gain XP, climb the leaderboard, and earn exclusive NFT rewards.</p>
+                            </div>
                         </div>
                     </div>
-                    <div className="mt-6 text-center text-xs text-gray-600">
-                        &copy; {new Date().getFullYear()} SolQuest.io. All rights reserved.
+                </section>
+
+                {/* CTA Section */}
+                <section className="py-20 bg-gradient-to-br from-gray-900 to-indigo-900/50">
+                    <div className="container mx-auto px-4 text-center">
+                        <h2 className="text-3xl md:text-4xl font-bold mb-6">
+                            Ready to Start Your Solana Journey?
+                        </h2>
+                        <p className="text-xl text-gray-300 mb-8 max-w-2xl mx-auto">
+                            Join our community and be the first to know when we launch.
+                            Follow us on Twitter for updates and early access opportunities.
+                        </p>
+                        <a
+                            href="https://twitter.com/solquestio"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-block px-8 py-4 bg-indigo-600 hover:bg-indigo-700 rounded-lg font-medium text-lg transition-colors glow-button"
+                        >
+                            Follow for Updates
+                        </a>
+                        
+                        <div className="mt-12 flex flex-wrap justify-center gap-8">
+                            <div className="flex items-center">
+                                <span className="text-2xl mr-3">📱</span>
+                                <span className="text-gray-300">Mobile Friendly</span>
+                            </div>
+                            <div className="flex items-center">
+                                <span className="text-2xl mr-3">🔒</span>
+                                <span className="text-gray-300">Secure & Non-Custodial</span>
+                            </div>
+                            <div className="flex items-center">
+                                <span className="text-2xl mr-3">🌐</span>
+                                <span className="text-gray-300">Web3 Native</span>
+                            </div>
+                        </div>
                     </div>
-                </div>
-            </footer>
-        </main>
+                </section>
+                
+                {/* Footer */}
+                <footer className="py-8 bg-gray-900 border-t border-gray-800">
+                    <div className="container mx-auto px-4">
+                        <div className="flex flex-col md:flex-row justify-between items-center">
+                            <div className="mb-4 md:mb-0">
+                                <h3 className="text-xl font-bold solana-gradient-text">SolQuest.io</h3>
+                                <p className="text-sm text-gray-500">Embark on your Solana Adventure</p>
+                            </div>
+                            <div className="flex gap-4">
+                                <a href="https://twitter.com/solquestio" target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-white">
+                                    Twitter
+                                </a>
+                                <a href="https://discord.gg/solquest" target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-white">
+                                    Discord
+                                </a>
+                                <a href="mailto:hello@solquest.io" className="text-gray-400 hover:text-white">
+                                    Contact
+                                </a>
+                            </div>
+                        </div>
+                        <div className="mt-6 text-center text-xs text-gray-600">
+                            &copy; {new Date().getFullYear()} SolQuest.io. All rights reserved.
+                        </div>
+                    </div>
+                </footer>
+            </main>
+        </LandingLayout>
     );
 }
 
