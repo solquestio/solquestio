@@ -358,29 +358,138 @@ const LeaderboardSnippet: React.FC = () => {
     );
 };
 
+// Blockchain Node Animation Component
+const BlockchainNodes = () => {
+  const [nodes, setNodes] = useState<{id: number, x: number, y: number, size: number, delay: number}[]>([]);
+  
+  useEffect(() => {
+    // Create random nodes
+    const newNodes = Array.from({ length: 20 }, (_, i) => ({
+      id: i,
+      x: Math.random() * 100,
+      y: Math.random() * 100,
+      size: Math.random() * 4 + 2,
+      delay: Math.random() * 5
+    }));
+    setNodes(newNodes);
+    
+    // Create random blockchain paths
+    const createPaths = () => {
+      const paths = document.querySelectorAll('.blockchain-path');
+      paths.forEach(path => path.remove());
+      
+      const container = document.querySelector('.blockchain-nodes');
+      if (!container) return;
+      
+      for (let i = 0; i < 5; i++) {
+        const path = document.createElement('div');
+        path.className = 'blockchain-path';
+        path.style.width = `${Math.random() * 30 + 10}%`;
+        path.style.top = `${Math.random() * 80 + 10}%`;
+        path.style.left = `${Math.random() * 20}%`;
+        path.style.animationDelay = `${Math.random() * 5}s`;
+        container.appendChild(path);
+      }
+    };
+    
+    createPaths();
+    const interval = setInterval(createPaths, 8000);
+    
+    return () => clearInterval(interval);
+  }, []);
+  
+  return (
+    <div className="blockchain-nodes">
+      {nodes.map(node => (
+        <div 
+          key={node.id}
+          className="node"
+          style={{
+            left: `${node.x}%`,
+            top: `${node.y}%`,
+            width: `${node.size}px`,
+            height: `${node.size}px`,
+            animationDelay: `${node.delay}s`
+          }}
+        />
+      ))}
+    </div>
+  );
+};
+
+// NFT Card Component
+const NFTCard = ({ image, title, description }: { image: string, title: string, description: string }) => {
+  return (
+    <div className="nft-card">
+      <div className="relative h-48 w-full overflow-hidden">
+        <Image 
+          src={image} 
+          alt={title}
+          layout="fill"
+          objectFit="cover"
+          className="transition-transform duration-500 hover:scale-110"
+        />
+      </div>
+      <div className="p-5">
+        <h3 className="text-lg font-semibold mb-2">{title}</h3>
+        <p className="text-gray-400 text-sm">{description}</p>
+        <div className="mt-4 flex justify-between items-center">
+          <span className="text-xs text-indigo-400">Exclusive Rewards</span>
+          <span className="text-xs bg-indigo-900/50 text-indigo-300 px-2 py-1 rounded-full">Coming Soon</span>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// Stat Card Component
+const StatCard = ({ icon, value, label }: { icon: string, value: string, label: string }) => {
+  return (
+    <div className="stat-card">
+      <div className="flex items-center mb-2">
+        <span className="text-2xl mr-3">{icon}</span>
+        <span className="text-gray-400 text-sm">{label}</span>
+      </div>
+      <div className="text-2xl font-bold solana-gradient-text">{value}</div>
+    </div>
+  );
+};
+
 // --- Main Homepage Component --- 
 export default function LandingPage() {
     return (
         <main className="min-h-screen">
-            {/* Hero Section */}
-            <section className="relative pt-20 pb-32 overflow-hidden">
+            {/* Hero Section with Web3 Background */}
+            <section className="relative pt-20 pb-32 overflow-hidden web3-grid">
+                <BlockchainNodes />
                 <div className="hero-gradient absolute inset-0" />
                 <div className="container mx-auto px-4 relative">
                     <div className="text-center max-w-4xl mx-auto">
+                        <div className="mb-6 flex justify-center">
+                            <div className="relative w-16 h-16 mb-4">
+                                <Image 
+                                    src="/solana-logo.png" 
+                                    alt="Solana Logo"
+                                    width={64}
+                                    height={64}
+                                    className="token-float"
+                                />
+                            </div>
+                        </div>
                         <h1 className="text-5xl md:text-7xl font-bold mb-6">
-                            <span className="gradient-text">SolQuest.io</span>
+                            <span className="solana-gradient-text">SolQuest.io</span>
                         </h1>
                         <p className="text-xl md:text-2xl text-gray-300 mb-8">
                             Your interactive quest-based learning platform for the Solana ecosystem.
                             <br />
                             <span className="text-indigo-400 font-semibold">Coming Soon!</span>
                         </p>
-                        <div className="flex justify-center gap-4">
+                        <div className="flex flex-wrap justify-center gap-4">
                             <a
                                 href="https://twitter.com/solquestio"
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className="px-6 py-3 bg-indigo-600 hover:bg-indigo-700 rounded-lg font-medium transition-colors"
+                                className="px-6 py-3 bg-indigo-600 hover:bg-indigo-700 rounded-lg font-medium transition-colors glow-button"
                             >
                                 Follow on Twitter
                             </a>
@@ -395,15 +504,27 @@ export default function LandingPage() {
                 </div>
             </section>
 
+            {/* Stats Section */}
+            <section className="py-16 bg-gray-900/80">
+                <div className="container mx-auto px-4">
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+                        <StatCard icon="🔍" value="3+" label="Learning Paths" />
+                        <StatCard icon="🧩" value="20+" label="Interactive Quests" />
+                        <StatCard icon="🏆" value="1000+" label="XP per Path" />
+                        <StatCard icon="💰" value="$SOL" label="Rewards" />
+                    </div>
+                </div>
+            </section>
+
             {/* Features Section */}
             <section className="py-20 bg-gray-900/50">
                 <div className="container mx-auto px-4">
                     <h2 className="text-3xl md:text-4xl font-bold text-center mb-12">
-                        <span className="gradient-text">Features Coming Soon</span>
+                        <span className="solana-gradient-text">Features Coming Soon</span>
                     </h2>
                     <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
                         {features.map((feature, index) => (
-                            <div key={index} className="feature-card">
+                            <div key={index} className="feature-card glow-effect">
                                 <div className="text-2xl mb-4">{feature.icon}</div>
                                 <h3 className="text-xl font-semibold mb-2">{feature.title}</h3>
                                 <p className="text-gray-400">{feature.description}</p>
@@ -413,8 +534,140 @@ export default function LandingPage() {
                 </div>
             </section>
 
+            {/* Learning Paths Preview */}
+            <section className="py-20 relative overflow-hidden">
+                <div className="absolute inset-0 opacity-10">
+                    <div className="absolute inset-0 bg-gradient-to-br from-indigo-600/20 to-purple-600/20" />
+                </div>
+                <div className="container mx-auto px-4 relative">
+                    <h2 className="text-3xl md:text-4xl font-bold text-center mb-6">
+                        <span className="gradient-text">Learning Paths</span>
+                    </h2>
+                    <p className="text-center text-gray-300 mb-12 max-w-2xl mx-auto">
+                        Explore our interactive learning paths designed to take you from beginner to expert in the Solana ecosystem.
+                    </p>
+                    
+                    <div className="grid md:grid-cols-3 gap-8">
+                        <div className="bg-gray-800/50 backdrop-blur-sm border border-gray-700/50 rounded-xl overflow-hidden">
+                            <div className="h-40 bg-gradient-to-r from-purple-900/80 to-indigo-900/80 flex items-center justify-center">
+                                <Image src="/layerzero.jpg" alt="LayerZero" width={120} height={120} className="rounded-lg" />
+                            </div>
+                            <div className="p-6">
+                                <h3 className="text-xl font-semibold mb-2">LayerZero Path</h3>
+                                <p className="text-gray-400 text-sm mb-4">Master omnichain interactions with LayerZero V2. Send messages and tokens across blockchains.</p>
+                                <div className="flex justify-between text-sm">
+                                    <span className="text-gray-500">3 Quests</span>
+                                    <span className="text-yellow-400">1500 XP</span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div className="bg-gray-800/50 backdrop-blur-sm border border-gray-700/50 rounded-xl overflow-hidden">
+                            <div className="h-40 bg-gradient-to-r from-green-900/80 to-blue-900/80 flex items-center justify-center">
+                                <Image src="/solana_v2_2b.jpg" alt="Solana Explorer" width={120} height={120} className="rounded-lg" />
+                            </div>
+                            <div className="p-6">
+                                <h3 className="text-xl font-semibold mb-2">Solana Explorer Path</h3>
+                                <p className="text-gray-400 text-sm mb-4">Dive deep into Solana's core concepts and learn to navigate the ecosystem.</p>
+                                <div className="flex justify-between text-sm">
+                                    <span className="text-gray-500">7 Quests</span>
+                                    <span className="text-yellow-400">1650 XP</span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div className="bg-gray-800/50 backdrop-blur-sm border border-gray-700/50 rounded-xl overflow-hidden">
+                            <div className="h-40 bg-gradient-to-r from-blue-900/80 to-cyan-900/80 flex items-center justify-center">
+                                <Image src="/zk-compression.jpg" alt="ZK Compression" width={120} height={120} className="rounded-lg" />
+                            </div>
+                            <div className="p-6">
+                                <h3 className="text-xl font-semibold mb-2">ZK Compression Path</h3>
+                                <p className="text-gray-400 text-sm mb-4">Build scalable, private, and secure applications using compressed tokens and accounts.</p>
+                                <div className="flex justify-between text-sm">
+                                    <span className="text-gray-500">7 Quests</span>
+                                    <span className="text-yellow-400">1000 XP</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            {/* NFT Showcase */}
+            <section className="py-20 bg-gray-900/70">
+                <div className="container mx-auto px-4">
+                    <h2 className="text-3xl md:text-4xl font-bold text-center mb-6">
+                        <span className="gradient-text">Exclusive NFT Rewards</span>
+                    </h2>
+                    <p className="text-center text-gray-300 mb-12 max-w-2xl mx-auto">
+                        Complete quests and earn exclusive NFTs that provide special benefits in the SolQuest ecosystem.
+                    </p>
+                    
+                    <div className="grid md:grid-cols-3 gap-8">
+                        <NFTCard 
+                            image="/placeholder-nft.png"
+                            title="SolQuest OG Pass"
+                            description="Early adopter NFT with exclusive XP boosts and special community perks."
+                        />
+                        <NFTCard 
+                            image="/placeholder-nft.png"
+                            title="Path Completion Badge"
+                            description="Showcase your achievements and expertise in specific Solana domains."
+                        />
+                        <NFTCard 
+                            image="/placeholder-nft.png"
+                            title="Quest Master Collection"
+                            description="Rare NFTs for users who complete all quests with perfect scores."
+                        />
+                    </div>
+                </div>
+            </section>
+
+            {/* How It Works */}
+            <section className="py-20 relative overflow-hidden">
+                <div className="container mx-auto px-4">
+                    <h2 className="text-3xl md:text-4xl font-bold text-center mb-12">
+                        <span className="solana-gradient-text">How SolQuest Works</span>
+                    </h2>
+                    
+                    <div className="grid md:grid-cols-4 gap-8 max-w-5xl mx-auto">
+                        <div className="text-center">
+                            <div className="w-16 h-16 bg-indigo-900/50 rounded-full flex items-center justify-center mx-auto mb-4">
+                                <span className="text-2xl">1</span>
+                            </div>
+                            <h3 className="text-lg font-semibold mb-2">Connect Wallet</h3>
+                            <p className="text-gray-400 text-sm">Connect your Solana wallet to get started on your learning journey.</p>
+                        </div>
+                        
+                        <div className="text-center">
+                            <div className="w-16 h-16 bg-indigo-900/50 rounded-full flex items-center justify-center mx-auto mb-4">
+                                <span className="text-2xl">2</span>
+                            </div>
+                            <h3 className="text-lg font-semibold mb-2">Choose a Path</h3>
+                            <p className="text-gray-400 text-sm">Select from various learning paths based on your interests.</p>
+                        </div>
+                        
+                        <div className="text-center">
+                            <div className="w-16 h-16 bg-indigo-900/50 rounded-full flex items-center justify-center mx-auto mb-4">
+                                <span className="text-2xl">3</span>
+                            </div>
+                            <h3 className="text-lg font-semibold mb-2">Complete Quests</h3>
+                            <p className="text-gray-400 text-sm">Follow interactive tutorials and complete on-chain verification tasks.</p>
+                        </div>
+                        
+                        <div className="text-center">
+                            <div className="w-16 h-16 bg-indigo-900/50 rounded-full flex items-center justify-center mx-auto mb-4">
+                                <span className="text-2xl">4</span>
+                            </div>
+                            <h3 className="text-lg font-semibold mb-2">Earn Rewards</h3>
+                            <p className="text-gray-400 text-sm">Gain XP, climb the leaderboard, and earn exclusive NFT rewards.</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
             {/* CTA Section */}
-            <section className="py-20">
+            <section className="py-20 bg-gradient-to-br from-gray-900 to-indigo-900/50">
                 <div className="container mx-auto px-4 text-center">
                     <h2 className="text-3xl md:text-4xl font-bold mb-6">
                         Ready to Start Your Solana Journey?
@@ -427,12 +680,53 @@ export default function LandingPage() {
                         href="https://twitter.com/solquestio"
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="inline-block px-8 py-4 bg-indigo-600 hover:bg-indigo-700 rounded-lg font-medium text-lg transition-colors"
+                        className="inline-block px-8 py-4 bg-indigo-600 hover:bg-indigo-700 rounded-lg font-medium text-lg transition-colors glow-button"
                     >
                         Follow for Updates
                     </a>
+                    
+                    <div className="mt-12 flex flex-wrap justify-center gap-8">
+                        <div className="flex items-center">
+                            <span className="text-2xl mr-3">📱</span>
+                            <span className="text-gray-300">Mobile Friendly</span>
+                        </div>
+                        <div className="flex items-center">
+                            <span className="text-2xl mr-3">🔒</span>
+                            <span className="text-gray-300">Secure & Non-Custodial</span>
+                        </div>
+                        <div className="flex items-center">
+                            <span className="text-2xl mr-3">🌐</span>
+                            <span className="text-gray-300">Web3 Native</span>
+                        </div>
+                    </div>
                 </div>
             </section>
+            
+            {/* Footer */}
+            <footer className="py-8 bg-gray-900 border-t border-gray-800">
+                <div className="container mx-auto px-4">
+                    <div className="flex flex-col md:flex-row justify-between items-center">
+                        <div className="mb-4 md:mb-0">
+                            <h3 className="text-xl font-bold solana-gradient-text">SolQuest.io</h3>
+                            <p className="text-sm text-gray-500">Embark on your Solana Adventure</p>
+                        </div>
+                        <div className="flex gap-4">
+                            <a href="https://twitter.com/solquestio" target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-white">
+                                Twitter
+                            </a>
+                            <a href="https://discord.gg/solquest" target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-white">
+                                Discord
+                            </a>
+                            <a href="mailto:hello@solquest.io" className="text-gray-400 hover:text-white">
+                                Contact
+                            </a>
+                        </div>
+                    </div>
+                    <div className="mt-6 text-center text-xs text-gray-600">
+                        &copy; {new Date().getFullYear()} SolQuest.io. All rights reserved.
+                    </div>
+                </div>
+            </footer>
         </main>
     );
 }
@@ -467,5 +761,20 @@ const features = [
         icon: "🚀",
         title: "Devnet & Mainnet",
         description: "Practice on devnet, then apply your skills on mainnet with confidence."
+    },
+    {
+        icon: "🔄",
+        title: "Cross-Chain Learning",
+        description: "Explore interoperability between Solana and other blockchains."
+    },
+    {
+        icon: "📊",
+        title: "Progress Tracking",
+        description: "Monitor your learning journey with detailed progress analytics."
+    },
+    {
+        icon: "💎",
+        title: "NFT Rewards",
+        description: "Earn exclusive NFTs that showcase your achievements and provide benefits."
     }
 ]; 
