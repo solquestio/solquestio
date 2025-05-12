@@ -518,11 +518,11 @@ export default function LandingPage() {
                 </header>
 
                 {/* Enhanced Hero Section with Web3 Background */}
-                <section className="relative pt-32 pb-40 overflow-hidden web3-grid">
+                <section className="relative pt-32 pb-40 overflow-hidden web3-grid w-full">
                     <BlockchainNodes />
                     <div className="hero-gradient absolute inset-0" />
-                    <div className="container mx-auto px-4 relative">
-                        <div className="text-center max-w-4xl mx-auto">
+                    <div className="w-full max-w-4xl mx-auto px-4 relative">
+                        <div className="text-center w-full mx-auto">
                             <div className="mb-8 flex justify-center">
                                 <div className="relative w-24 h-24">
                                     <Image 
