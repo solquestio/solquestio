@@ -3,11 +3,31 @@
 @tailwind utilities;
 
 :root {
-  color-scheme: dark;
+  --foreground-rgb: 255, 255, 255;
+  --background-start-rgb: 17, 24, 39;
+  --background-end-rgb: 30, 41, 59;
 }
 
 body {
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  color: rgb(var(--foreground-rgb));
+  background: linear-gradient(
+    to bottom,
+    rgb(var(--background-start-rgb)),
+    rgb(var(--background-end-rgb))
+  );
+  min-height: 100vh;
+}
+
+.gradient-text {
+  @apply bg-clip-text text-transparent bg-gradient-to-r from-indigo-400 to-purple-500;
+}
+
+.feature-card {
+  @apply bg-gray-800/50 backdrop-blur-sm border border-gray-700/50 rounded-xl p-6 hover:border-indigo-500/50 transition-all duration-300;
+}
+
+.hero-gradient {
+  background: radial-gradient(circle at center, rgba(99, 102, 241, 0.15) 0%, rgba(17, 24, 39, 0) 70%);
 }
 
 /* Custom scrollbar for dark theme */

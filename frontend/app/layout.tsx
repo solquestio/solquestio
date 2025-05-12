@@ -11,8 +11,9 @@ import AnimatedBackground from '@/components/background/AnimatedBackground'
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: 'SolQuest.io',
-  description: 'Quest-based learning platform for Solana',
+  title: 'SolQuest.io - Interactive Solana Learning Platform',
+  description: 'Master Solana through interactive quests, earn XP, and join a vibrant community of builders. Coming soon!',
+  keywords: 'Solana, blockchain, learning, quests, LayerZero, ZK Compression, crypto education',
 }
 
 export default function RootLayout({

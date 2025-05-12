@@ -359,248 +359,113 @@ const LeaderboardSnippet: React.FC = () => {
 };
 
 // --- Main Homepage Component --- 
-export default function HomePage() {
-    const { publicKey: hookPublicKey, signMessage, connected, wallet } = useWallet();
-    const { setVisible: setWalletModalVisible } = useWalletModal();
-    const [learningPaths, setLearningPaths] = useState<LearningPath[]>([]);
-    const [isLoadingPaths, setIsLoadingPaths] = useState(true);
-    const [pathFetchError, setPathFetchError] = useState<string | null>(null);
-    const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
-    const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
-    const [isAuthLoading, setIsAuthLoading] = useState(false);
-    const [authError, setAuthError] = useState<string | null>(null);
-    const [isAuthenticated, setIsAuthenticated] = useState(false);
-
-    useEffect(() => {
-        const token = localStorage.getItem(AUTH_TOKEN_KEY);
-        setIsAuthenticated(!!token);
-        const handleStorageChange = (event: StorageEvent) => {
-            if (event.key === AUTH_TOKEN_KEY) {
-                setIsAuthenticated(!!event.newValue);
-            }
-        };
-        window.addEventListener('storage', handleStorageChange);
-        return () => window.removeEventListener('storage', handleStorageChange);
-    }, []);
-
-    const fetchPaths = useCallback(async (token?: string | null) => {
-        setIsLoadingPaths(true);
-        setPathFetchError(null);
-        let fetchedPaths: LearningPath[] = []; // Store fetched paths here
-        try {
-            const headers: HeadersInit = { 'Content-Type': 'application/json' };
-            if (token) {
-                headers['Authorization'] = `Bearer ${token}`;
-            }
-            const response = await fetch(`${BACKEND_URL}/quests/paths`, { headers });
-            if (!response.ok) {
-                const errorData = await response.json().catch(() => ({})); 
-                throw new Error(errorData.message || `Failed to fetch learning paths (status: ${response.status})`);
-            }
-            const data = await response.json();
-            // Backend returns { paths: [...] }, so prioritize checking for the paths property
-            fetchedPaths = data.paths || (Array.isArray(data) ? data : []); // Assign to fetchedPaths
-        } catch (error: any) {
-            console.error("Failed to fetch learning paths from backend:", error);
-            // fetchedPaths will remain empty if there's an error
-            setPathFetchError(error.message || "Could not load learning paths from backend.");
-        } finally {
-            // Combine fetched paths with the static LayerZero path
-            const combinedPaths = [...fetchedPaths];
-            // Add LayerZero path if it's not already in the fetched list (by id)
-            if (!fetchedPaths.find(p => p.id === STATIC_LAYER_ZERO_PATH.id)) {
-                combinedPaths.push(STATIC_LAYER_ZERO_PATH);
-            }
-            // Add Solana Foundations path if it's not already in the fetched list (by id)
-            if (!combinedPaths.find(p => p.id === STATIC_SOLANA_FOUNDATIONS_PATH.id)) {
-                combinedPaths.push(STATIC_SOLANA_FOUNDATIONS_PATH);
-            }
-            // Add ZK Compression path if it's not already in the fetched list (by id)
-            if (!combinedPaths.find(p => p.id === STATIC_ZK_COMPRESSION_PATH.id)) {
-                combinedPaths.push(STATIC_ZK_COMPRESSION_PATH);
-            }
-            
-            // Deduplicate paths by ID, giving preference to fetched (backend) paths if IDs match
-            // This ensures that if the backend sends an updated version of a "static" path, it's used.
-            const uniquePathsMap = new Map<string, LearningPath>();
-
-            // Add static paths first (they might be overridden by fetched ones with the same ID)
-            uniquePathsMap.set(STATIC_LAYER_ZERO_PATH.id, STATIC_LAYER_ZERO_PATH);
-            uniquePathsMap.set(STATIC_SOLANA_FOUNDATIONS_PATH.id, STATIC_SOLANA_FOUNDATIONS_PATH);
-            uniquePathsMap.set(STATIC_ZK_COMPRESSION_PATH.id, STATIC_ZK_COMPRESSION_PATH);
-
-            // Add fetched paths, potentially overwriting static ones if IDs match
-            fetchedPaths.forEach(path => {
-                uniquePathsMap.set(path.id, path);
-            });
-
-            setLearningPaths(Array.from(uniquePathsMap.values()));
-            setIsLoadingPaths(false);
-        }
-    }, []); // Dependency array remains empty as STATIC_LAYER_ZERO_PATH is stable
-
-    useEffect(() => {
-        const currentToken = localStorage.getItem(AUTH_TOKEN_KEY);
-        setIsAuthenticated(!!currentToken);
-        if (!currentToken) {
-            fetchPaths();
-        } else {
-            fetchPaths(currentToken);
-        }
-    }, [wallet, fetchPaths]);
-
-    const handleRequestAuthentication = async () => {
-        setAuthError(null);
-        setIsAuthLoading(true);
-
-        // If not connected, open the standard wallet modal
-        if (!connected) {
-            console.log("Wallet not connected, opening standard wallet modal.");
-            setWalletModalVisible(true); // Open the wallet selection modal
-            setIsAuthLoading(false); // Stop loading, user needs to interact with wallet modal
-            return; // Stop here
-        }
-
-        // If connected, proceed. Check for public key.
-        const currentPublicKey = hookPublicKey; // Use the reactive value from the hook
-        if (!currentPublicKey) {
-             setAuthError("Wallet connected, but failed to get public key. Please try disconnecting and reconnecting.");
-             setIsAuthLoading(false);
-             return;
-        }
-
-        // Check for signMessage support
-        if (!signMessage) {
-            setAuthError('The selected wallet does not support message signing.');
-            setIsAuthLoading(false);
-            return;
-        }
-
-        // Proceed with signing and verification
-        try {
-            const messageToSign = SIGN_IN_MESSAGE;
-            const messageBytes = new TextEncoder().encode(messageToSign);
-            const signatureBytes = await signMessage(messageBytes);
-            const signature = bs58.encode(signatureBytes);
-
-            const response = await fetch(`${BACKEND_URL}/auth/verify`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ walletAddress: currentPublicKey.toBase58(), signature, message: messageToSign }),
-            });
-
-            if (!response.ok) {
-                const errorData = await response.json().catch(() => ({}));
-                throw new Error(errorData.message || `Authentication failed (status: ${response.status}). Please try again.`);
-            }
-
-            const { token, user } = await response.json();
-            localStorage.setItem(AUTH_TOKEN_KEY, token);
-            setUserProfile(user);
-            setIsAuthenticated(true); 
-            setIsAuthModalOpen(false); 
-            setAuthError(null); 
-            console.log("Successfully authenticated and token stored.");
-            fetchPaths(token); // Re-fetch paths with token
-
-        } catch (error: any) {
-            console.error("Authentication error:", error);
-            let errorMessage = "An unexpected error occurred during sign-in.";
-            // Simplified error check for user rejection
-            if (error.message && (error.message.toLowerCase().includes('user rejected') || 
-                 error.message.toLowerCase().includes('cancelled') || 
-                 error.message.toLowerCase().includes('declined'))) {
-                errorMessage = "Sign message request was cancelled or rejected in your wallet. Please try again.";
-            } else if (error.message) {
-                errorMessage = error.message;
-            } else if (typeof error === 'string') {
-                 errorMessage = error;
-            }
-            setAuthError(errorMessage);
-        } finally {
-            setIsAuthLoading(false);
-        }
-    };
-
-    // Function to open the auth modal (called by external buttons)
-    const openAuthModal = () => {
-        setAuthError(null); 
-        setIsAuthModalOpen(true);
-    }
-    
+export default function LandingPage() {
     return (
-        <div className="space-y-12 md:space-y-16 py-8 px-4 md:px-6 lg:px-8 min-h-screen bg-dark-background text-gray-200">
-            
-            <AuthPromptModal 
-                isOpen={isAuthModalOpen}
-                onClose={() => {
-                    setIsAuthModalOpen(false);
-                    setAuthError(null); 
-                }}
-                onAuthenticate={handleRequestAuthentication} // Modal button triggers the full handler
-                loading={isAuthLoading}
-            />
-            {authError && (
-                <div className="fixed top-20 left-1/2 -translate-x-1/2 bg-red-600/90 text-white p-4 rounded-md shadow-lg z-50 max-w-md w-auto text-center">
-                    <p>{authError}</p>
-                    <button onClick={() => setAuthError(null)} className="text-xs underline hover:text-red-200 mt-1">Dismiss</button>
-                </div>
-            )}
-
-            <section className="flex flex-col lg:flex-row gap-8 lg:gap-12 items-start">
-                <div className="w-full lg:w-2/3">
-                    <OgNftShowcase isAuthenticated={isAuthenticated} promptLogin={openAuthModal} />
-                </div>
-                
-                <div className="w-full lg:w-1/3">
-                     <LeaderboardSnippet />
+        <main className="min-h-screen">
+            {/* Hero Section */}
+            <section className="relative pt-20 pb-32 overflow-hidden">
+                <div className="hero-gradient absolute inset-0" />
+                <div className="container mx-auto px-4 relative">
+                    <div className="text-center max-w-4xl mx-auto">
+                        <h1 className="text-5xl md:text-7xl font-bold mb-6">
+                            <span className="gradient-text">SolQuest.io</span>
+                        </h1>
+                        <p className="text-xl md:text-2xl text-gray-300 mb-8">
+                            Your interactive quest-based learning platform for the Solana ecosystem.
+                            <br />
+                            <span className="text-indigo-400 font-semibold">Coming Soon!</span>
+                        </p>
+                        <div className="flex justify-center gap-4">
+                            <a
+                                href="https://twitter.com/solquestio"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="px-6 py-3 bg-indigo-600 hover:bg-indigo-700 rounded-lg font-medium transition-colors"
+                            >
+                                Follow on Twitter
+                            </a>
+                            <a
+                                href="mailto:hello@solquest.io"
+                                className="px-6 py-3 bg-gray-800 hover:bg-gray-700 rounded-lg font-medium transition-colors"
+                            >
+                                Contact Us
+                            </a>
+                        </div>
+                    </div>
                 </div>
             </section>
 
-            <section>
-                <div className="text-center mb-10">
-                    <h1 className="text-4xl font-bold mb-3 bg-gradient-to-r from-solana-purple to-solana-green bg-clip-text text-transparent">
-                        Learning Paths
-                    </h1>
-                    <p className="text-lg text-gray-400 max-w-2xl mx-auto">
-                        Choose a path to begin your Solana journey and earn XP!
-                    </p>
-                </div>
-
-                {isLoadingPaths && <div className="text-center text-gray-400 py-8">Loading paths... <SparklesIcon className="w-5 h-5 inline animate-pulse" /></div>}
-                {pathFetchError && !isLoadingPaths && (
-                    <p className="text-center text-red-400 py-8">
-                        Error loading learning paths: {pathFetchError}
-                        <br/>Displaying available offline paths.
-                    </p>
-                )}
-                {!isLoadingPaths && learningPaths.length === 0 && !pathFetchError && (
-                     <p className="text-gray-500 md:col-span-2 text-center py-8">No learning paths available currently. Check back soon!</p>
-                )}
-                {!isLoadingPaths && learningPaths.length > 0 && (
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-6 gap-y-8 max-w-6xl mx-auto">
-                        {learningPaths.map((path) => (
-                            <LearningPathCard
-                                key={path.id}
-                                title={path.title}
-                                description={path.description}
-                                isLocked={path.isLocked || false}
-                                pathSlug={path.pathSlug || path.id}
-                                totalXp={path.totalXp}
-                                questCount={path.questCount}
-                                isAuthenticated={isAuthenticated} 
-                                promptLogin={openAuthModal} 
-                                graphicType={path.graphicType}
-                                imageUrl={path.imageUrl}
-                            />
+            {/* Features Section */}
+            <section className="py-20 bg-gray-900/50">
+                <div className="container mx-auto px-4">
+                    <h2 className="text-3xl md:text-4xl font-bold text-center mb-12">
+                        <span className="gradient-text">Features Coming Soon</span>
+                    </h2>
+                    <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+                        {features.map((feature, index) => (
+                            <div key={index} className="feature-card">
+                                <div className="text-2xl mb-4">{feature.icon}</div>
+                                <h3 className="text-xl font-semibold mb-2">{feature.title}</h3>
+                                <p className="text-gray-400">{feature.description}</p>
+                            </div>
                         ))}
                     </div>
-                )}
+                </div>
             </section>
 
-            <footer className="text-center mt-16 py-8 border-t border-gray-800">
-                <p className="text-sm text-gray-600">&copy; {new Date().getFullYear()} SolQuest.io - Embark on your Solana Adventure.</p>
-            </footer>
-        </div>
+            {/* CTA Section */}
+            <section className="py-20">
+                <div className="container mx-auto px-4 text-center">
+                    <h2 className="text-3xl md:text-4xl font-bold mb-6">
+                        Ready to Start Your Solana Journey?
+                    </h2>
+                    <p className="text-xl text-gray-300 mb-8 max-w-2xl mx-auto">
+                        Join our community and be the first to know when we launch.
+                        Follow us on Twitter for updates and early access opportunities.
+                    </p>
+                    <a
+                        href="https://twitter.com/solquestio"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-block px-8 py-4 bg-indigo-600 hover:bg-indigo-700 rounded-lg font-medium text-lg transition-colors"
+                    >
+                        Follow for Updates
+                    </a>
+                </div>
+            </section>
+        </main>
     );
-} 
+}
+
+const features = [
+    {
+        icon: "🧭",
+        title: "Interactive Learning Paths",
+        description: "Master Solana through structured quests covering LayerZero, ZK Compression, and more."
+    },
+    {
+        icon: "🏆",
+        title: "On-chain Verification",
+        description: "Complete quests and earn verifiable XP rewards on the Solana blockchain."
+    },
+    {
+        icon: "🎮",
+        title: "Gamified Experience",
+        description: "Learn through interactive challenges, achievements, and real-world projects."
+    },
+    {
+        icon: "👥",
+        title: "Community Driven",
+        description: "Join a vibrant community of learners, builders, and Solana enthusiasts."
+    },
+    {
+        icon: "🔒",
+        title: "Secure Authentication",
+        description: "Connect your Solana wallet for a seamless, secure learning experience."
+    },
+    {
+        icon: "🚀",
+        title: "Devnet & Mainnet",
+        description: "Practice on devnet, then apply your skills on mainnet with confidence."
+    }
+]; 
