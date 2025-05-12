@@ -442,15 +442,53 @@ const NFTCard = ({ image, title, description }: { image: string, title: string, 
   );
 };
 
-// Stat Card Component
-const StatCard = ({ icon, value, label }: { icon: string, value: string, label: string }) => {
+// Enhanced Stat Card Component
+const StatCard = ({ icon, value, label, color }: { icon: string, value: string, label: string, color: string }) => {
   return (
-    <div className="stat-card">
-      <div className="flex items-center mb-2">
-        <span className="text-2xl mr-3">{icon}</span>
-        <span className="text-gray-400 text-sm">{label}</span>
+    <div className={`stat-card relative overflow-hidden group`}>
+      <div className={`absolute top-0 left-0 w-full h-1 ${color}`}></div>
+      <div className="flex items-center mb-3">
+        <div className={`text-3xl mr-4 p-2 rounded-lg ${color} bg-opacity-20 group-hover:bg-opacity-30 transition-all`}>
+          {icon}
+        </div>
+        <span className="text-gray-300 text-sm font-medium">{label}</span>
       </div>
-      <div className="text-2xl font-bold solana-gradient-text">{value}</div>
+      <div className="text-3xl font-bold solana-gradient-text">{value}</div>
+    </div>
+  );
+};
+
+// Example Quest Card Component
+const ExampleQuestCard = ({ title, description, difficulty, xpReward, category, icon }: { 
+  title: string, 
+  description: string, 
+  difficulty: 'Beginner' | 'Intermediate' | 'Advanced', 
+  xpReward: number,
+  category: string,
+  icon: string
+}) => {
+  const difficultyColor = 
+    difficulty === 'Beginner' ? 'bg-green-500' : 
+    difficulty === 'Intermediate' ? 'bg-yellow-500' : 
+    'bg-red-500';
+  
+  return (
+    <div className="bg-gray-800/50 backdrop-blur-sm border border-gray-700/50 rounded-xl p-6 hover:border-indigo-500/30 transition-all duration-300">
+      <div className="flex items-center mb-4">
+        <div className="text-2xl mr-3">{icon}</div>
+        <div>
+          <h3 className="text-lg font-semibold">{title}</h3>
+          <div className="flex items-center gap-2 mt-1">
+            <span className={`text-xs px-2 py-0.5 rounded-full ${difficultyColor}`}>{difficulty}</span>
+            <span className="text-xs text-gray-400">{category}</span>
+          </div>
+        </div>
+      </div>
+      <p className="text-gray-400 text-sm mb-4">{description}</p>
+      <div className="flex justify-between items-center text-sm">
+        <span className="text-yellow-400 font-medium">{xpReward} XP</span>
+        <span className="text-indigo-400">Coming Soon</span>
+      </div>
     </div>
   );
 };
@@ -459,43 +497,61 @@ const StatCard = ({ icon, value, label }: { icon: string, value: string, label: 
 export default function LandingPage() {
     return (
         <main className="min-h-screen">
-            {/* Hero Section with Web3 Background */}
-            <section className="relative pt-20 pb-32 overflow-hidden web3-grid">
+            {/* Simple Header */}
+            <header className="absolute top-0 left-0 right-0 z-10 py-4">
+                <div className="container mx-auto px-4">
+                    <div className="flex justify-center">
+                        <div className="flex items-center">
+                            <Image 
+                                src="/solana-logo.svg" 
+                                alt="SolQuest Logo" 
+                                width={32} 
+                                height={32} 
+                                className="mr-2"
+                            />
+                            <span className="text-xl font-bold solana-gradient-text">SolQuest.io</span>
+                        </div>
+                    </div>
+                </div>
+            </header>
+
+            {/* Enhanced Hero Section with Web3 Background */}
+            <section className="relative pt-32 pb-40 overflow-hidden web3-grid">
                 <BlockchainNodes />
                 <div className="hero-gradient absolute inset-0" />
                 <div className="container mx-auto px-4 relative">
                     <div className="text-center max-w-4xl mx-auto">
-                        <div className="mb-6 flex justify-center">
-                            <div className="relative w-16 h-16 mb-4">
+                        <div className="mb-8 flex justify-center">
+                            <div className="relative w-24 h-24">
                                 <Image 
                                     src="/solana-logo.svg" 
                                     alt="Solana Logo"
-                                    width={64}
-                                    height={64}
+                                    width={96}
+                                    height={96}
                                     className="token-float"
                                 />
                             </div>
                         </div>
-                        <h1 className="text-5xl md:text-7xl font-bold mb-6">
+                        <h1 className="text-6xl md:text-7xl lg:text-8xl font-bold mb-6">
                             <span className="solana-gradient-text">SolQuest.io</span>
                         </h1>
-                        <p className="text-xl md:text-2xl text-gray-300 mb-8">
+                        <p className="text-xl md:text-2xl lg:text-3xl text-gray-300 mb-8 leading-relaxed">
                             Your interactive quest-based learning platform for the Solana ecosystem.
                             <br />
                             <span className="text-indigo-400 font-semibold">Coming Soon!</span>
                         </p>
-                        <div className="flex flex-wrap justify-center gap-4">
+                        <div className="flex flex-wrap justify-center gap-6">
                             <a
                                 href="https://twitter.com/solquestio"
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className="px-6 py-3 bg-indigo-600 hover:bg-indigo-700 rounded-lg font-medium transition-colors glow-button"
+                                className="px-8 py-4 bg-indigo-600 hover:bg-indigo-700 rounded-lg font-medium text-lg transition-colors glow-button"
                             >
                                 Follow on Twitter
                             </a>
                             <a
                                 href="mailto:hello@solquest.io"
-                                className="px-6 py-3 bg-gray-800 hover:bg-gray-700 rounded-lg font-medium transition-colors"
+                                className="px-8 py-4 bg-gray-800 hover:bg-gray-700 rounded-lg font-medium text-lg transition-colors"
                             >
                                 Contact Us
                             </a>
@@ -504,14 +560,34 @@ export default function LandingPage() {
                 </div>
             </section>
 
-            {/* Stats Section */}
-            <section className="py-16 bg-gray-900/80">
+            {/* Enhanced Stats Section */}
+            <section className="py-16 bg-gray-900/80 relative -mt-20">
                 <div className="container mx-auto px-4">
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-                        <StatCard icon="🔍" value="3+" label="Learning Paths" />
-                        <StatCard icon="🧩" value="20+" label="Interactive Quests" />
-                        <StatCard icon="🏆" value="1000+" label="XP per Path" />
-                        <StatCard icon="💰" value="$SOL" label="Rewards" />
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-6 max-w-5xl mx-auto">
+                        <StatCard 
+                            icon="🧭" 
+                            value="3+" 
+                            label="Learning Paths" 
+                            color="bg-indigo-500"
+                        />
+                        <StatCard 
+                            icon="🧩" 
+                            value="20+" 
+                            label="Interactive Quests" 
+                            color="bg-purple-500"
+                        />
+                        <StatCard 
+                            icon="🏆" 
+                            value="1000+" 
+                            label="XP per Path" 
+                            color="bg-yellow-500"
+                        />
+                        <StatCard 
+                            icon="💰" 
+                            value="$SOL" 
+                            label="Rewards" 
+                            color="bg-green-500"
+                        />
                     </div>
                 </div>
             </section>
@@ -593,8 +669,71 @@ export default function LandingPage() {
                 </div>
             </section>
 
-            {/* NFT Showcase */}
+            {/* Example Quests Section */}
             <section className="py-20 bg-gray-900/70">
+                <div className="container mx-auto px-4">
+                    <h2 className="text-3xl md:text-4xl font-bold text-center mb-6">
+                        <span className="gradient-text">Example Quests</span>
+                    </h2>
+                    <p className="text-center text-gray-300 mb-12 max-w-2xl mx-auto">
+                        Our quests range from beginner-friendly tutorials to advanced technical challenges, covering a wide range of Solana topics.
+                    </p>
+                    
+                    <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+                        <ExampleQuestCard 
+                            title="LayerZero Messenger"
+                            description="Build and deploy a cross-chain messaging application using LayerZero's omnichain communication protocol."
+                            difficulty="Advanced"
+                            xpReward={500}
+                            category="Cross-Chain"
+                            icon="🔄"
+                        />
+                        <ExampleQuestCard 
+                            title="Create a Compressed NFT"
+                            description="Learn how to create and mint compressed NFTs using Solana's state compression technology for gas efficiency."
+                            difficulty="Intermediate"
+                            xpReward={350}
+                            category="NFTs"
+                            icon="🗜️"
+                        />
+                        <ExampleQuestCard 
+                            title="Build a Simple dApp"
+                            description="Create your first decentralized application on Solana using the web3.js library and connect it to a wallet."
+                            difficulty="Beginner"
+                            xpReward={200}
+                            category="Development"
+                            icon="🔨"
+                        />
+                        <ExampleQuestCard 
+                            title="Deploy a Solana Program"
+                            description="Write and deploy a Rust-based Solana program to the devnet and interact with it from a frontend."
+                            difficulty="Advanced"
+                            xpReward={450}
+                            category="Smart Contracts"
+                            icon="📦"
+                        />
+                        <ExampleQuestCard 
+                            title="Stake SOL Tokens"
+                            description="Learn how to stake SOL tokens with validators and earn staking rewards while supporting the network."
+                            difficulty="Beginner"
+                            xpReward={150}
+                            category="DeFi"
+                            icon="💰"
+                        />
+                        <ExampleQuestCard 
+                            title="Implement Account Compression"
+                            description="Optimize your Solana application by implementing account compression techniques for better performance."
+                            difficulty="Intermediate"
+                            xpReward={400}
+                            category="Optimization"
+                            icon="⚡"
+                        />
+                    </div>
+                </div>
+            </section>
+
+            {/* NFT Showcase */}
+            <section className="py-20 bg-gray-900/50">
                 <div className="container mx-auto px-4">
                     <h2 className="text-3xl md:text-4xl font-bold text-center mb-6">
                         <span className="gradient-text">Exclusive NFT Rewards</span>
