@@ -425,8 +425,8 @@ const NFTCard = ({ image, title, description }: { image: string, title: string, 
         <Image 
           src={image} 
           alt={title}
-          layout="fill"
-          objectFit="cover"
+          fill
+          style={{ objectFit: 'cover' }}
           className="transition-transform duration-500 hover:scale-110"
         />
       </div>
@@ -468,7 +468,7 @@ export default function LandingPage() {
                         <div className="mb-6 flex justify-center">
                             <div className="relative w-16 h-16 mb-4">
                                 <Image 
-                                    src="/solana-logo.png" 
+                                    src="/solana-logo.svg" 
                                     alt="Solana Logo"
                                     width={64}
                                     height={64}
@@ -578,7 +578,7 @@ export default function LandingPage() {
                         
                         <div className="bg-gray-800/50 backdrop-blur-sm border border-gray-700/50 rounded-xl overflow-hidden">
                             <div className="h-40 bg-gradient-to-r from-blue-900/80 to-cyan-900/80 flex items-center justify-center">
-                                <Image src="/zk-compression.jpg" alt="ZK Compression" width={120} height={120} className="rounded-lg" />
+                                <Image src="/zk-compression.svg" alt="ZK Compression" width={120} height={120} className="rounded-lg" />
                             </div>
                             <div className="p-6">
                                 <h3 className="text-xl font-semibold mb-2">ZK Compression Path</h3>
@@ -605,17 +605,17 @@ export default function LandingPage() {
                     
                     <div className="grid md:grid-cols-3 gap-8">
                         <NFTCard 
-                            image="/placeholder-nft.png"
+                            image="/placeholder-nft.svg"
                             title="SolQuest OG Pass"
                             description="Early adopter NFT with exclusive XP boosts and special community perks."
                         />
                         <NFTCard 
-                            image="/placeholder-nft.png"
+                            image="/placeholder-nft.svg"
                             title="Path Completion Badge"
                             description="Showcase your achievements and expertise in specific Solana domains."
                         />
                         <NFTCard 
-                            image="/placeholder-nft.png"
+                            image="/placeholder-nft.svg"
                             title="Quest Master Collection"
                             description="Rare NFTs for users who complete all quests with perfect scores."
                         />
