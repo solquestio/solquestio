@@ -6,14 +6,14 @@ import UserModel from '../../lib/models/User';
 export default async function handler(request: VercelRequest, response: VercelResponse) {
   // --- CORS HEADERS ---
   const origin = request.headers.origin || '';
-  const allowedOrigins = ['https://www.solquest.io', 'https://solquest.io', 'http://localhost:3000'];
-  const effectiveOrigin = allowedOrigins.includes(origin) ? origin : 'https://solquest.io';
-  response.setHeader('Access-Control-Allow-Origin', effectiveOrigin);
+  const allowedOrigins = ['https://www.solquest.io', 'https://solquest.io', 'http://localhost:3000', 'http://localhost:3001'];
+  
+  // Set CORS headers for all requests
+  response.setHeader('Access-Control-Allow-Origin', '*'); // Allow all origins temporarily for debugging
   response.setHeader('Access-Control-Allow-Credentials', 'true');
   response.setHeader('Access-Control-Allow-Methods', 'GET,OPTIONS,PATCH,DELETE,POST,PUT');
   response.setHeader('Access-Control-Allow-Headers', 'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version, Authorization');
-  response.setHeader('Vary', 'Origin');
-
+  
   // --- Handle OPTIONS ---
   if (request.method === 'OPTIONS') {
     response.status(200).end();
@@ -109,14 +109,27 @@ async function handleMe(request: VercelRequest, response: VercelResponse) {
 // Handler for leaderboard endpoint
 async function handleLeaderboard(request: VercelRequest, response: VercelResponse) {
   try {
+    // Set content type to application/json
+    response.setHeader('Content-Type', 'application/json');
+    
     // Ensure database connection
     await connectDB();
     
     // Get limit from query parameter or default to 20
     const limit = request.query.limit ? parseInt(request.query.limit as string) : 20;
     
+    // Get timeframe parameter - 'monthly' or default to all-time
+    const timeframe = request.query.timeframe as string || 'total';
+    
+    // Define query based on timeframe
+    let query = {};
+    
+    // For monthly timeframe implementation, we would typically use date range filtering
+    // For now, we'll just return the same data for both, but in a real implementation
+    // you would track monthly XP separately or filter based on date ranges
+    
     // Get top users sorted by XP
-    const users = await UserModel.find({})
+    const users = await UserModel.find(query)
       .sort({ xp: -1 }) // Sort by XP in descending order
       .limit(limit) // Limit to requested number or default
       .select('walletAddress username xp ownsOgNft'); // Only select needed fields
@@ -128,16 +141,23 @@ async function handleLeaderboard(request: VercelRequest, response: VercelRespons
       username: user.username || null, // Handle null usernames
       xp: user.xp,
       rank: index + 1, // Add rank based on order
-      ownsOgNft: user.ownsOgNft || false
+      ownsOgNft: user.ownsOgNft || false,
+      // Add XP boost if user owns OG NFT
+      xpBoost: user.ownsOgNft ? 1.2 : 1.0
     }));
 
     // Log successful response for debugging
-    console.log(`Leaderboard data fetched successfully. ${leaderboard.length} users returned.`);
+    console.log(`${timeframe} leaderboard data fetched successfully. ${leaderboard.length} users returned.`);
     
+    // Send the response as JSON
     return response.status(200).json(leaderboard);
   } catch (error) {
     console.error('Error in leaderboard endpoint:', error);
-    response.status(500).json({ 
+    
+    // Make sure to set content type for error responses too
+    response.setHeader('Content-Type', 'application/json');
+    
+    return response.status(500).json({ 
       error: 'Failed to fetch leaderboard data',
       message: error instanceof Error ? error.message : 'Unknown error'
     });

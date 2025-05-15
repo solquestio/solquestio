@@ -1,0 +1,17 @@
+<svg width="48" height="48" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Bitcoin circle background -->
+  <circle cx="24" cy="24" r="22" fill="#F7931A" />
+  
+  <!-- Bitcoin symbol styling -->
+  <g transform="translate(10, 8)">
+    <path d="M21.8735 14.5137C21.3931 16.3392 19.4292 17.3864 17.6037 16.9059C15.7783 16.4255 14.731 14.4617 15.2115 12.6362C15.6919 10.8107 17.6558 9.76345 19.4812 10.2439C21.3067 10.7243 22.354 12.6882 21.8735 14.5137Z" fill="white"/>
+    <path d="M22.5 10.5L20 10L18.5 6.5L17 10L14.5 9.5L16 13.5L13.5 13L14 14.5L12 14L12.5 16L10.5 15.5L11 17L8.5 16.5L9 18.5L6.5 18L7 20L4.5 19.5L5.5 22.5L3 22L4 24.5L1.5 24L3 27L1 26.5L3 30H5.5L7 28.5H9L10.5 30H13.5L15 28.5H17.5L19 31.5H21.5L23 28.5H25.5L27 31.5" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="M14.5 19.5C18.5 19.5 22 21 22 16C22 11 17.5 11.5 14.5 11.5C11.5 11.5 7 11 7 16C7 21 10.5 19.5 14.5 19.5Z" fill="white"/>
+  </g>
+  
+  <!-- Solana-inspired logo element -->
+  <g transform="translate(28, 28) scale(0.6)">
+    <path d="M10.5 0L21 15H0L10.5 0Z" fill="#9945FF" />
+    <path d="M10.5 30L0 15H21L10.5 30Z" fill="#14F195" />
+  </g>
+</svg> 

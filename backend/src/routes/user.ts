@@ -31,10 +31,27 @@ router.get('/me', protect, async (req: Request, res: Response) => {
 // GET /api/users/leaderboard - Get top users by XP
 router.get('/leaderboard', async (req: Request, res: Response) => {
      try {
-        const limit = parseInt(req.query.limit as string) || 20; 
+        const limit = parseInt(req.query.limit as string) || 20;
+        const timeframe = req.query.timeframe as string;
+        let query = {};
+
+        // If timeframe is 'monthly', we should filter based on activity in the current month
+        if (timeframe === 'monthly') {
+            // Get the start of the current month
+            const now = new Date();
+            const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+            
+            // For demonstration purposes, we're just using the same query
+            // In a real implementation, you would track monthly XP separately
+            // or filter users based on activity timestamps
+            // For now, we'll just use the same data for both timeframes
+            console.log(`Fetching leaderboard for monthly timeframe since ${startOfMonth.toISOString()}`);
+        } else {
+            console.log('Fetching leaderboard for all-time (total) timeframe');
+        }
         
         // Fetch users including ownsOgNft status
-        const leaderboardUsers = await User.find()
+        const leaderboardUsers = await User.find(query)
             .sort({ xp: -1 })
             .limit(limit)
             .select('walletAddress username xp ownsOgNft'); // Include ownsOgNft

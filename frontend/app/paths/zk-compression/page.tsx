@@ -11,6 +11,7 @@ import { ZkCompressionUseCasesQuest } from '@/components/quests/zk-compression/Z
 import { ZkCompressionToolsQuest } from '@/components/quests/zk-compression/ZkCompressionToolsQuest';
 import { FirstCNFTConceptualQuest } from '@/components/quests/zk-compression/FirstCNFTConceptualQuest';
 import { ZkHackathonBrainstormQuest } from '@/components/quests/zk-compression/ZkHackathonBrainstormQuest';
+import { loadQuestCompletions, updateQuestCompletion, calculateEarnedXP } from '@/lib/questStorage';
 // import { CompressedTokensBenefitsQuest } from '@/components/quests/zk-compression/CompressedTokensBenefitsQuest';
 
 // Define the structure for individual quests within this path
@@ -39,123 +40,156 @@ const PlaceholderQuestComponent: React.FC<{ onQuestComplete: () => void, title: 
 
 
 const ZkCompressionLearningPathPage = () => {
-  const [activeQuestId, setActiveQuestId] = useState<string>('zk-intro'); // Default to first quest
+  const [activeQuestId, setActiveQuestId] = useState<string>('zk-q1-intro'); // Default to first quest
   const [completedQuests, setCompletedQuests] = useState<Record<string, boolean>>({});
+  const [earnedXP, setEarnedXP] = useState<number>(0);
+  const PATH_KEY = 'zkCompression';
 
-  // Load completed quests from localStorage on mount
+  // Load completed quests from localStorage on mount using the utility
   useEffect(() => {
-    const storedCompletedQuests = localStorage.getItem('zkCompressionCompletedQuests');
-    if (storedCompletedQuests) {
-      setCompletedQuests(JSON.parse(storedCompletedQuests));
+    const savedCompletions = loadQuestCompletions(PATH_KEY);
+    setCompletedQuests(savedCompletions);
+    
+    // Set active quest to first incomplete quest or last quest if all complete
+    const questsList = getQuestsList();
+    const firstIncompleteQuest = questsList.find(q => !savedCompletions[q.id]);
+    if (firstIncompleteQuest) {
+      setActiveQuestId(firstIncompleteQuest.id);
+    } else if (questsList.length > 0) {
+      // If all are completed, show the last quest
+      setActiveQuestId(questsList[questsList.length - 1].id);
     }
+    
+    // Calculate earned XP
+    setEarnedXP(calculateEarnedXP(questsList, savedCompletions));
   }, []);
 
-  // Save completed quests to localStorage whenever it changes
-  useEffect(() => {
-    localStorage.setItem('zkCompressionCompletedQuests', JSON.stringify(completedQuests));
-  }, [completedQuests]);
-
-  const quests: ZkCompressionQuest[] = useMemo(() => [
+  // Define quests with their XP values
+  const getQuestsList = () => [
     {
-      id: 'zk-intro',
-      title: '1. What is ZK Compression?',
-      description: 'Grasp the fundamentals of ZK Compression on Solana. Learn how it drastically reduces on-chain state costs while maintaining L1 security, and its importance for building scalable applications.',
-      component: IntroToZkCompressionQuest, // Replace with IntroToZkCompressionQuest later
-      xp: 50,
-      props: { title: '1. What is ZK Compression?' },
-      isComplete: !!completedQuests['zk-intro']
-    },
-    {
-      id: 'zk-explore-assets',
-      title: '2. Compressed Assets on Solana Explorers',
-      description: 'Learn how to identify and inspect compressed assets (like cNFTs or cTokens) using Solana block explorers. Understand what to look for.',
-      component: ExploreCompressedAssetsQuest, // Replace with ExploreCompressedAssetsQuest later
-      xp: 100,
-      props: { title: '2. Compressed Assets on Solana Explorers' },
-      isComplete: !!completedQuests['zk-explore-assets']
-    },
-    {
-      id: 'zk-ctokens-benefits',
-      title: '3. Advantages of Compressed Tokens (cTokens)',
-      description: 'Discover the key benefits of using cTokens for various applications, from airdrops to ticketing, and how they compare to regular SPL tokens.',
-      component: PlaceholderQuestComponent, // Replace with CompressedTokensBenefitsQuest later
-      xp: 150,
-      props: { title: '3. Advantages of Compressed Tokens (cTokens)' },
-      isComplete: !!completedQuests['zk-ctokens-benefits']
-    },
-    {
-      id: 'zk-ctokens-deep-dive',
-      title: "3. Compressed Tokens (cTokens) Deep Dive", // Note: Title was updated to 3, but original plan had this as new 3.
-      description: "Explore the specifics of cTokens. How are they minted? What are their limitations compared to standard SPL tokens? Understand their lifecycle and interaction patterns.",
-      component: CompressedTokensDeepDiveQuest, 
-      xp: 150,
-      props: { title: "3. Compressed Tokens (cTokens) Deep Dive" },
-      isComplete: !!completedQuests['zk-ctokens-deep-dive']
-    },
-    {
-      id: 'zk-use-cases',
-      title: "4. Real-World Use Cases for ZK Compression",
-      description: "Discover diverse applications of ZK compression beyond simple token mints. Think about loyalty systems, digital identity, on-chain game assets, and more.",
-      component: ZkCompressionUseCasesQuest,
-      xp: 150,
-      props: { title: "4. Real-World Use Cases for ZK Compression" },
-      isComplete: !!completedQuests['zk-use-cases']
-    },
-    {
-      id: 'zk-tools-sdks',
-      title: "5. Tools & SDKs for ZK Compression",
-      description: "Get introduced to the developer tools and SDKs provided by Light Protocol and Helius that simplify working with ZK compression on Solana.",
-      component: ZkCompressionToolsQuest,
+      id: 'zk-q1-intro',
+      title: 'Introduction to ZK Compression',
+      description: 'Learn the fundamentals of state compression on Solana, including merkle trees and how ZK proofs enable secure compression on-chain.',
+      component: IntroToZkCompressionQuest,
       xp: 200,
-      props: { title: "5. Tools & SDKs for ZK Compression" },
-      isComplete: !!completedQuests['zk-tools-sdks']
+      props: { title: 'Introduction to ZK Compression' },
+      isComplete: !!completedQuests['zk-q1-intro']
     },
     {
-      id: 'zk-first-cnft-conceptual',
-      title: "6. Conceptualizing Your First cNFT Mint",
-      description: "Conceptually walk through the steps of minting a compressed NFT. Understand the roles of Merkle trees, tree authorities, and how the off-chain data relates to the on-chain proof.",
-      component: FirstCNFTConceptualQuest,
+      id: 'zk-q2-setup',
+      title: 'Setting Up Your Compression Environment',
+      description: 'Configure your developer environment with Solana CLI, Node.js, and specific libraries needed for working with compressed assets.',
+      component: ExploreCompressedAssetsQuest,
       xp: 250,
-      props: { title: "6. Conceptualizing Your First cNFT Mint" },
-      isComplete: !!completedQuests['zk-first-cnft-conceptual']
+      props: { title: 'Setting Up Your Compression Environment' },
+      isComplete: !!completedQuests['zk-q2-setup']
     },
     {
-      id: 'zk-hackathon-brainstorm',
-      title: "7. Hackathon Idea with ZK Compression",
-      description: "Inspired by what you've learned, brainstorm a simple project idea for the 1000x Hackathon that utilizes ZK compression. Focus on novelty or potential impact.",
+      id: 'zk-q3-compressed-nfts',
+      title: 'Creating Your First Compressed NFT',
+      description: 'Learn to mint and manage compressed NFTs using Metaplex\'s Bubblegum program, from setting up the merkle tree to minting your first cNFT.',
+      component: PlaceholderQuestComponent,
+      xp: 300,
+      props: { title: 'Creating Your First Compressed NFT' },
+      isComplete: !!completedQuests['zk-q3-compressed-nfts']
+    },
+    {
+      id: 'zk-q4-compressed-tokens',
+      title: 'Working with Compressed Tokens (cTokens)',
+      description: 'Create and transact with compressed fungible tokens, understanding their differences compared to regular SPL tokens.',
+      component: CompressedTokensDeepDiveQuest, 
+      xp: 350,
+      props: { title: 'Working with Compressed Tokens (cTokens)' },
+      isComplete: !!completedQuests['zk-q4-compressed-tokens']
+    },
+    {
+      id: 'zk-q5-compression-api',
+      title: 'Using the Digital Asset Standard (DAS) API',
+      description: 'Learn how to use the Digital Asset Standard API through Helius to query and retrieve data for compressed assets.',
+      component: ZkCompressionUseCasesQuest,
+      xp: 350,
+      props: { title: 'Using the Digital Asset Standard (DAS) API' },
+      isComplete: !!completedQuests['zk-q5-compression-api']
+    },
+    {
+      id: 'zk-q6-merkle-tree-advanced',
+      title: 'Advanced Merkle Tree Operations',
+      description: 'Master merkle tree configurations including canopy depth, maximum depth, and buffer size to optimize for different use cases.',
+      component: ZkCompressionToolsQuest,
+      xp: 400,
+      props: { title: 'Advanced Merkle Tree Operations' },
+      isComplete: !!completedQuests['zk-q6-merkle-tree-advanced']
+    },
+    {
+      id: 'zk-q7-integration',
+      title: 'Integrating Compression into dApps',
+      description: 'Build user interfaces that let users view, transfer, and interact with compressed NFTs and tokens, with wallet integration.',
+      component: FirstCNFTConceptualQuest,
+      xp: 450,
+      props: { title: 'Integrating Compression into dApps' },
+      isComplete: !!completedQuests['zk-q7-integration']
+    },
+    {
+      id: 'zk-q8-capstone',
+      title: 'Capstone: Build a Compressed Asset Marketplace',
+      description: 'Build a simplified marketplace for compressed NFTs with merkle trees, sample cNFTs, and a user interface for browsing and purchasing.',
       component: ZkHackathonBrainstormQuest,
-      xp: 100,
-      props: { title: "7. Hackathon Idea with ZK Compression" },
-      isComplete: !!completedQuests['zk-hackathon-brainstorm']
+      xp: 500,
+      props: { title: 'Capstone: Build a Compressed Asset Marketplace' },
+      isComplete: !!completedQuests['zk-q8-capstone']
     }
-  ], [completedQuests]);
+  ];
+
+  const quests: ZkCompressionQuest[] = useMemo(() => getQuestsList(), [completedQuests]);
 
   const handleQuestCompletion = (questId: string) => {
-    setCompletedQuests(prev => ({ ...prev, [questId]: true }));
-    // Potentially unlock next quest or show completion message
-    const currentIndex = quests.findIndex(q => q.id === questId);
-    if (currentIndex !== -1 && currentIndex < quests.length - 1) {
-      setActiveQuestId(quests[currentIndex + 1].id);
-    } else if (currentIndex === quests.length - 1) {
-      // Last quest completed
-      console.log("ZK Compression Path Completed!");
-      // Potentially trigger a path completion event / UI update
+    try {
+      // Update completion state using utility
+      const updatedCompletions = updateQuestCompletion(PATH_KEY, questId);
+      setCompletedQuests(updatedCompletions);
+      
+      // Update earned XP
+      const quest = quests.find(q => q.id === questId);
+      if (quest && !completedQuests[questId]) { // Only add XP if not already completed
+        setEarnedXP(prev => prev + (quest.xp || 0));
+      }
+      
+      // Update UI
+      const currentIndex = quests.findIndex(q => q.id === questId);
+      if (currentIndex !== -1 && currentIndex < quests.length - 1) {
+        // Move to next quest
+        const nextQuestId = quests[currentIndex + 1].id;
+        setActiveQuestId(nextQuestId);
+      } else if (currentIndex === quests.length - 1) {
+        // Last quest completed
+        console.log("ZK Compression Path Completed!");
+        // Display completion celebration
+        alert(`Congratulations! You've completed the ZK Compression learning path! Total XP earned: ${earnedXP}`);
+      }
+    } catch (error) {
+      console.error("Error in quest completion handler:", error);
     }
   };
 
   const activeQuest = quests.find(q => q.id === activeQuestId);
   const ActiveQuestComponent = activeQuest ? activeQuest.component : null;
 
+  // Calculate total XP
+  const totalXP = quests.reduce((sum, quest) => sum + (quest.xp || 0), 0);
+
   return (
     <QuestPageLayout
-      pathTitle="ZK Compression Innovators Path"
+      pathTitle="ZK Compression Developer Path"
       quests={quests}
       activeQuestId={activeQuestId}
       onSelectQuest={setActiveQuestId}
+      totalXP={totalXP}
+      earnedXP={earnedXP}
     >
       {ActiveQuestComponent && activeQuest && (
         <ActiveQuestComponent 
           onQuestComplete={() => handleQuestCompletion(activeQuest.id)}
+          xpReward={activeQuest.xp}
           {...activeQuest.props} // Pass specific props to the quest component
         />
       )}

@@ -40,6 +40,7 @@ export const TokenBridgeQuest: React.FC<TokenBridgeQuestProps> = ({ onQuestCompl
   const [recipientAddress, setRecipientAddress] = useState<string>('');
   const [status, setStatus] = useState<string>('');
   const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [isCompleted, setIsCompleted] = useState<boolean>(false);
 
   const handleBridgeToken = async () => {
     if (!destinationChain || !tokenAmount || !recipientAddress || parseFloat(tokenAmount) <= 0) {
@@ -57,9 +58,12 @@ export const TokenBridgeQuest: React.FC<TokenBridgeQuestProps> = ({ onQuestCompl
     // Simulate API call
     await new Promise(resolve => setTimeout(resolve, 2000)); 
 
-    setStatus(`Token bridge initiated (Simulated)! ${tokenAmount} [MockSPL] to ${recipientAddress} on chain ID ${destinationChain}.`);
+    setStatus(`Token bridge successful! ${tokenAmount} [MockSPL] sent to ${recipientAddress} on chain ID ${destinationChain}.`);
     setIsLoading(false);
-    // onQuestComplete();
+    setIsCompleted(true);
+    
+    // Automatically complete the quest
+    onQuestComplete();
   };
 
   return (
@@ -110,7 +114,7 @@ export const TokenBridgeQuest: React.FC<TokenBridgeQuestProps> = ({ onQuestCompl
             value={tokenAmount}
             onChange={(e) => setTokenAmount(e.target.value)}
             placeholder="e.g., 100"
-            disabled={isLoading}
+            disabled={isLoading || isCompleted}
             className="w-full bg-gray-700 border border-gray-600 text-white rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-solana-purple focus:border-solana-purple"
           />
         </div>
@@ -124,7 +128,7 @@ export const TokenBridgeQuest: React.FC<TokenBridgeQuestProps> = ({ onQuestCompl
             name="destinationChainBridge"
             value={destinationChain}
             onChange={(e) => setDestinationChain(e.target.value)}
-            disabled={isLoading}
+            disabled={isLoading || isCompleted}
             className="w-full bg-gray-700 border border-gray-600 text-white rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-solana-purple focus:border-solana-purple"
           >
             {EVM_TESTNETS_FOR_BRIDGE.map(chain => (
@@ -146,17 +150,29 @@ export const TokenBridgeQuest: React.FC<TokenBridgeQuestProps> = ({ onQuestCompl
             value={recipientAddress}
             onChange={(e) => setRecipientAddress(e.target.value)}
             placeholder="0xAbCdEf1234567890AbCdEf1234567890AbCdEf12"
-            disabled={isLoading}
+            disabled={isLoading || isCompleted}
             className="w-full bg-gray-700 border border-gray-600 text-white rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-solana-purple focus:border-solana-purple"
           />
         </div>
 
         <button 
           onClick={handleBridgeToken}
-          disabled={isLoading}
-          className="w-full bg-solana-purple text-white font-semibold px-6 py-3 rounded-lg hover:bg-solana-purple-dark transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          disabled={isLoading || isCompleted}
+          className="w-full bg-solana-purple text-white font-semibold px-6 py-3 rounded-lg hover:bg-solana-purple-dark transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
         >
-          {isLoading ? 'Bridging Token... (Simulated)' : 'Bridge Token via LayerZero (Simulated)'}
+          {isLoading ? (
+            <>
+              <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+              </svg>
+              Bridging Token...
+            </>
+          ) : isCompleted ? (
+            'Token Bridged Successfully!'
+          ) : (
+            'Bridge Token via LayerZero (Simulated)'
+          )}
         </button>
       </div>
 
@@ -166,12 +182,15 @@ export const TokenBridgeQuest: React.FC<TokenBridgeQuestProps> = ({ onQuestCompl
         </div>
       )}
 
-      <button 
-        onClick={onQuestComplete} 
-        className="mt-8 bg-solana-green text-white px-6 py-2 rounded-lg hover:bg-solana-green-dark transition-colors text-xs"
-      >
-        DEBUG: Mark Quest 3 as Complete
-      </button>
+      {isCompleted && (
+        <div className="mt-6 p-4 bg-green-900/20 border border-green-500/30 rounded-lg">
+          <h4 className="text-green-400 font-semibold mb-2">Quest Completed!</h4>
+          <p className="text-gray-300 text-sm">
+            You've successfully simulated bridging tokens using LayerZero's OFT standard. In a real application, 
+            your tokens would be locked on Solana and an equivalent amount would be minted or unlocked on the destination chain.
+          </p>
+        </div>
+      )}
     </div>
   );
 }; 

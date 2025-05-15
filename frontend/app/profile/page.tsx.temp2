@@ -1,0 +1,524 @@
+﻿'use client';
+
+import { FC, useEffect, useState, useCallback } from 'react';
+import { useConnection, useWallet } from '@solana/wallet-adapter-react';
+import { LAMPORTS_PER_SOL } from '@solana/web3.js';
+import dynamic from 'next/dynamic';
+import { useRouter } from 'next/navigation';
+// Adjusted import path for Logo
+import { Logo } from '@/components/Logo'; // Assuming Logo is in components directory relative to app
+import bs58 from 'bs58';
+import { PencilIcon, CheckIcon, XMarkIcon, CalendarDaysIcon, ArrowPathIcon, FireIcon, ClipboardDocumentIcon, CheckCircleIcon, UsersIcon, GiftIcon, ShareIcon, SparklesIcon as XpIcon } from '@heroicons/react/24/solid'; // Add Check/X icons and new icons
+import Skeleton, { SkeletonTheme } from 'react-loading-skeleton'; // Import Skeleton
+import { useAuth } from '@/context/AuthContext';
+
+// Dynamically import the WalletMultiButton with no SSR
+const WalletMultiButtonDynamic = dynamic(
+  async () => (await import('@solana/wallet-adapter-react-ui')).WalletMultiButton,
+  { ssr: false, loading: () => <button className="px-4 py-2 bg-gray-600 rounded-md">Loading Wallet...</button> }
+);
+
+// Define the expected user structure from backend
+interface UserProfile {
+  id: string;
+  walletAddress: string;
+  username?: string;
+  completedQuestIds: string[];
+  xp: number;
+  lastCheckedInAt?: string | Date; // Add lastCheckedInAt (can be string from JSON)
+  checkInStreak?: number; // Add streak
+  createdAt: string;
+  updatedAt: string;
+  ownsOgNft?: boolean; // Ensure this is here
+}
+
+// Define the Quest structure from backend
+interface Quest {
+    id: string;
+    title: string;
+    description: string;
+    path: string;
+    order: number;
+    isCompleted: boolean;
+    xpReward: number;
+}
+
+// Define the backend API endpoint
+// Hardcode API URL temporarily for testing
+const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:5000';
+const AUTH_TOKEN_KEY = 'solquest_auth_token'; // Key for localStorage
+
+// Quest IDs (match backend)
+const FUND_WALLET_QUEST_ID = 'fund-wallet';
+
+// --- Helper: Check if eligible for check-in & Calculate Potential XP --- 
+const getCheckInStatus = (userProfile?: UserProfile | null): { canCheckIn: boolean; potentialXp: number; currentStreak: number } => {
+    const currentStreak = userProfile?.checkInStreak || 0;
+    if (!userProfile?.lastCheckedInAt) {
+         // Never checked in before
+         return { canCheckIn: true, potentialXp: 1, currentStreak: 0 };
+    }
+
+    const now = new Date();
+    const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate()); 
+    const yesterdayStart = new Date(todayStart);
+    yesterdayStart.setDate(todayStart.getDate() - 1); 
+    const lastCheckDate = new Date(userProfile.lastCheckedInAt);
+
+    if (lastCheckDate >= todayStart) {
+         // Already checked in today
+         return { canCheckIn: false, potentialXp: 0, currentStreak };
+    }
+
+    let nextStreak = 0;
+    if (lastCheckDate >= yesterdayStart) {
+         // Last check-in was yesterday, streak continues
+         nextStreak = currentStreak + 1;
+    } else {
+         // Last check-in was before yesterday, streak resets
+         nextStreak = 1;
+    }
+    
+    const potentialXp = Math.min(nextStreak, 30);
+    return { canCheckIn: true, potentialXp, currentStreak }; 
+};
+
+// Renamed component to ProfilePage (default export)
+export default function ProfilePage() { 
+  // Use the AuthContext
+  const { authToken, userProfile, isAuthenticated, isLoading: isLoadingAuth, error: authError, logout } = useAuth();
+  
+  // Hooks
+  const { connection } = useConnection();
+  const { publicKey, connected, signMessage, disconnect } = useWallet();
+  const router = useRouter();
+
+  // State
+  const [balance, setBalance] = useState<number | null>(null);
+  const [isLoadingBalance, setIsLoadingBalance] = useState(true);
+  const [isMounted, setIsMounted] = useState(false);
+  const [quests, setQuests] = useState<Quest[]>([]);
+  const [isLoadingQuests, setIsLoadingQuests] = useState(true);
+  const [questError, setQuestError] = useState<string | null>(null);
+  const [isVerifyingQuest, setIsVerifyingQuest] = useState<string | null>(null);
+
+  // State for username editing
+  const [isEditingUsername, setIsEditingUsername] = useState(false);
+  const [newUsername, setNewUsername] = useState('');
+  const [usernameError, setUsernameError] = useState<string | null>(null);
+  const [isUpdatingUsername, setIsUpdatingUsername] = useState(false);
+
+  // Daily Check-in State
+  const [checkInData, setCheckInData] = useState({ canCheckIn: false, potentialXp: 0, currentStreak: 0 });
+  const [isCheckingIn, setIsCheckingIn] = useState(false);
+  const [checkInError, setCheckInError] = useState<string | null>(null);
+  const [lastXpAwarded, setLastXpAwarded] = useState<number | null>(null);
+
+  // Initialization
+  useEffect(() => {
+    setIsMounted(true);
+    
+    // Initialize username when userProfile changes
+    if (userProfile) {
+      setNewUsername(userProfile.username || '');
+    }
+  }, [userProfile]);
+
+  // Fetch balance when connected and userProfile is loaded
+  useEffect(() => {
+    if (connected && publicKey && userProfile) {
+      const fetchBalance = async () => {
+        try {
+          setIsLoadingBalance(true);
+          const balanceResponse = await connection.getBalance(publicKey);
+          setBalance(balanceResponse / LAMPORTS_PER_SOL);
+        } catch (error: any) {
+          console.error('Error fetching balance:', error);
+        } finally {
+          setIsLoadingBalance(false);
+        }
+      };
+      fetchBalance();
+    } else {
+      setBalance(null);
+      setIsLoadingBalance(false);
+    }
+  }, [connected, publicKey, connection, userProfile]);
+
+  // Fetch quests when user profile is loaded
+  useEffect(() => {
+    if (userProfile && authToken) {
+      const fetchQuests = async () => {
+        setIsLoadingQuests(true);
+        setQuestError(null);
+        try {
+          const response = await fetch(`${BACKEND_URL}/api/quests`, {
+            method: 'GET',
+            headers: { 'Authorization': `Bearer ${authToken}` },
+          });
+          const data = await response.json();
+          if (!response.ok) { throw new Error(data.message || 'Failed to fetch quests'); }
+          console.log('Quests fetched:', data);
+          setQuests(data);
+        } catch (error: any) {
+          console.error('Error fetching quests:', error);
+          setQuestError(`Failed to load quests: ${error.message}`);
+          setQuests([]);
+        } finally {
+          setIsLoadingQuests(false);
+        }
+      };
+      fetchQuests();
+    }
+  }, [userProfile, authToken]);
+
+  // Update check-in status when userProfile changes
+  useEffect(() => {
+    if (userProfile) {
+      const status = getCheckInStatus(userProfile);
+      setCheckInData(status);
+    }
+  }, [userProfile]);
+
+  // --- Username Update Handler ---
+  const handleUpdateUsername = useCallback(async () => {
+    if (!authToken || !newUsername) return;
+    if (newUsername.trim().length < 3 || newUsername.trim().length > 15) {
+        setUsernameError('Username must be 3-15 characters.');
+        return;
+    }
+    if (newUsername.trim() === userProfile?.username) {
+        setIsEditingUsername(false); // No change, just exit edit mode
+        setUsernameError(null);
+        return;
+    }
+
+    setIsUpdatingUsername(true);
+    setUsernameError(null);
+
+    try {
+        const response = await fetch(`${BACKEND_URL}/api/users/me`, {
+            method: 'PUT',
+            headers: {
+                'Authorization': `Bearer ${authToken}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ username: newUsername.trim() })
+        });
+        const data = await response.json();
+
+        if (!response.ok) {
+            throw new Error(data.message || 'Failed to update username');
+        }
+
+        console.log('Username updated:', data);
+        setNewUsername(data.username || ''); // Update input field state
+        setIsEditingUsername(false); // Exit edit mode
+
+    } catch (err: any) {
+        console.error('Error updating username:', err);
+        setUsernameError(err.message || 'Could not update username.');
+    } finally {
+        setIsUpdatingUsername(false);
+    }
+  }, [authToken, newUsername, userProfile?.username]); // Added dependencies
+
+  // --- Daily Check-in Handler (MOVED HERE) ---
+   const handleCheckIn = useCallback(async () => {
+        if (!authToken || !checkInData.canCheckIn) return;
+
+        setIsCheckingIn(true);
+        setCheckInError(null);
+        setLastXpAwarded(null);
+        try {
+            const response = await fetch(`${BACKEND_URL}/api/users/check-in`, {
+                method: 'POST',
+                headers: { 'Authorization': `Bearer ${authToken}` }
+            });
+            const data = await response.json();
+
+            if (!response.ok) {
+                if (data.message && data.message.includes('Already checked in')) {
+                     setCheckInData(getCheckInStatus(data.user)); 
+                }
+                throw new Error(data.message || 'Failed to check in');
+            }
+
+            console.log('Check-in successful:', data);
+            setLastXpAwarded(data.xpAwarded || null); 
+
+        } catch (err: any) {
+            console.error('Check-in error:', err);
+            setCheckInError(err.message || 'An error occurred during check-in.');
+        } finally {
+            setIsCheckingIn(false);
+        }
+   }, [authToken, checkInData.canCheckIn]);
+
+  // --- Redirect Effect ---
+  useEffect(() => {
+    // Only redirect if mounted AND wallet is not connected
+    if (isMounted && !connected) {
+      console.log('Wallet not connected, redirecting to homepage...');
+      router.push('/');
+    }
+    // Depend on isMounted and connected status
+  }, [isMounted, connected, router]);
+
+  // --- Render Logic ---
+  if (!isMounted) {
+    // Render placeholder or spinner until mounted
+    return (
+        <div className="flex justify-center items-center min-h-[calc(100vh-200px)]"> {/* Adjusted min height */} 
+            <p className="text-gray-400">Loading Profile...</p>
+        </div>
+    );
+  }
+
+  // If authenticated, proceed to render the profile content
+  // Calculate completed quests count ONLY if authenticated and quests are loaded
+  const completedQuestsCount = isAuthenticated ? quests.filter(q => q.isCompleted).length : 0;
+
+  // copyToClipboard function removed (referral feature)
+
+  // Add console log here to inspect userProfile before render
+  console.log("ProfilePage - userProfile state:", userProfile);
+
+  if (isLoadingAuth) {
+    return (
+      <div className="w-full max-w-md mx-auto mt-10 p-6 bg-dark-card rounded-xl shadow-lg border border-gray-700">
+        <div className="text-center mb-6">
+          <h1 className="text-2xl font-bold text-white">Loading Profile...</h1>
+        </div>
+      </div>
+    );
+  }
+
+  if (!isAuthenticated) {
+    return (
+      <div className="w-full max-w-md mx-auto mt-10 p-6 bg-dark-card rounded-xl shadow-lg border border-gray-700">
+        <div className="text-center mb-6">
+          <h1 className="text-2xl font-bold text-white">Profile</h1>
+          <p className="text-gray-400 mt-2">Connect your wallet to view your profile</p>
+        </div>
+        <div className="flex flex-col items-center gap-4">
+          <WalletMultiButtonDynamic className="wallet-button" />
+          {authError && (
+            <div className="bg-red-900/50 border border-red-800 text-red-200 p-3 rounded-lg mt-4 text-sm">
+              {authError}
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  }
+
+  // Loading handled by isLoadingAuth check
+
+  return (
+    <SkeletonTheme baseColor="#2d3748" highlightColor="#4a5568"> {/* Dark theme skeletons */}
+      <div className="max-w-4xl mx-auto py-8"> {/* Add some padding */} 
+        <div className="bg-dark-card shadow-lg rounded-lg backdrop-blur-lg border border-white/10 overflow-hidden">
+          <div className="p-6 border-b border-white/10 flex justify-end">
+             {/* Wallet Connect Button moved to top right for consistency */}
+             <div className="flex-shrink-0">
+                 <WalletMultiButtonDynamic className="!bg-gradient-to-r from-sol-gradient-from to-sol-gradient-to hover:opacity-90 transition-opacity !rounded-md !h-10" />
+             </div>
+          </div>
+
+          {/* --- Main Content: Conditional Rendering based on Connection & Auth --- */} 
+          <div className="p-6">
+              {error && <p className="text-red-500 mb-4 text-sm text-center">Error: {error}</p>} 
+              {/* Removed !isLoadingBalance check from error display */} 
+
+              {!connected ? (
+                  // State 1: Wallet Not Connected
+                  <p className="text-center text-gray-400 py-8">Please connect your wallet to view your profile.</p>
+              ) : isLoadingAuth ? (
+                  // *** Skeleton for Profile Header + Stats ***
+                  <div>
+                      <div className="flex items-center gap-3 mb-6">
+                          <Skeleton circle height={48} width={48} />
+                          <div className="flex-grow">
+                              <Skeleton height={24} width="40%" />
+                              <Skeleton height={16} width="60%" className="mt-1"/>
+                          </div>
+                      </div>
+                      <div className="grid grid-cols-2 md:grid-cols-3 gap-px bg-white/10 mb-6 border-t border-b border-white/10">
+                          <div className="bg-dark-card p-4 text-center"><Skeleton height={36} width="50%" className="mx-auto"/></div>
+                          <div className="bg-dark-card p-4 text-center"><Skeleton height={36} width="50%" className="mx-auto"/></div>
+                          <div className="bg-dark-card p-4 text-center col-span-2 md:col-span-1"><Skeleton height={36} width="50%" className="mx-auto"/></div>
+                      </div>
+                       {/* Skeleton for Quest History */}
+                      <div>
+                          <Skeleton height={28} width="45%" className="mb-4"/>
+                          <ul className="space-y-3">
+                              <li><Skeleton height={50} /></li>
+                              <li><Skeleton height={50} /></li>
+                          </ul>
+                      </div>
+                  </div>
+              ) : !isAuthenticated ? (
+                  // State 2: Wallet Connected, Not Authenticated
+                  <div className="text-center py-8">
+                       <p className="text-gray-400 mb-4">Please sign the message to authenticate and view your full profile.</p>
+                       <button 
+                          onClick={signIn} 
+                          disabled={isAuthenticating} 
+                          className="bg-gradient-to-r from-sol-gradient-from to-sol-gradient-to text-white px-6 py-2 rounded-md hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                           {isAuthenticating ? 'Verifying...' : 'Authenticate / Verify Ownership'}
+                       </button>
+                   </div>
+              ) : (
+                  // State 3: Wallet Connected AND Authenticated (userProfile exists)
+                  <> 
+                      {/* User Info Header */} 
+                      <div className="flex items-center gap-3 mb-6">
+                          <div className="w-12 h-12 bg-gradient-to-br from-solana-purple to-solana-green rounded-full flex items-center justify-center text-xl font-bold">
+                              {userProfile.username ? userProfile.username.charAt(0).toUpperCase() : '?'}
+                          </div>
+                          <div>
+                              {/* Username Display/Edit */} 
+                              {isEditingUsername ? ( /* ... editing input JSX ... */ 
+                                  <div className="relative">
+                                      <input 
+                                          type="text" 
+                                          value={newUsername} 
+                                          onChange={(e) => setNewUsername(e.target.value)}
+                                          className="w-full px-3 py-1.5 bg-dark-input border border-gray-600 rounded-md text-white focus:outline-none focus:ring-1 focus:ring-solana-purple text-sm"
+                                          maxLength={15}
+                                          placeholder="Enter username"
+                                      />
+                                      {usernameError && <p className="text-red-500 text-xs mt-1 absolute -bottom-5 left-0">{usernameError}</p>}
+                                      <div className="flex items-center space-x-1 absolute top-1/2 right-2 transform -translate-y-1/2">
+                                          {/* ... save/cancel buttons ... */}
+                                          <button onClick={handleUpdateUsername} /* ... */ > {isUpdatingUsername ? <span className="text-xs">...</span> : <CheckIcon className="h-4 w-4" />} </button>
+                                          <button onClick={handleCancelEdit} /* ... */ > <XMarkIcon className="h-4 w-4" /> </button>
+                                      </div>
+                                  </div>
+                               ) : (
+                                  <div className="flex items-center gap-2">
+                                      <h2 className="text-xl font-semibold text-gray-100 truncate">{userProfile.username || 'Unnamed User'}</h2>
+                                      <button onClick={handleEditUsername} className="text-xs text-blue-400 hover:text-blue-300" title="Edit Username">
+                                          <PencilIcon className="h-4 w-4" />
+                                      </button>
+                                  </div>
+                              )}
+                               {/* Wallet Address */} 
+                              {publicKey && (
+                                  <p className="text-xs text-gray-400 font-mono mt-1">{publicKey.toString()}</p>
+                              )}
+                          </div>
+                      </div>
+
+                      {/* Stats Section */} 
+                      <div className="grid grid-cols-2 md:grid-cols-3 gap-px bg-white/10 mb-6 border-t border-b border-white/10"> 
+                           {/* ... XP card ... */} 
+                          <div className="bg-dark-card p-4 text-center">
+                              <p className="text-xs text-gray-400 uppercase mb-1">XP</p>
+                              <p className="text-xl font-bold text-yellow-400">{userProfile.xp ?? 0}</p>
+                          </div>
+                           {/* ... Balance card ... */} 
+                          <div className="bg-dark-card p-4 text-center">
+                              <p className="text-xs text-gray-400 uppercase mb-1">Balance</p>
+                              {isLoadingBalance ? (
+                                  <Skeleton height={28} width="60%" className="mx-auto mt-1"/>
+                              ) : (
+                                  <p className="text-xl font-bold bg-gradient-to-r from-sol-gradient-from to-sol-gradient-to bg-clip-text text-transparent">
+                                      {balance !== null ? `${balance.toLocaleString(undefined, { minimumFractionDigits: 4, maximumFractionDigits: 4 })} SOL` : 'N/A'}
+                                  </p>
+                              )}
+                          </div>
+                           {/* ... Quests Completed card ... */} 
+                           <div className="bg-dark-card p-4 text-center col-span-2 md:col-span-1">
+                              <p className="text-xs text-gray-400 uppercase mb-1">Quests Completed</p>
+                              <p className="text-xl font-bold text-gray-100">{completedQuestsCount}</p>
+                          </div>
+                      </div>
+
+                      {/* Daily Check-in Section */}
+                      <div className="mb-8 p-4 bg-dark-card-secondary rounded-lg border border-white/10">
+                         <div className="flex justify-between items-start mb-3">
+                             <h3 className="text-lg font-semibold text-gray-100">Daily Check-in</h3>
+                             {checkInData.currentStreak > 0 && (
+                                 <div className="flex items-center text-sm text-orange-400 font-medium bg-orange-900/30 px-2 py-1 rounded">
+                                     <FireIcon className="h-4 w-4 mr-1"/>
+                                     {checkInData.currentStreak} Day Streak
+                                 </div>
+                             )}
+                         </div>
+
+                         {checkInError && <p className="text-red-500 text-xs mb-2">Error: {checkInError}</p>}
+                         {lastXpAwarded && <p className="text-green-400 text-xs mb-2">+{lastXpAwarded} XP awarded!</p>}
+
+                         <button 
+                            onClick={handleCheckIn}
+                            disabled={!checkInData.canCheckIn || isCheckingIn}
+                            className={`w-full sm:w-auto inline-flex items-center justify-center px-6 py-2 rounded-md text-sm font-medium transition-opacity ${checkInData.canCheckIn ? 'bg-gradient-to-r from-sol-gradient-from to-sol-gradient-to text-white hover:opacity-90' : 'bg-gray-600 text-gray-400 cursor-not-allowed'} disabled:opacity-50`}
+                         >
+                             {isCheckingIn ? <ArrowPathIcon className="animate-spin h-4 w-4 mr-2"/> : <CalendarDaysIcon className="h-4 w-4 mr-2"/>}
+                             {isCheckingIn ? 'Checking in...' : 
+                                (checkInData.canCheckIn ? `Check In (+${checkInData.potentialXp} XP)` : 'Checked in Today')
+                             }
+                         </button>
+                         {!checkInData.canCheckIn && !isCheckingIn && userProfile.lastCheckedInAt && (
+                            <p className="text-xs text-gray-500 mt-2">Last check-in: {new Date(userProfile.lastCheckedInAt).toLocaleString()}</p>
+                         )}
+                      </div>
+
+                      {/* Completed Quests History */} 
+                      <div>
+                          <h3 className="text-lg font-semibold mb-4 text-gray-100">Completed Quest History</h3>
+                          {/* Filter quests before mapping */} 
+                          { (() => { // Use IIFE to filter and check length cleanly
+                              const completedQuests = quests.filter(quest => quest.isCompleted);
+
+                              if (questError && !isLoadingQuests) {
+                                  return <p className="text-red-500 text-sm">Error loading quest history: {questError}</p>;
+                              }
+                              if (isLoadingQuests) {
+                                  // *** Skeleton for Quest List Items ***
+                                  return (
+                                      <ul className="space-y-3">
+                                          <li><Skeleton height={50} /></li>
+                                          <li><Skeleton height={50} /></li>
+                                      </ul>
+                                  );
+                              }
+                              if (completedQuests.length > 0) {
+                                  return (
+                                      <ul className="space-y-3">
+                                          {completedQuests.map((quest) => (
+                                              <li key={quest.id} className="p-3 rounded-lg border border-green-700/50 bg-green-900/20 flex justify-between items-center">
+                                                  <div>
+                                                      <h4 className="font-semibold text-green-300">{quest.title}</h4>
+                                                      {/* Optionally show description if needed: <p className="text-xs text-gray-400">{quest.description}</p> */}
+                                                  </div>
+                                                  <span className="text-sm font-medium text-yellow-500 whitespace-nowrap ml-4">+{quest.xpReward} XP</span>
+                                              </li>
+                                          ))}
+                                      </ul>
+                                  );
+                              } else {
+                                  return <p className="text-gray-500 text-sm italic">No quests completed yet.</p>;
+                              }
+                          })() } 
+                      </div>
+                  </>
+              )}
+          </div>
+
+          {/* Referral section removed */}
+
+          {/* Logout Button - Only show if authenticated */} 
+          {isAuthenticated && (
+              <div className="p-4 border-t border-white/10 text-center">
+                  <button onClick={logout} className="px-4 py-2 bg-red-600 hover:bg-red-700 rounded-md text-sm"> Logout </button>
+              </div>
+          )}
+        </div>
+      </div>
+    </SkeletonTheme>
+  );
+} 

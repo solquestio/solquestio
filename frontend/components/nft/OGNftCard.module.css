@@ -4,7 +4,7 @@
     height: 250px;
     margin: 0 auto;
     border-radius: 20px;
-    overflow: hidden;
+    overflow: visible;
     box-shadow: 0 0 20px rgba(138, 43, 226, 0.5);
     border: 1px solid rgba(255, 255, 255, 0.1);
     animation: card-glow 5s ease-in-out infinite;
@@ -101,10 +101,10 @@
     position: absolute;
     top: -15px;
     right: -40px;
-    background: linear-gradient(135deg, #FFD700, #FFA500);
+    background: #FFC107;
     color: #121212;
-    padding: 5px 10px;
-    border-radius: 7px;
+    padding: 8px 12px;
+    border-radius: 8px;
     font-weight: bold;
     font-size: 18px;
     box-shadow: 0 0 10px rgba(255, 215, 0, 0.8);
@@ -192,6 +192,28 @@
     text-shadow: 0 0 7px rgba(0, 0, 0, 0.5);
 }
 
+.boostContainer {
+    position: absolute;
+    bottom: 55px;
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    z-index: 4;
+}
+
+.boostBadge {
+    background: rgba(0, 0, 0, 0.6);
+    color: white;
+    font-size: 12px;
+    font-weight: bold;
+    padding: 6px 12px;
+    border-radius: 15px;
+    box-shadow: 0 0 10px rgba(151, 71, 255, 0.5);
+    border: 1px solid rgba(151, 71, 255, 0.3);
+    animation: pulse-badge 3s infinite;
+}
+
 .solquestText {
     position: absolute;
     top: 15px;
@@ -228,10 +250,6 @@
     100% { transform: translateY(0px); }
 }
 
-.lightRays {
-    /* This class was for an inline styled div, specific styles kept inline in JSX for now */
-}
-
 .ray {
     position: absolute;
     top: 50%;
@@ -253,108 +271,122 @@
 .ray8 { transform: rotate(315deg); animation: pulse-ray 2s infinite ease-in-out 1.75s; }
 
 @keyframes pulse-ray {
-    0% { opacity: 0.2; width: 40px; box-shadow: 0 0 2px rgba(255, 255, 255, 0.5); }
-    50% { opacity: 0.7; width: 60px; box-shadow: 0 0 5px rgba(255, 255, 255, 0.8); }
-    100% { opacity: 0.2; width: 40px; box-shadow: 0 0 2px rgba(255, 255, 255, 0.5); }
+    0% { width: 60px; opacity: 0.5; }
+    50% { width: 120px; opacity: 0.8; }
+    100% { width: 60px; opacity: 0.5; }
 }
 
 .logoGlow {
-    /* This class was for an inline styled div, specific styles kept inline in JSX for now */
-    /* Styles: position, width, height, borderRadius, background, animation: pulse-glow */
     animation: pulse-glow 3s infinite ease-in-out;
+    border-radius: 8px;
 }
 
 .logoGlowInner {
-    /* This class was for an inline styled div, specific styles kept inline in JSX for now */
-    /* Styles: position, width, height, borderRadius, background, animation: pulse-glow (delayed) */
-    animation: pulse-glow 2s infinite ease-in-out 1s;
+    animation: pulse-glow 3s infinite ease-in-out 1s;
+    border-radius: 8px;
 }
 
 @keyframes pulse-glow {
-    0% { opacity: 0.5; transform: scale(1); }
-    50% { opacity: 0.8; transform: scale(1.1); }
-    100% { opacity: 0.5; transform: scale(1); }
+    0% { opacity: 0.7; }
+    50% { opacity: 1; }
+    100% { opacity: 0.7; }
 }
 
 .actualLogo {
-    /* This class was for an inline styled img, specific styles kept inline in JSX for now */
-    /* Styles: width, height, position, zIndex, filter, animation: pulse-subtle */
-    animation: pulse-subtle 4s infinite ease-in-out;
+    animation: pulse-subtle 3s infinite ease-in-out;
+    filter: drop-shadow(0 0 15px rgba(255, 255, 255, 0.8));
+    border-radius: 6px;
+}
+
+.logoText {
+    position: relative;
+    z-index: 2;
+    color: white;
+    font-size: 16px;
+    font-weight: bold;
+    text-align: center;
+    line-height: 1.3;
+    text-shadow: 0 0 10px rgba(255, 255, 255, 0.8);
+    animation: pulse-subtle 3s infinite ease-in-out;
+    background-color: rgba(255, 255, 255, 0.1);
+    padding: 8px 12px;
+    border-radius: 8px;
+    box-shadow: 0 0 15px rgba(255, 255, 255, 0.3);
+    backdrop-filter: blur(2px);
 }
 
 @keyframes pulse-subtle {
-    0% { filter: drop-shadow(0 0 10px rgba(255,255,255,0.5)); transform: scale(1); }
-    50% { filter: drop-shadow(0 0 20px rgba(255,255,255,0.7)); transform: scale(1.05); }
-    100% { filter: drop-shadow(0 0 10px rgba(255,255,255,0.5)); transform: scale(1); }
+    0% { transform: scale(1); }
+    50% { transform: scale(1.1); }
+    100% { transform: scale(1); }
 }
 
-.shine { /* General class for shine spots */
-    /* Common styles: position, background, animation: twinkle */
-    /* Specific styles (size, top, left, animation-delay) kept inline in JSX for now */
-    animation-name: twinkle;
-    animation-iteration-count: infinite;
-    /* spot1: animation-duration: 2s */
-    /* spot2: animation-duration: 1.5s; animation-delay: 0.5s */
+.shine {
+    animation: pulse-glow 2s infinite ease-in-out;
+    border-radius: 50%;
 }
 
 .spot1 {
-    animation-duration: 2s;
+    animation-delay: 0s;
 }
 
 .spot2 {
-    animation-duration: 1.5s;
-    animation-delay: 0.5s; 
-}
-
-.particleContainer {
-    /* Styles for this dynamically created container will be handled in component logic if needed */
+    animation-delay: 1s;
 }
 
 .particle {
-    pointer-events: none;
-    z-index: 4;
-    filter: blur(1px);
-    /* Dynamic styles (size, position, color, animation) will be applied in component */
+    position: absolute;
+    z-index: 3;
+    border-radius: 50%;
+}
+
+.mintButtonContainer {
+    position: absolute;
+    bottom: -35px;
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    z-index: 10;
+}
+
+.mintButton {
+    background: linear-gradient(to right, #6e3adc, #5f42d5);
+    color: white;
+    font-size: 16px;
+    font-weight: bold;
+    padding: 12px 30px;
+    border-radius: 8px;
+    text-decoration: none;
+    box-shadow: 0 4px 10px rgba(95, 66, 213, 0.5), 0 0 0 2px rgba(255, 255, 255, 0.2);
+    transition: all 0.3s ease;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.mintButton:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 15px rgba(95, 66, 213, 0.6);
 }
 
 @keyframes float-particle-1 {
-    0% { transform: translateY(0) translateX(0); opacity: 0; }
-    10% { opacity: 1; }
-    100% { transform: translateY(-400px) translateX(30px); opacity: 0; }
+    0%, 100% { transform: translate(0, 0); }
+    25% { transform: translate(20px, -20px); }
+    50% { transform: translate(40px, 0); }
+    75% { transform: translate(20px, 20px); }
 }
 
 @keyframes float-particle-2 {
-    0% { transform: translateY(0) translateX(0); opacity: 0; }
-    10% { opacity: 1; }
-    100% { transform: translateY(-400px) translateX(-40px); opacity: 0; }
+    0%, 100% { transform: translate(0, 0); }
+    25% { transform: translate(-20px, 20px); }
+    50% { transform: translate(0, 40px); }
+    75% { transform: translate(20px, 20px); }
 }
 
 @keyframes float-particle-3 {
-    0% { transform: translateY(0) translateX(0); opacity: 0; }
-    10% { opacity: 1; }
-    100% { transform: translateY(-400px) translateX(20px); opacity: 0; }
-}
-
-.downloadOptions {
-    /* Inline styles (display, gap, justify-content, flex-wrap) kept in JSX for now */
-}
-
-.downloadBtn {
-    margin-top: 30px;
-    padding: 12px 24px;
-    /* background: linear-gradient(...) specific to each button, kept inline */
-    border: none;
-    border-radius: 5px;
-    color: white;
-    font-size: 16px;
-    cursor: pointer;
-    transition: all 0.3s;
-    font-weight: bold;
-}
-
-.downloadBtn:hover {
-    transform: translateY(-3px);
-    box-shadow: 0 5px 15px rgba(138, 43, 226, 0.4);
+    0%, 100% { transform: translate(0, 0); }
+    25% { transform: translate(-30px, -10px); }
+    50% { transform: translate(-20px, -30px); }
+    75% { transform: translate(-10px, -10px); }
 }
 
 .hexagonPattern {
@@ -364,10 +396,8 @@
     width: 100%;
     height: 100%;
     z-index: 2;
-    opacity: 0.1;
+    opacity: 0.05;
     animation: rotate-slow 60s linear infinite;
-    transform: scale(0.5);
-    transform-origin: center center;
 }
 
 @keyframes rotate-slow {
@@ -377,3 +407,26 @@
 
 /* Keyframes that were duplicated or implicitly handled by class animations: */
 /* @keyframes glow - similar to card-glow or others */ 
+
+.simpleLogoText {
+    position: relative;
+    z-index: 2;
+    color: white;
+    font-size: 16px;
+    font-weight: bold;
+    text-align: center;
+    line-height: 1.3;
+    text-shadow: 0 0 10px rgba(255, 255, 255, 0.8);
+    animation: pulse-subtle 3s infinite ease-in-out;
+    background-color: rgba(255, 255, 255, 0.1);
+    padding: 8px 12px;
+    border-radius: 4px;
+    box-shadow: 0 0 15px rgba(255, 255, 255, 0.3);
+    backdrop-filter: blur(2px);
+}
+
+@keyframes pulse-subtle {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.1); }
+    100% { transform: scale(1); }
+} 

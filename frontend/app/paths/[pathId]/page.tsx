@@ -318,23 +318,22 @@ export default function QuestPathPage() {
     // --- Fetch Path Metadata (Title) --- 
     const fetchPathMetadata = useCallback(async () => {
         try {
-            // Assuming the paths endpoint can give basic info by ID, or fetch all and filter
-            // Adjust endpoint if needed
-            const response = await fetch(`${BACKEND_URL}/quests/paths`); 
-            if (!response.ok) throw new Error('Failed to fetch path metadata');
-            const data = await response.json();
-            const paths = data.paths || (Array.isArray(data) ? data : []);
-            const currentPath = paths.find((p: PathMetadata) => p.id === pathId);
-            if (currentPath) {
-                setPathMetadata(currentPath);
-            } else {
-                 setError('Path not found.'); // Set error if path doesn't exist
+            const headers = {
+                'Authorization': `Bearer ${authToken}`,
+                'Content-Type': 'application/json'
+            };
+            const metaRes = await fetch(`${BACKEND_URL}/api/paths/${pathId}`, { headers });
+            if (!metaRes.ok) {
+                if (metaRes.status === 404) throw new Error('Path not found. Check the path ID or come back later.');
+                throw new Error(`Failed to fetch path metadata (${metaRes.status})`);
             }
+            const metaData: PathMetadata = await metaRes.json();
+            setPathMetadata(metaData);
         } catch (err: any) {
             console.error('Error fetching path metadata:', err);
             setError('Failed to load path details.');
         }
-    }, [pathId]);
+    }, [pathId, authToken]);
 
     // --- Fetch Quests --- 
     const fetchPathQuests = useCallback(async (token: string) => {
@@ -342,22 +341,20 @@ export default function QuestPathPage() {
         setIsLoading(true);
         setError(null);
         try {
-            const response = await fetch(`${BACKEND_URL}/quests/path/${pathId}`, {
-                method: 'GET',
-                headers: { 'Authorization': `Bearer ${token}` },
-            });
-            const data = await response.json();
-            if (!response.ok) { 
-                if (response.status === 401) {
-                    localStorage.removeItem(AUTH_TOKEN_KEY);
-                    setAuthToken(null);
-                    setError('Session expired. Please log in again.');
-                    router.push('/'); 
-                    return; 
+            const headers = {
+                'Authorization': `Bearer ${token}`,
+            };
+            const questsResponse = await fetch(`${BACKEND_URL}/api/quests/path/${pathId}`, { headers });
+            if (!questsResponse.ok) {
+                if (questsResponse.status === 404) { // Handle case where path has no quests yet or wrong ID
+                    setError('Path has no quests yet or wrong ID.');
+                    setQuests([]);
+                    return;
                 }
-                throw new Error(data.message || `Failed to fetch quests (status: ${response.status})`); 
+                throw new Error(questsResponse.statusText || 'Failed to fetch quests');
             }
             
+            const data = await questsResponse.json();
             const sortedQuests = (data as Quest[]).sort((a, b) => a.order - b.order);
             setQuests(sortedQuests);
             
@@ -373,7 +370,7 @@ export default function QuestPathPage() {
         } finally {
             setIsLoading(false);
         }
-    }, [pathId, router]);
+    }, [pathId, authToken]);
 
     // Combined effect for initial load
     useEffect(() => {
@@ -396,12 +393,13 @@ export default function QuestPathPage() {
         setQuestActionError(prev => ({ ...prev, [questId]: null }));
 
         try {
+            const headers = {
+                'Authorization': `Bearer ${authToken}`,
+                'Content-Type': 'application/json' 
+            };
             const response = await fetch(`${BACKEND_URL}/quests/check-balance`, {
                 method: 'POST',
-                headers: {
-                    'Authorization': `Bearer ${authToken}`,
-                    'Content-Type': 'application/json' 
-                },
+                headers,
             });
 
             const data = await response.json();
@@ -434,12 +432,13 @@ export default function QuestPathPage() {
         setQuestActionError(prev => ({ ...prev, [questId]: null }));
         
         try {
+            const headers = {
+                'Authorization': `Bearer ${authToken}`,
+                'Content-Type': 'application/json'
+            };
             const response = await fetch(`${BACKEND_URL}/quests/verify-answer`, {
                 method: 'POST',
-                headers: {
-                    'Authorization': `Bearer ${authToken}`,
-                    'Content-Type': 'application/json'
-                },
+                headers,
                 body: JSON.stringify({ questId, answer: answer.trim() })
             });
             const data = await response.json();

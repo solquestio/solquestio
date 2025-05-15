@@ -16,6 +16,8 @@ interface QuestPageLayoutProps {
   activeQuestId: string | null;
   onSelectQuest: (questId: string) => void;
   children: ReactNode;
+  totalXP?: number;
+  earnedXP?: number;
 }
 
 // Ensure the component is exported
@@ -25,12 +27,31 @@ export const QuestPageLayout: React.FC<QuestPageLayoutProps> = ({
   activeQuestId,
   onSelectQuest,
   children,
+  totalXP,
+  earnedXP,
 }) => {
   // ... (JSX from your current version, ensure it's correct)
   return (
     <div className="flex flex-col md:flex-row gap-6 p-4 md:p-6 lg:p-8 max-w-7xl mx-auto">
       <nav className="w-full md:w-1/4 lg:w-1/5 bg-dark-card p-4 rounded-xl shadow-lg h-fit sticky top-24">
         <h2 className="text-xl font-semibold mb-5 text-gray-100 border-b border-gray-700 pb-3">{pathTitle}</h2>
+        
+        {/* XP Progress if provided */}
+        {totalXP && earnedXP !== undefined && (
+          <div className="mb-5 bg-gray-800/50 p-3 rounded-lg">
+            <div className="flex justify-between text-sm font-medium mb-1.5">
+              <span className="text-gray-300">Progress</span>
+              <span className="text-blue-300">{earnedXP} / {totalXP} XP</span>
+            </div>
+            <div className="h-2 bg-gray-700 rounded-full overflow-hidden">
+              <div 
+                className="h-full bg-gradient-to-r from-blue-500 to-blue-400 rounded-full transition-all duration-500 ease-out"
+                style={{ width: `${Math.min(100, (earnedXP / totalXP) * 100)}%` }}
+              ></div>
+            </div>
+          </div>
+        )}
+        
         <ul className="space-y-1.5">
           {quests.map((quest) => (
             <li key={quest.id}>

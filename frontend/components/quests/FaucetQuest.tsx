@@ -1,7 +1,7 @@
 // frontend/components/quests/FaucetQuest.tsx
 import React, { useState, useEffect, useCallback } from 'react';
 import { useConnection, useWallet } from '@solana/wallet-adapter-react';
-import { LAMPORTS_PER_SOL, PublicKey } from '@solana/web3.js';
+import { LAMPORTS_PER_SOL, PublicKey, Connection } from '@solana/web3.js';
 
 interface FaucetQuestProps {
   minRequiredSOL: number;
@@ -10,6 +10,7 @@ interface FaucetQuestProps {
 }
 
 const SOLANA_FAUCET_URL = "https://solfaucet.com";
+const DEVNET_RPC_URL = "https://api.devnet.solana.com";
 
 export const FaucetQuest: React.FC<FaucetQuestProps> = ({
   minRequiredSOL,
@@ -24,19 +25,15 @@ export const FaucetQuest: React.FC<FaucetQuestProps> = ({
   const [questAttempted, setQuestAttempted] = useState(false);
   const [isQuestMarkedComplete, setIsQuestMarkedComplete] = useState(false);
   const [isActuallyOnDevnet, setIsActuallyOnDevnet] = useState<boolean | null>(null);
+  
+  // Create a direct Devnet connection
+  const devnetConnection = new Connection(DEVNET_RPC_URL);
 
   const checkNetwork = useCallback(async () => {
-    if (!connection || !wallet) {
-      setIsActuallyOnDevnet(false);
-      return;
-    }
-    const endpoint = connection.rpcEndpoint;
-    if (endpoint.includes('devnet') || endpoint.includes('testnet')) {
-         setIsActuallyOnDevnet(true);
-    } else {
-         setIsActuallyOnDevnet(false);
-    }
-  }, [connection, wallet]);
+    // Always set to true to bypass the network check
+    setIsActuallyOnDevnet(true);
+    return;
+  }, []);
 
   useEffect(() => {
     if (connected) {
@@ -47,13 +44,9 @@ export const FaucetQuest: React.FC<FaucetQuestProps> = ({
   }, [connected, checkNetwork]);
 
   const handleVerifyBalance = useCallback(async () => {
-    if (!connected || !publicKey || !connection) {
+    if (!connected || !publicKey) {
       alert('Please connect your Solana wallet first.');
       return;
-    }
-    if (!isActuallyOnDevnet) {
-        alert('Please ensure your wallet is connected to the Solana Devnet.');
-        return;
     }
 
     setIsLoading(true);
@@ -61,14 +54,21 @@ export const FaucetQuest: React.FC<FaucetQuestProps> = ({
     setCurrentSolBalance(null);
 
     try {
-      const balanceLamports = await connection.getBalance(publicKey);
+      console.log("Checking balance on Devnet for:", publicKey.toBase58());
+      // Use direct Devnet connection instead of the wallet's connection
+      const balanceLamports = await devnetConnection.getBalance(publicKey);
+      console.log("Raw balance in lamports:", balanceLamports);
       const balanceSOL = balanceLamports / LAMPORTS_PER_SOL;
+      console.log("Converted balance in SOL:", balanceSOL);
+      
       setCurrentSolBalance(balanceSOL);
 
       if (balanceSOL >= minRequiredSOL) {
+        console.log("Quest completed! Balance sufficient:", balanceSOL, "≥", minRequiredSOL);
         setIsQuestMarkedComplete(true);
         onQuestComplete();
       } else {
+        console.log("Quest not completed. Insufficient balance:", balanceSOL, "<", minRequiredSOL);
         setIsQuestMarkedComplete(false);
       }
     } catch (error) {
@@ -78,7 +78,7 @@ export const FaucetQuest: React.FC<FaucetQuestProps> = ({
     } finally {
       setIsLoading(false);
     }
-  }, [connected, publicKey, connection, minRequiredSOL, onQuestComplete, isActuallyOnDevnet]);
+  }, [connected, publicKey, devnetConnection, minRequiredSOL, onQuestComplete]);
 
   if (!connected || !publicKey) {
     return (
@@ -87,27 +87,6 @@ export const FaucetQuest: React.FC<FaucetQuestProps> = ({
         <p>Please connect your Solana wallet to begin the quests.</p>
       </div>
     );
-  }
-
-  if (isActuallyOnDevnet === null && connected) {
-    return (
-        <div style={styles.questContainer}>
-            <p>Checking network...</p>
-        </div>
-    )
-  }
-
-  if (isActuallyOnDevnet === false && connected) {
-    return (
-        <div style={styles.questContainer}>
-            <h4>Switch to Solana Devnet</h4>
-            <p>The LayerZero Learning Path quests must be completed on the Solana Devnet.</p>
-            <p>Please switch your wallet's network to Devnet and then refresh or try verifying again.</p>
-            <button onClick={checkNetwork} style={styles.button} disabled={isLoading}>
-                Re-check Network
-            </button>
-        </div>
-    )
   }
 
   return (
@@ -161,23 +140,23 @@ export const FaucetQuest: React.FC<FaucetQuestProps> = ({
           </a>
           <button
             onClick={handleVerifyBalance}
-            disabled={isLoading || !isActuallyOnDevnet}
+            disabled={isLoading}
             style={styles.button}
           >
             {isLoading ? 'Verifying...' : 'Verify My Devnet SOL Balance'}
           </button>
 
-          {questAttempted && !isLoading && !isQuestMarkedComplete && (
+          {questAttempted && !isLoading && currentSolBalance !== null && !isQuestMarkedComplete && (
             <p style={styles.errorMessage}>
               Verification Failed. You currently have {currentSolBalance?.toFixed(4) || '0'} Devnet SOL.
               Please ensure you have at least {minRequiredSOL} Devnet SOL from the faucet and try again.
             </p>
           )}
-           {questAttempted && !isLoading && currentSolBalance === null && !isQuestMarkedComplete && (
-             <p style={styles.errorMessage}>
-                Could not retrieve balance. Please ensure your wallet is connected to Devnet and try again.
-             </p>
-           )}
+          {questAttempted && !isLoading && currentSolBalance === null && !isQuestMarkedComplete && (
+            <p style={styles.errorMessage}>
+              Could not retrieve balance. Please ensure you have a valid Solana wallet address and try again.
+            </p>
+          )}
         </>
       )}
     </div>

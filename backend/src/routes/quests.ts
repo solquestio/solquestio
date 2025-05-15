@@ -5,6 +5,21 @@ import User, { IUser } from '../models/User';
 import mongoose from 'mongoose'; // Import mongoose for Types.ObjectId
 // Referral utils import removed
 
+// Define QuestDefinition interface
+interface QuestDefinition {
+  id: string;
+  pathId: string;
+  order: number;
+  title: string;
+  shortDescription: string;
+  description: string;
+  xpReward: number;
+  difficulty: string;
+  verificationType: string;
+  correctAnswer?: string;
+  actionText?: string;
+}
+
 const router: Router = express.Router();
 
 // Define Quest IDs
@@ -28,106 +43,214 @@ const MINT_OG_NFT_QUEST_ID = 'mint-og-nft';
 const SOLANA_FOUNDATIONS_PATH_ID = 'solana-foundations';
 const SOLQUEST_OG_PATH_ID = 'solquest-og';
 
+// Define new Path ID for ZK Compression
+const ZK_COMPRESSION_PATH_ID = 'zk-compression-path';
+
 const OG_NFT_XP_BOOST = 1.2; // Example: 20% XP boost
 
-// Export quest definitions so they can be imported elsewhere
-export const QUEST_DEFINITIONS = {
-    // --- Community Quests for Solana Explorer Path ---
-    [VISIT_X_SE_QUEST_ID]: {
-        id: VISIT_X_SE_QUEST_ID,
-        title: 'Visit Solana on X',
-        description: 'Stay updated with official announcements from Solana by visiting their X (formerly Twitter) page.',
-        pathId: SOLANA_FOUNDATIONS_PATH_ID,
-        order: 1,
-        xpReward: 100,
-        verificationType: 'community_link_click',
-        actionText: 'Visit Solana on X',
-        actionUrl: 'https://x.com/solana',
-        correctAnswer: 'action_confirmed'
-    },
-    [JOIN_DISCORD_SE_QUEST_ID]: {
-        id: JOIN_DISCORD_SE_QUEST_ID,
-        title: 'Join the Solana Discord',
-        description: 'Become a part of the official Solana community on Discord! Get help, share ideas, and connect with fellow Solana enthusiasts and developers.',
-        pathId: SOLANA_FOUNDATIONS_PATH_ID,
-        order: 2,
-        xpReward: 150,
-        verificationType: 'community_link_click',
-        actionText: 'Join Solana Discord',
-        actionUrl: 'https://discord.gg/solana',
-        correctAnswer: 'action_confirmed'
-    },
+// Quest Definitions (Consider moving to a separate file or database in a real app)
+const QUEST_DEFINITIONS: { [key: string]: QuestDefinition } = {
+  // == LayerZero V2 Omnichain Path Quests ==
+  'lzv2-q1-concepts': {
+    id: 'lzv2-q1-concepts',
+    pathId: 'layerzero-path',
+    order: 1,
+    title: 'Intro to Omnichain & LayerZero V2',
+    shortDescription: 'Understand interoperability and LayerZero V2.',
+    description: 'Learn the core concepts of omnichain communication, what LayerZero is, its architecture (Endpoints, OApps, Message Libraries), and the key improvements in V2. Resources: [LayerZero V2 Docs](https://docs.layerzero.network/v2)',
+    xpReward: 200,
+    difficulty: 'Beginner',
+    verificationType: 'input_answer',
+    correctAnswer: 'OApp',
+    actionText: 'Review Docs & Answer',
+  },
+  'lzv2-q2-setup': {
+    id: 'lzv2-q2-setup',
+    pathId: 'layerzero-path',
+    order: 2,
+    title: 'Solana Dev Environment for LayerZero',
+    shortDescription: 'Prepare your local setup for Solana and LayerZero development.',
+    description: 'Ensure you have Rust, Solana CLI, Anchor (optional but recommended for complex projects), and Node.js/npm installed. Get familiar with requesting Devnet SOL for deployments and testing. Key step: Clone the LayerZero V2 examples repository: `git clone https://github.com/LayerZero-Labs/devtools.git` and navigate to `examples/oft-solana`.',
+    xpReward: 250,
+    difficulty: 'Beginner',
+    verificationType: 'input_answer',
+    correctAnswer: 'devtools',
+    actionText: 'Confirm Setup Step',
+  },
+  'lzv2-q3-endpoint': {
+    id: 'lzv2-q3-endpoint',
+    pathId: 'layerzero-path',
+    order: 3,
+    title: 'Understanding LayerZero V2 Endpoints on Solana',
+    shortDescription: 'Explore the code and role of a Solana LayerZero Endpoint.',
+    description: 'Dive into the `examples/oft-solana/programs/layerzero-solana-endpoint` directory from the cloned `devtools` repo. Understand how an Endpoint is a deployed contract that other OApps on Solana will use to send and receive messages. What is the typical command to build this endpoint program using Anchor?',
+    xpReward: 300,
+    difficulty: 'Intermediate',
+    verificationType: 'input_answer',
+    correctAnswer: 'anchor build',
+    actionText: 'Analyze Endpoint & Answer',
+  },
+  'lzv2-q4-send-message': {
+    id: 'lzv2-q4-send-message',
+    pathId: 'layerzero-path',
+    order: 4,
+    title: 'Sending Your First LayerZero Message (Conceptual)',
+    shortDescription: 'Learn to structure and dispatch an omnichain message from Solana.',
+    description: 'Review the `send_message` instruction in `examples/oft-solana/programs/oft/src/lib.rs`. Focus on how it uses `lz_send` from the LayerZero Endpoint. What key parameters are required for `lz_send` (e.g., destination chain ID, receiver address, message payload, options)? For this quest, list three essential parameters.',
+    xpReward: 400,
+    difficulty: 'Intermediate',
+    verificationType: 'input_answer',
+    correctAnswer: 'destination chain id, receiver address, message payload',
+    actionText: 'Study Sending Logic & Answer',
+  },
+  'lzv2-q5-receive-message': {
+    id: 'lzv2-q5-receive-message',
+    pathId: 'layerzero-path',
+    order: 5,
+    title: 'Receiving a LayerZero Message on Solana (Conceptual)',
+    shortDescription: 'Understand how a Solana OApp processes incoming omnichain messages.',
+    description: 'Examine the `lz_receive` instruction in `examples/oft-solana/programs/oft/src/lib.rs`. How does the OApp ensure the message is authentic and from a trusted remote source? What role does `setConfig` or similar admin functions play in establishing trusted remotes?',
+    xpReward: 400,
+    difficulty: 'Intermediate',
+    verificationType: 'input_answer',
+    correctAnswer: 'trusted remote lookup',
+    actionText: 'Study Receiving Logic & Answer',
+  },
+  'lzv2-q6-oft-explore': {
+    id: 'lzv2-q6-oft-explore',
+    pathId: 'layerzero-path',
+    order: 6,
+    title: 'Exploring an Omnichain Fungible Token (OFT) V2',
+    shortDescription: 'Understand how OFTs enable cross-chain token transfers.',
+    description: 'The `oft` example in the `devtools` repository demonstrates how to create a token that can be seamlessly transferred across chains using LayerZero. What are the main functions an OFT contract implements to handle sending and receiving tokens (e.g., `send`, `credit`, `debit`)? List two.',
+    xpReward: 450,
+    difficulty: 'Advanced',
+    verificationType: 'input_answer',
+    correctAnswer: 'send, credit',
+    actionText: 'Analyze OFT & Answer',
+  },
+  'lzv2-q7-capstone': {
+    id: 'lzv2-q7-capstone',
+    pathId: 'layerzero-path',
+    order: 7,
+    title: 'Capstone: Omnichain Proof-of-Learning Beacon',
+    shortDescription: 'Design a simple cross-chain "proof-of-learning" system.',
+    description: 'Conceptually design and describe the key components of an OApp on Solana that sends a LayerZero message to another chain (e.g., Ethereum Sepolia) when this quest is "completed". The message should contain your Solana wallet address and the path ID (`layerzero-path`). What would be the `messagePayload` format (e.g., stringified JSON)? Provide an example payload.',
+    xpReward: 500,
+    difficulty: 'Advanced',
+    verificationType: 'input_answer',
+    correctAnswer: '{"wallet":"[YOUR_SOL_ADDRESS]","pathId":"layerzero-path"}',
+    actionText: 'Design Beacon & Submit Payload Format',
+  },
 
-    // --- Solana Explorer Path Specific Quests ---
-    [VERIFY_WALLET_QUEST_ID]: { id: VERIFY_WALLET_QUEST_ID, title: 'Verify Wallet Ownership', description: 'Connect and sign a message to prove you own your wallet.', pathId: SOLANA_FOUNDATIONS_PATH_ID, order: 3, xpReward: 100, verificationType: 'signature' },
-    [FUND_WALLET_QUEST_ID]: { id: FUND_WALLET_QUEST_ID, title: 'Fund Your Wallet', description: 'Ensure your mainnet wallet has at least 0.01 SOL.', pathId: SOLANA_FOUNDATIONS_PATH_ID, order: 4, xpReward: 200, verificationType: 'balance_check' },
-    [EXPLORE_TRANSACTION_QUEST_ID]: {
-        id: EXPLORE_TRANSACTION_QUEST_ID,
-        title: 'Explore a Transaction',
-        description: 'Use a block explorer like [Solscan](https://solscan.io/) or [SolanaFM](https://solana.fm/) to find the compute units consumed by transaction: `3rTBBBx2J8j6HwuKxQiMfsFRNb1z2EseVeJbPbKKB9dVewPrGRT14yyowQnnrr7XV6Ma6jnYwwXA6ibDkYayp3ES` (Click the address to copy!). Enter the CU value below.',
-        pathId: SOLANA_FOUNDATIONS_PATH_ID,
-        order: 5,
-        xpReward: 300,
-        correctAnswer: '150',
-        verificationType: 'input_answer'
-    },
-    [FIND_NFT_AUTHORITY_QUEST_ID]: {
-        id: FIND_NFT_AUTHORITY_QUEST_ID,
-        title: 'Find NFT Collection Authority',
-        description: 'Using a Solana explorer (like [Solscan](https://solscan.io/) or [SolanaFM](https://solana.fm/)), find the **Update Authority** address for the **Mad Lads NFT Collection** (Mint Address: `J1S9H3QjnRtBbbuD4HjPV6RpRhwuk4zKbxsnCHuTgh9w`). Enter the Update Authority address below.',
-        pathId: SOLANA_FOUNDATIONS_PATH_ID,
-        order: 6,
-        xpReward: 400,
-        correctAnswer: '2RtGg6fsFiiF1EQzHqbd66AhW7R5bWeQGpTbv2UMkCdW',
-        verificationType: 'input_answer'
-    },
-    [FIND_FIRST_TX_QUEST_ID]: {
-        id: FIND_FIRST_TX_QUEST_ID,
-        title: 'Find First Transaction',
-        description: 'Using a Solana explorer (like [Solscan](https://solscan.io/) or [SolanaFM](https://solana.fm/)), find the signature of the *very first* transaction ever made by the wallet address: `DevRk1Y4SftxH47JkXjNPAk4Qh9f7XHXBHp53vZAe9eF`. (Hint: Look for the oldest transaction date). Enter the full transaction signature below.',
-        pathId: SOLANA_FOUNDATIONS_PATH_ID,
-        order: 7,
-        xpReward: 500,
-        correctAnswer: '2rNSt8n54Y7cF5o3FGU8Wdqac9TzgdiyMErq1ns9g7L8o1M1N1aH4B99RnHvjcF1SbCHHsmWw4h51W8s1t1F7tLz',
-        verificationType: 'input_answer'
-    },
+  // == ZK Compression Path Quests ==
+  'zk-q1-intro': {
+    id: 'zk-q1-intro',
+    pathId: ZK_COMPRESSION_PATH_ID,
+    order: 1,
+    title: 'Introduction to ZK Compression',
+    shortDescription: 'Learn the fundamentals of state compression on Solana',
+    description: 'Zero-Knowledge (ZK) Compression on Solana allows for significant storage cost reduction while maintaining security and composability. This quest introduces state compression concepts, merkle trees, and how ZK proofs enable secure compression on-chain. Resources: [ZK Compression Overview](https://solana.com/developers/guides/state-compression), [Merkle Trees Explained](https://www.helius.dev/blog/state-compression-on-solana-understanding-merkle-trees)',
+    xpReward: 200,
+    difficulty: 'Beginner',
+    verificationType: 'input_answer',
+    correctAnswer: 'merkle tree',
+    actionText: 'What data structure is at the core of state compression on Solana?',
+  },
+  'zk-q2-setup': {
+    id: 'zk-q2-setup',
+    pathId: ZK_COMPRESSION_PATH_ID,
+    order: 2,
+    title: 'Setting Up Your Compression Environment',
+    shortDescription: 'Configure your developer environment for compressed NFTs and tokens',
+    description: 'To work with ZK Compression, you\'ll need the Solana CLI, Node.js, and specific libraries. This quest walks you through setting up your environment, installing the @solana/spl-account-compression library and other tools necessary for compression. Resources: [Solana CLI Setup](https://docs.solana.com/cli/install-solana-cli-tools), [Account Compression Library](https://github.com/solana-labs/solana-program-library/tree/master/account-compression/sdk)',
+    xpReward: 250,
+    difficulty: 'Beginner',
+    verificationType: 'input_answer',
+    correctAnswer: '@solana/spl-account-compression',
+    actionText: 'What is the main npm package needed for working with compressed accounts?',
+  },
+  'zk-q3-compressed-nfts': {
+    id: 'zk-q3-compressed-nfts',
+    pathId: ZK_COMPRESSION_PATH_ID,
+    order: 3,
+    title: 'Creating Your First Compressed NFT',
+    shortDescription: 'Learn to mint and manage compressed NFTs on Solana',
+    description: 'Compressed NFTs (cNFTs) can be created for a fraction of the cost of regular NFTs. This quest explains how to create a compressed NFT collection using Metaplex\'s Bubblegum program, from setting up the merkle tree to minting your first cNFT. Resources: [Helius cNFT Guide](https://docs.helius.dev/compression-and-das-api/cnfts), [Metaplex Bubblegum](https://developers.metaplex.com/bubblegum)',
+    xpReward: 300,
+    difficulty: 'Intermediate',
+    verificationType: 'input_answer',
+    correctAnswer: 'bubblegum',
+    actionText: 'What is the name of Metaplex\'s program used for creating compressed NFTs?',
+  },
+  'zk-q4-compressed-tokens': {
+    id: 'zk-q4-compressed-tokens',
+    pathId: ZK_COMPRESSION_PATH_ID,
+    order: 4,
+    title: 'Working with Compressed Tokens (cTokens)',
+    shortDescription: 'Create and transact with compressed fungible tokens',
+    description: 'Compressed tokens (cTokens) offer scalable token transactions with minimal storage costs. Learn how to create a cToken, transfer cTokens between wallets, and understand the differences between cTokens and regular SPL tokens. Resources: [Light Protocol cToken Guide](https://www.lightprotocol.com/), [cToken Documentation](https://docs.lightprotocol.com/)',
+    xpReward: 350,
+    difficulty: 'Intermediate',
+    verificationType: 'input_answer',
+    correctAnswer: 'light protocol',
+    actionText: 'Which protocol is commonly used for cToken operations on Solana?',
+  },
+  'zk-q5-compression-api': {
+    id: 'zk-q5-compression-api',
+    pathId: ZK_COMPRESSION_PATH_ID,
+    order: 5,
+    title: 'Using the Digital Asset Standard (DAS) API',
+    shortDescription: 'Query and retrieve data for compressed assets',
+    description: 'The Digital Asset Standard (DAS) API allows developers to fetch information about compressed assets. This quest covers how to use the DAS API through Helius to find cNFTs, get asset details, and monitor compressed collections. Resources: [DAS API Reference](https://docs.helius.dev/compression-and-das-api/digital-asset-standard-das-api)',
+    xpReward: 350,
+    difficulty: 'Intermediate',
+    verificationType: 'input_answer',
+    correctAnswer: 'helius',
+    actionText: 'Which service provides a comprehensive API for querying compressed NFTs?',
+  },
+  'zk-q6-merkle-tree-advanced': {
+    id: 'zk-q6-merkle-tree-advanced',
+    pathId: ZK_COMPRESSION_PATH_ID,
+    order: 6,
+    title: 'Advanced Merkle Tree Operations',
+    shortDescription: 'Deep dive into merkle tree configuration and optimization',
+    description: 'To maximize compression benefits, developers need to understand merkle tree configurations. This quest explores canopy depth, maximum depth, and buffer size parameters to optimize for different use cases. Resources: [Merkle Tree Configuration Guide](https://docs.helius.dev/compression-and-das-api/cnfts/create-a-compressed-nft-collection)',
+    xpReward: 400,
+    difficulty: 'Advanced',
+    verificationType: 'input_answer',
+    correctAnswer: 'canopy',
+    actionText: 'What merkle tree configuration parameter helps reduce on-chain verification costs?',
+  },
+  'zk-q7-integration': {
+    id: 'zk-q7-integration',
+    pathId: ZK_COMPRESSION_PATH_ID,
+    order: 7,
+    title: 'Integrating Compression into dApps',
+    shortDescription: 'Build user interfaces for compressed assets',
+    description: 'This quest demonstrates how to integrate compressed assets into web applications. Learn to build interfaces that let users view, transfer, and interact with compressed NFTs and tokens, including wallet integration considerations. Resources: [Frontend Integration Examples](https://developers.metaplex.com/bubblegum/frontend)',
+    xpReward: 450,
+    difficulty: 'Advanced',
+    verificationType: 'input_answer',
+    correctAnswer: 'wallet adapter',
+    actionText: 'What Solana library is essential for integrating wallet functionality with compressed assets?',
+  },
+  'zk-q8-capstone': {
+    id: 'zk-q8-capstone',
+    pathId: ZK_COMPRESSION_PATH_ID,
+    order: 8,
+    title: 'Capstone: Build a Compressed Asset Marketplace',
+    shortDescription: 'Create a simple marketplace for compressed NFTs',
+    description: 'Apply everything you\'ve learned to build a simplified marketplace for compressed NFTs. This capstone project involves creating merkle trees, minting sample cNFTs, and building an interface where users can browse and "purchase" these assets. Document your implementation with code examples. Resources: [Marketplace Reference Implementation](https://github.com/solana-labs/solana-program-library/tree/master/account-compression/programs/account-compression)',
+    xpReward: 500,
+    difficulty: 'Advanced',
+    verificationType: 'input_answer',
+    correctAnswer: 'concurrentmerkletree',
+    actionText: 'What Solana program is used to create and manage concurrent merkle trees?',
+  },
 
-    // --- Community Quests for SolQuest OG Path ---
-    [VISIT_X_OG_QUEST_ID]: {
-        id: VISIT_X_OG_QUEST_ID,
-        title: 'Visit SolQuest on X',
-        description: 'Stay updated with the latest announcements and join the conversation by visiting our official X (formerly Twitter) page.',
-        pathId: SOLQUEST_OG_PATH_ID,
-        order: 1,
-        xpReward: 100,
-        verificationType: 'community_link_click',
-        actionText: 'Visit SolQuest on X',
-        actionUrl: 'https://x.com/SolQuestio',
-        correctAnswer: 'action_confirmed'
-    },
-    [JOIN_DISCORD_OG_QUEST_ID]: {
-        id: JOIN_DISCORD_OG_QUEST_ID,
-        title: 'Join the SolQuest Discord',
-        description: 'Become a part of our vibrant community on Discord! Get help, share ideas, and connect with fellow SolQuesters.',
-        pathId: SOLQUEST_OG_PATH_ID,
-        order: 2,
-        xpReward: 150,
-        verificationType: 'community_link_click',
-        actionText: 'Join Discord',
-        actionUrl: 'https://discord.gg/your-invite-code',
-        correctAnswer: 'action_confirmed'
-    },
-    [MINT_OG_NFT_QUEST_ID]: {
-        id: MINT_OG_NFT_QUEST_ID,
-        title: 'Mint Your SolQuest OG NFT',
-        description: "Become an official SolQuest OG by minting our exclusive NFT! This NFT grants you special perks and access within the SolQuest ecosystem. If the mint is live, follow the link/instructions provided on our main page or announcements. **After minting, please enter the transaction ID (signature) of your mint transaction below.**",
-        pathId: SOLQUEST_OG_PATH_ID,
-        order: 3,
-        xpReward: 1500,
-        verificationType: 'input_answer',
-        correctAnswer: 'PENDING_REAL_MINT_VALIDATION'
-    },
-    // Referral quest definition removed
+  // Intentionally leaving out other old quest definitions
+  // You can add back other path quests if needed
 };
 
 // TODO: Configure RPC connection (potentially move to a config file)
@@ -181,8 +304,17 @@ router.get('/paths', (req: Request, res: Response) => {
                 isLocked: false,
                 graphicType: 'image',
                 imageUrl: '/Union.svg'
+            },
+            {
+                id: ZK_COMPRESSION_PATH_ID,
+                title: 'ZK Compression Developer Path',
+                description: "Learn to build with ZK Compression on Solana. Master the technical skills needed to create scalable applications using compressed tokens and accounts while maintaining security and performance.",
+                questCount: 8,
+                totalXp: 2800, 
+                isLocked: false,
+                graphicType: 'image',
+                imageUrl: '/zk-compression.svg'
             }
-            // Future paths can be added here
         ];
 
         res.status(200).json({ paths: pathsMetadata });
@@ -317,7 +449,7 @@ router.get('/path/:pathId', protect, async (req: Request, res: Response) => {
 
         // Filter quests from definitions based on pathId
         const pathQuests = Object.values(QUEST_DEFINITIONS)
-            .filter(quest => quest.pathId === pathId); // Changed 'path' to 'pathId' to match new definitions
+            .filter(quest => quest.pathId === pathId); 
 
         if (pathQuests.length === 0) {
              console.log(`No quests found for path ID: ${pathId}`);
@@ -353,12 +485,11 @@ router.post('/verify-transaction', protect, async (req: Request, res: Response) 
         return res.status(400).json({ message: 'Answer is required and must be a string.' });
     }
 
-    const verifiedQuestId = questId as keyof typeof QUEST_DEFINITIONS; // Assert type
-
+    const verifiedQuestId = questId as string; // Change this to string type
     console.log(`Verifying answer '${answer}' for quest '${verifiedQuestId}' for user ${userId}`);
 
     try {
-        // Use the verified ID with asserted type
+        // Use the verified ID with string type
         const questDefinition = QUEST_DEFINITIONS[verifiedQuestId];
 
         // Type guard to ensure correctAnswer exists for this quest type
@@ -377,7 +508,15 @@ router.post('/verify-transaction', protect, async (req: Request, res: Response) 
              console.log(`Quest ${verifiedQuestId} already completed for user ${userId}.`);
              return res.status(200).json({ message: 'Quest already completed.', questCompleted: true, user });
         }
-        const isCorrect = answer.trim().toLowerCase() === questDefinition.correctAnswer.toLowerCase();
+        
+        // Ensure correctAnswer is not undefined
+        if (!questDefinition.correctAnswer) {
+            console.error(`Quest ${verifiedQuestId} has undefined correctAnswer.`);
+            return res.status(500).json({ message: 'Quest configuration error.' });
+        }
+        
+        const correctAnswer = questDefinition.correctAnswer as string;
+        const isCorrect = answer.trim().toLowerCase() === correctAnswer.toLowerCase();
         if (!isCorrect) {
             console.log(`Incorrect answer submitted by user ${userId} for quest ${verifiedQuestId}.`);
             return res.status(400).json({ message: 'Incorrect answer. Please check the block explorer again.' });
@@ -486,5 +625,8 @@ router.post('/verify-answer', protect, async (req: Request, res: Response) => {
         res.status(500).json({ message: 'Server error verifying quest answer.', error: error.message });
     }
 });
+
+// Export quest definitions for use in other files
+export { QUEST_DEFINITIONS };
 
 export default router;

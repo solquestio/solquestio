@@ -43,7 +43,7 @@ const AnimatedBackground: React.FC = () => {
         const animations = [styles.floatParticle1, styles.floatParticle2, styles.floatParticle3];
 
         for (let i = 0; i < particleCount; i++) {
-            const isLogo = Math.random() < 0.55; // 55% chance to be a logo
+            const isLogo = false; // 55% chance to be a logo
             if (isLogo) {
                 const logoSrc = LOGO_FILES[Math.floor(Math.random() * LOGO_FILES.length)];
                 const size = Math.random() * 32 + 32; // 32-64px for logos

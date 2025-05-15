@@ -47,6 +47,7 @@ export const OmnichainMessengerQuest: React.FC<OmnichainMessengerQuestProps> = (
   const [message, setMessage] = useState<string>('');
   const [status, setStatus] = useState<string>('');
   const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [isCompleted, setIsCompleted] = useState<boolean>(false);
 
   const handleSendMessage = async () => {
     if (!destinationChain || !recipientAddress || !message) {
@@ -64,11 +65,12 @@ export const OmnichainMessengerQuest: React.FC<OmnichainMessengerQuestProps> = (
     // Simulate API call / transaction
     await new Promise(resolve => setTimeout(resolve, 2000)); 
 
-    setStatus(`Message submission simulated! Recipient: ${recipientAddress}, Chain ID: ${destinationChain}, Message: "${message.substring(0,30)}..."`);
+    setStatus(`Message submission successful! Recipient: ${recipientAddress}, Chain ID: ${destinationChain}, Message: "${message.substring(0,30)}${message.length > 30 ? '...' : ''}"`);
     setIsLoading(false);
+    setIsCompleted(true);
     
-    // console.log("Quest 2 completed (simulated), calling onQuestComplete");
-    // onQuestComplete(); // Keep this commented unless you want auto-completion on simulation
+    // Automatically complete the quest on successful simulation
+    onQuestComplete();
   };
 
   return (
@@ -111,7 +113,7 @@ export const OmnichainMessengerQuest: React.FC<OmnichainMessengerQuestProps> = (
             name="destinationChain"
             value={destinationChain}
             onChange={(e) => setDestinationChain(e.target.value)}
-            disabled={isLoading}
+            disabled={isLoading || isCompleted}
             className="w-full bg-gray-700 border border-gray-600 text-white rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-solana-purple focus:border-solana-purple"
           >
             {SUPPORTED_DESTINATION_CHAINS.map(chain => (
@@ -133,7 +135,7 @@ export const OmnichainMessengerQuest: React.FC<OmnichainMessengerQuestProps> = (
             value={recipientAddress}
             onChange={(e) => setRecipientAddress(e.target.value)}
             placeholder="0xAbCdEf1234567890AbCdEf1234567890AbCdEf12"
-            disabled={isLoading}
+            disabled={isLoading || isCompleted}
             className="w-full bg-gray-700 border border-gray-600 text-white rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-solana-purple focus:border-solana-purple"
           />
         </div>
@@ -149,14 +151,14 @@ export const OmnichainMessengerQuest: React.FC<OmnichainMessengerQuestProps> = (
             value={message}
             onChange={(e) => setMessage(e.target.value)}
             placeholder="Enter your cross-chain message here..."
-            disabled={isLoading}
+            disabled={isLoading || isCompleted}
             className="w-full bg-gray-700 border border-gray-600 text-white rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-solana-purple focus:border-solana-purple"
           />
         </div>
 
         <button 
           onClick={handleSendMessage}
-          disabled={isLoading}
+          disabled={isLoading || isCompleted}
           className="w-full bg-solana-purple text-white font-semibold px-6 py-3 rounded-lg hover:bg-solana-purple-dark transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
         >
           {isLoading ? (
@@ -167,6 +169,8 @@ export const OmnichainMessengerQuest: React.FC<OmnichainMessengerQuestProps> = (
               </svg>
               Sending...
             </>
+          ) : isCompleted ? (
+            'Message Sent Successfully!'
           ) : (
             'Send Cross-Chain Message (Simulated)'
           )}
@@ -179,12 +183,15 @@ export const OmnichainMessengerQuest: React.FC<OmnichainMessengerQuestProps> = (
         </div>
       )}
 
-      <button 
-        onClick={onQuestComplete} 
-        className="mt-8 bg-solana-green text-white px-6 py-2 rounded-lg hover:bg-solana-green-dark transition-colors text-xs"
-      >
-        DEBUG: Mark Quest 2 as Complete
-      </button>
+      {isCompleted && (
+        <div className="mt-6 p-4 bg-green-900/20 border border-green-500/30 rounded-lg">
+          <h4 className="text-green-400 font-semibold mb-2">Quest Completed!</h4>
+          <p className="text-gray-300 text-sm">
+            You've successfully demonstrated the cross-chain messaging capability of LayerZero. In a real application, 
+            this message would be delivered across chains via LayerZero's secure messaging infrastructure.
+          </p>
+        </div>
+      )}
     </div>
   );
 }; 

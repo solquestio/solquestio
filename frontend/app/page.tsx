@@ -1,922 +1,562 @@
 'use client';
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React from 'react';
+import { useEffect, useState } from 'react';
+import dynamic from 'next/dynamic';
 import Link from 'next/link';
-import { useWallet, WalletNotSelectedError } from '@solana/wallet-adapter-react';
-import { useWalletModal } from '@solana/wallet-adapter-react-ui';
-import { SparklesIcon, TrophyIcon, UserCircleIcon, ArrowRightIcon } from '@heroicons/react/24/solid';
-import Image from 'next/image'; // For NFT image
-import { AuthPromptModal } from '@/components/AuthPromptModal';
-import bs58 from 'bs58';
-import LandingLayout from './landing-layout'; // Import the new layout
-// import OGNftCard from '@/components/nft/OGNftCard'; // Removed import
+import { useRouter } from 'next/navigation';
+import { ArrowRightIcon, ArrowPathIcon, UserCircleIcon, TrophyIcon, SparklesIcon, ArrowTopRightOnSquareIcon as ExternalLinkIcon, CheckCircleIcon as CheckCircleSolidIcon } from '@heroicons/react/24/solid';
+import { useAuth } from '@/context/AuthContext';
 
-// --- Interfaces --- 
+// Define learning path type
 interface LearningPath {
-    id: string;
-    title: string;
-    description: string;
-    questCount: number;
-    isLocked?: boolean;
-    totalXp?: number; // Added totalXp
-    graphicType?: 'image' | 'gradient' | 'none'; // Made graphicType optional
-    imageUrl?: string | null; // Allow null
-    pathSlug?: string; // STEP 1.1: Add pathSlug back to the interface
+  id: string;
+  title: string;
+  description: string;
+  questCount: number;
+  difficulty: string;
+  pathSlug?: string;
+  totalXp?: number;
+  isLocked?: boolean;
+  graphicType?: string;
+  imageUrl?: string;
+  shortTitle?: string;
+  logoUrl?: string;
+  bonusPoints?: number;
+  userCount?: string;
+  isPathCompleted?: boolean;
+  currentProgress?: number;
+  rewardTags?: Array<{ text: string; icon?: string; variant?: 'ethereum' | 'points' | 'generic' }>;
+  statusTextOverride?: string;
+  pathKey?: string;
 }
 
-interface UserProfile { 
-  id: string;
+// Define leaderboard user type
+interface LeaderboardUser {
+  _id: string;
+  walletAddress: string;
   username?: string;
   xp: number;
+  rank?: number;
+  xpBoost?: number;
 }
 
-interface LeaderboardUser {
-    _id: string;
-    walletAddress: string;
-    username?: string;
-    xp: number;
-    rank?: number; // Optional rank if provided by API or calculated client-side
-    xpBoost?: number; // Added xpBoost
-    // avatar?: string; // Placeholder for avatar images later
-}
+// Dynamically import the WalletMultiButton with no SSR
+const WalletMultiButtonDynamic = dynamic(
+  async () => (await import('@solana/wallet-adapter-react-ui')).WalletMultiButton,
+  { ssr: false, loading: () => <button className="px-4 py-2 bg-gray-600 rounded-md">Loading Wallet...</button> }
+);
 
-// --- Constants --- 
-// Hardcode API URL temporarily for testing
-const BACKEND_URL = 'https://api.solquest.io';
-const AUTH_TOKEN_KEY = 'solquest_auth_token';
-const SIGN_IN_MESSAGE = "Sign this message to verify your wallet and log in to SolQuest.io. This does not cost any SOL.";
+// Dynamic import for OG NFT Card
+const OGNftCardDynamic = dynamic(
+  () => import('@/components/nft/OGNftCard'),
+  { ssr: false, loading: () => <div className="bg-gray-800/50 rounded-lg h-64 animate-pulse"></div> }
+);
 
-// STEP 1.2: Define STATIC_LAYER_ZERO_PATH outside the component
-const STATIC_LAYER_ZERO_PATH: LearningPath = {
-  id: 'layerzero-path',
-  title: 'LayerZero Learning Path',
-  description: 'Explore omnichain interactions! Start by funding your Devnet wallet, then dive into sending messages and tokens across blockchains with LayerZero V2.',
-  questCount: 3, // Example: Faucet + Messenger + OFT
-  totalXp: 1500, // Example XP
-  pathSlug: 'layerzero', // Links to /paths/layerzero
-  isLocked: false,
-  graphicType: 'image',
-  imageUrl: '/layerzero.jpg' // Adjusted path to be relative to the public directory root
-};
+const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:5000';
 
-const STATIC_SOLANA_FOUNDATIONS_PATH: LearningPath = {
-  id: 'solana-foundations',
-  title: 'Solana Explorer Path',
-  description: "Dive deep into Solana\'s core concepts, learn to navigate the ecosystem, and complete foundational quests, starting with community engagement.",
-  questCount: 7,
-  totalXp: 1650,
-  pathSlug: 'solana-foundations',
-  isLocked: false,
-  graphicType: 'image',
-  imageUrl: '/solana_v2_2b.jpg'
-};
+// Define static learning paths
+const STATIC_LEARNING_PATHS: LearningPath[] = [
+  {
+    id: 'bitcoin-solana-path',
+    title: 'Bitcoin on Solana with Zeus Network',
+    shortTitle: 'Bitcoin on Solana',
+    description: "Become Satoshi Nakamoto on Solana through Zeus Network! Learn to build dApps using zBTC, the Solana native Bitcoin.",
+    questCount: 7,
+    difficulty: 'Intermediate',
+    pathSlug: 'bitcoin-solana',
+    totalXp: 2450,
+    isLocked: false,
+    graphicType: 'image',
+    imageUrl: '/bitcoin/zeusbtc.png', // Bitcoin-specific image
+    logoUrl: '/bitcoin/zeusbtc.png', // Bitcoin-specific logo
+    bonusPoints: 2000,
+    userCount: '2K+',
+    isPathCompleted: false,
+    currentProgress: 0,
+    rewardTags: [{ text: '+2450 zBTC XP', variant: 'points' }, { text: '0.05 zBTC Prize Pool', variant: 'ethereum' }],
+    statusTextOverride: 'Become Satoshi on Solana!',
+    pathKey: 'bitcoinSolana'
+  },
+  {
+    id: 'layerzero-path',
+    title: 'LayerZero V2 Omnichain Path',
+    shortTitle: 'LayerZero V2',
+    description: 'Master omnichain development! Learn to send messages, tokens, and build innovative cross-chain solutions on Solana using LayerZero V2.',
+    questCount: 7,
+    difficulty: 'Advanced',
+    pathSlug: 'layerzero',
+    totalXp: 2500,
+    isLocked: false,
+    graphicType: 'image',
+    imageUrl: '/layerzero.jpg',
+    logoUrl: '/layerzero.jpg',
+    bonusPoints: 1500,
+    userCount: '5K',
+    isPathCompleted: false,
+    currentProgress: 0,
+    rewardTags: [{ text: '+2500 LZ XP', variant: 'points' }, { text: 'Omnichain Dev', variant: 'generic' }],
+    statusTextOverride: 'Become an Omnichain Pro!',
+    pathKey: 'layerZero'
+  },
+  {
+    id: 'substreams-path',
+    title: 'The Graph Substreams on Solana',
+    shortTitle: 'Substreams',
+    description: 'Learn to index blockchain data with The Graph Substreams. Build powerful and efficient data pipelines for Solana dApps.',
+    questCount: 9,
+    difficulty: 'Intermediate',
+    pathSlug: 'substreams',
+    totalXp: 2150,
+    isLocked: false,
+    graphicType: 'image',
+    imageUrl: '/the-graph-grt-logo.svg', 
+    logoUrl: '/the-graph-grt-logo.svg',
+    bonusPoints: 1800,
+    userCount: '2K', 
+    isPathCompleted: false,
+    currentProgress: 0,
+    rewardTags: [{ text: '+2150 XP', variant: 'points' }, { text: 'Hackathon Ready', variant: 'generic' }],
+    statusTextOverride: 'Prepare for Hackathon!',
+    pathKey: 'substreams'
+  },
+  {
+    id: 'solana-foundations',
+    title: 'Solana Explorer Path',
+    shortTitle: 'Solana Explorer',
+    description: "Dive deep into Solana's core concepts, learn to navigate the ecosystem, and complete foundational quests, starting with community engagement.",
+    questCount: 7,
+    difficulty: 'Beginner',
+    pathSlug: 'solana-foundations',
+    totalXp: 1650,
+    isLocked: false,
+    graphicType: 'image',
+    imageUrl: '/solana_v2_2b.jpg',
+    logoUrl: '/solana_v2_2b.jpg',
+    bonusPoints: 1200,
+    userCount: '25K',
+    isPathCompleted: false,
+    currentProgress: 0,
+    rewardTags: [{ text: '+0.1 SOL (Bonus)', variant: 'ethereum' }, { text: '+500 XP', variant: 'points' }],
+    statusTextOverride: 'New Path!',
+    pathKey: 'solanaExplorer'
+  },
+  {
+    id: 'zk-compression-path',
+    title: 'ZK Compression Developer Path',
+    shortTitle: 'ZK Compression',
+    description: "Master ZK Compression on Solana! Learn to build scalable dApps with compressed NFTs, tokens, and state - essential skills for the 1000x Hackathon.",
+    questCount: 8,
+    difficulty: 'Advanced',
+    pathSlug: 'zk-compression',
+    totalXp: 2200,
+    isLocked: false,
+    graphicType: 'image',
+    imageUrl: '/zk-compression.jpg',
+    logoUrl: '/zk-compression.jpg',
+    bonusPoints: 1800,
+    userCount: '10K+',
+    isPathCompleted: false,
+    currentProgress: 0,
+    rewardTags: [{ text: '+2200 ZK XP', variant: 'points' }, { text: '1000x Hackathon Ready', variant: 'generic' }],
+    statusTextOverride: 'Become a ZK Compression Pro!',
+    pathKey: 'zkCompression'
+  }
+];
 
-const STATIC_ZK_COMPRESSION_PATH: LearningPath = {
-  id: 'zk-compression-path',
-  title: 'ZK Compression Innovators Path',
-  description: "Learn about ZK Compression on Solana. Discover how to build scalable, private, and secure applications using compressed tokens and accounts, as featured in the 1000x Hackathon.",
-  questCount: 7, // Updated from 3
-  totalXp: 1000, // Updated from 300
-  pathSlug: 'zk-compression',
-  isLocked: false,
-  graphicType: 'image',
-  imageUrl: '/zk-compression.jpg' // Placeholder
-};
-
-// --- Helper Components --- 
-
-interface LearningPathCardProps {
-    title: string;
-    description: string;
-    isLocked: boolean;
-    pathSlug?: string; // Ensure this is present
-    totalXp?: number;
-    questCount: number;
-    isAuthenticated: boolean;
-    promptLogin: () => void;
-    graphicType?: 'image' | 'gradient' | 'none';
-    imageUrl?: string | null;
-}
-
-const LearningPathCard: React.FC<LearningPathCardProps> = ({ title, description, isLocked, pathSlug, totalXp, questCount, isAuthenticated, promptLogin, graphicType = 'none', imageUrl }) => {
-    const cardClasses = isLocked
-        ? "bg-dark-card-secondary border-gray-700 cursor-not-allowed opacity-60"
-        : "bg-dark-card border-gray-800 hover:border-solana-purple transition-all duration-200 ease-in-out transform hover:-translate-y-1 shadow-lg hover:shadow-solana-purple/30";
-
-    const cardContent = (
-        <div className={`rounded-xl border ${cardClasses} flex flex-col h-full overflow-hidden`}>
-            {/* Graphic Area */}            
-            {(graphicType === 'image' && imageUrl) ? (
-                <div className="relative h-36 w-full bg-black/20"> 
-                    <Image 
-                        src={imageUrl} 
-                        alt={`${title} graphic`} 
-                        layout="fill" 
-                        objectFit="cover"
-                        className="opacity-80 group-hover:opacity-100 transition-opacity"
-                    />
-                </div>
-            ) : graphicType === 'gradient' ? (
-                // Example gradient for Solana Explorer Path
-                <div className="h-36 w-full bg-gradient-to-br from-emerald-900/70 via-sky-900/60 to-purple-900/70 flex items-center justify-center">
-                    {/* Optional: Add a subtle icon or text here */}
-                     <svg className="w-16 h-16 text-sky-300 opacity-40" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path></svg> 
-                </div>
-            ) : (
-                 <div className="h-8"></div> // Minimal space if no graphic
-            )}
-
-            {/* Content Area */} 
-            <div className="p-6 flex flex-col flex-grow">
-                <h3 className="text-xl font-semibold mb-2 text-gray-100">{title}</h3>
-                <p className="text-gray-400 text-sm mb-4 flex-grow">{description}</p>
-                <div className="flex justify-between items-center mt-auto pt-4 border-t border-gray-700/50">
-                    <div className="text-xs text-gray-500">
-                        {questCount} Quests 
-                        {totalXp !== undefined && (
-                            <span className="ml-2 pl-2 border-l border-gray-600">
-                                Up to <span className="font-semibold text-yellow-400">{totalXp} XP</span>
-                            </span>
-                        )}
-                    </div>
-                    {isLocked ? (
-                        <span className="text-xs text-gray-500 italic">Coming Soon</span>
-                    ) : !isAuthenticated ? (
-                        <button 
-                            onClick={(e) => { e.preventDefault(); e.stopPropagation(); promptLogin(); }}
-                            className="text-sm font-medium text-solana-green hover:text-solana-green-light flex items-center focus:outline-none"
-                        >
-                            Login to Start <ArrowRightIcon className="w-4 h-4 ml-1" />
-                        </button>
-                    ) : (
-                        <span className="text-sm font-medium text-solana-purple group-hover:text-solana-purple-light flex items-center">
-                            Start Path <ArrowRightIcon className="w-4 h-4 ml-1 transition-transform group-hover:translate-x-1" />
-                        </span>
-                    )}
-                </div>
-            </div>
-        </div>
-    );
-
-    if (!isLocked && pathSlug && isAuthenticated) {
-        return (
-            <Link href={`/paths/${pathSlug}`} legacyBehavior={false} className="block group h-full">
-                {cardContent}
-            </Link>
-        );
-    } else {
-        return <div className="block group h-full">{cardContent}</div>; 
-    }
-};
-
-interface OgNftShowcaseProps {
-    isAuthenticated: boolean;
-    promptLogin: () => void;
-}
-
-const OgNftShowcase: React.FC<OgNftShowcaseProps> = ({ isAuthenticated, promptLogin }) => {
-    const nftName = "SolQuest OG Pass";
-    const nftBenefit = "Unlock exclusive XP boosts, early access to new paths, and special community perks.";
-    const nftImageUrl = "/placeholder-nft.png"; // Restored placeholder image
-
-    return (
-        <div className="relative bg-gradient-to-br from-purple-600/80 via-solana-purple to-solana-green/80 p-8 md:p-12 rounded-xl shadow-2xl overflow-hidden mb-16">
-            <div className="absolute inset-0 opacity-20" style={{ backgroundImage: `url('/grid-pattern.svg')`, backgroundSize: 'cover'}}></div>
-            <div className="relative z-10 flex flex-col md:flex-row items-center">
-                <div className="md:w-2/3 mb-8 md:mb-0 md:pr-10">
-                     <h2 className="text-3xl md:text-4xl font-bold text-white mb-4 leading-tight">
-                        Hold the <span className="bg-clip-text text-transparent bg-gradient-to-r from-yellow-300 to-orange-400">{nftName}</span>
-                    </h2>
-                    <p className="text-purple-100 text-lg mb-6">
-                        {nftBenefit}
-                    </p>
-                    {!isAuthenticated ? (
-                        <button 
-                            onClick={promptLogin}
-                            className="inline-block bg-white text-solana-purple font-semibold px-8 py-3 rounded-lg shadow-md hover:bg-gray-100 transition-colors duration-200 focus:outline-none"
-                        > 
-                            Login to Learn More
-                        </button>
-                    ) : (
-                        <Link 
-                            href="/mint" // Assuming /mint page might require auth or show different content
-                            legacyBehavior={false} 
-                            className="inline-block bg-white text-solana-purple font-semibold px-8 py-3 rounded-lg shadow-md hover:bg-gray-100 transition-colors duration-200"
-                        > 
-                            Learn More & Mint (Soon)
-                        </Link>
-                    )}
-                </div>
-                <div className="md:w-1/3 flex justify-center md:justify-end">
-                    {/* Restored placeholder image div */}
-                    <div className="w-48 h-48 md:w-60 md:h-60 bg-black/20 rounded-lg shadow-xl flex items-center justify-center overflow-hidden animate-float">
-                        <img src={nftImageUrl} alt={nftName} className="object-cover w-full h-full opacity-80 hover:opacity-100 transition-opacity" /> 
-                    </div>
-                </div>
-            </div>
-        </div>
-    );
-};
-
-// Helper function to shorten wallet address (if not already global)
+// Helper function to shorten wallet address
 const shortenAddress = (address: string, chars = 4): string => {
-    if (!address) return '';
-    return `${address.substring(0, chars)}...${address.substring(address.length - chars)}`;
+  if (!address) return '';
+  return `${address.substring(0, chars)}...${address.substring(address.length - chars)}`;
 };
 
-// Rank Color/Style Helper (copied from leaderboard page)
+// Rank Color/Style Helper
 const getRankClasses = (rank: number): string => {
-    if (rank === 1) return 'bg-yellow-500 text-black';
-    if (rank === 2) return 'bg-gray-400 text-black';
-    if (rank === 3) return 'bg-orange-600 text-white';
-    return 'bg-gray-700 text-gray-300';
+  if (rank === 1) return 'bg-yellow-500 text-black';
+  if (rank === 2) return 'bg-gray-400 text-black';
+  if (rank === 3) return 'bg-orange-600 text-white';
+  return 'bg-gray-700 text-gray-300';
 };
 
-const LeaderboardSnippet: React.FC = () => {
-    const [topPlayers, setTopPlayers] = useState<LeaderboardUser[]>([]);
-    const [isLoading, setIsLoading] = useState(true);
-    const [error, setError] = useState<string | null>(null);
+export default function HomePage() {
+  const router = useRouter();
 
-    useEffect(() => {
-        const fetchTopPlayers = async () => {
-            setIsLoading(true);
-            setError(null);
-            try {
-                const response = await fetch(`${BACKEND_URL}/users?path=leaderboard&limit=3`); 
-                if (!response.ok) throw new Error('Failed to fetch leaderboard');
-                const responseData = await response.json();
-                // The backend may return either an array directly or an object with a users/leaderboard property
-                let data: LeaderboardUser[] = Array.isArray(responseData) ? responseData : 
-                    responseData.users || responseData.leaderboard || [];
-                // Ensure limit if backend doesn't support it
-                if (data.length > 3 && !response.url.includes('limit=3')) {
-                    data = data.slice(0, 3);
-                }
-                 // Assign rank explicitly if not provided by backend
-                 setTopPlayers(data.map((player, index) => ({
-                    ...player, 
-                    rank: player.rank ?? index + 1 // Use backend rank or calculate
-                })));
-            } catch (err: any) {
-                setError(err.message || 'Could not load top players.');
-                console.error("Leaderboard snippet error:", err);
-            } finally {
-                setIsLoading(false);
-            }
-        };
-        fetchTopPlayers();
-    }, []);
+  const { 
+    userProfile, 
+    isLoading: isLoadingAuth,
+    isAuthenticated, 
+    login,
+    logout,
+    error: authError
+  } = useAuth();
 
-    return (
-        <div className="bg-dark-card border border-gray-800/50 p-6 rounded-xl shadow-xl h-full"> {/* Added h-full */} 
-            <div className="flex justify-between items-center mb-5">
-                <h2 className="text-xl font-semibold text-gray-100 flex items-center">
-                    <TrophyIcon className="w-6 h-6 mr-2 text-yellow-400" /> Top Questers
-                </h2>
-                <Link href="/leaderboard" legacyBehavior={false}
-                    className="text-xs text-solana-purple hover:text-solana-purple-light transition-colors font-medium"
-                >
-                    View All &rarr;
-                </Link>
-            </div>
-            {isLoading && (
-                <div className="space-y-2 animate-pulse">
-                     {/* Updated Skeleton to match new layout */}
-                    {[...Array(3)].map((_, i) => (
-                       <div key={i} className="flex items-center justify-between p-3 bg-dark-card-secondary rounded-md">
-                           <div className="flex items-center space-x-3">
-                                <div className="w-6 h-6 bg-gray-600 rounded-md"></div> {/* Rank */}
-                                <div className="w-8 h-8 bg-gray-600 rounded-full"></div> {/* Avatar */}
-                                <div className="h-4 w-24 bg-gray-600 rounded"></div> {/* Name */}
-                            </div>
-                            <div className="flex items-center space-x-2">
-                                <div className="h-4 w-12 bg-gray-600 rounded"></div> {/* Boost */}
-                                <div className="h-5 w-16 bg-gray-600 rounded-md"></div> {/* Score */}
-                            </div>
-                        </div>
-                    ))}
-                </div>
-            )}
-            {error && <p className="text-red-400 text-sm text-center py-4">Error: {error}</p>}
-            {!isLoading && !error && topPlayers.length > 0 && (
-                 <div className="space-y-1"> {/* Use space-y-1 for tighter rows */} 
-                    {topPlayers.map((player, index) => {
-                         const rank = player.rank ?? index + 1;
-                         const rankClasses = getRankClasses(rank);
-                         const truncatedAddress = shortenAddress(player.walletAddress, 4); // Use 4 chars for snippet
-                         const gradientBg = rank === 1 ? 'bg-gradient-to-r from-yellow-500/15 to-dark-card-secondary/0' 
-                                           : rank === 2 ? 'bg-gradient-to-r from-gray-500/15 to-dark-card-secondary/0'
-                                           : rank === 3 ? 'bg-gradient-to-r from-orange-600/15 to-dark-card-secondary/0' 
-                                           : 'bg-dark-card-secondary/50';
+  const [featuredPaths, setFeaturedPaths] = useState<LearningPath[]>([]);
+  const [isLoadingPaths, setIsLoadingPaths] = useState(false);
+  const [pathError, setPathError] = useState<string | null>(null);
+  const [isMounted, setIsMounted] = useState(false);
+  const [topPlayers, setTopPlayers] = useState<LeaderboardUser[]>([]);
+  const [isLoadingLeaderboard, setIsLoadingLeaderboard] = useState(true);
+  const [leaderboardError, setLeaderboardError] = useState<string | null>(null);
 
-                        return (
-                            <div 
-                                key={player._id} 
-                                className={`flex items-center justify-between p-3 rounded-lg ${gradientBg} hover:bg-gray-700/40 transition-colors duration-150`}
-                            >
-                                {/* Left Side: Rank, Avatar, User Info */}
-                                <div className="flex items-center space-x-3 flex-grow min-w-0 mr-3">
-                                    <span className={`flex-shrink-0 w-6 h-6 flex items-center justify-center text-xs font-bold rounded-md ${rankClasses}`}>
-                                        {rank}
-                                    </span>
-                                    <UserCircleIcon className="flex-shrink-0 w-8 h-8 text-gray-500" /> {/* Placeholder Avatar */}
-                                    <div className="min-w-0">
-                                        <p className="text-sm font-medium text-gray-100 truncate">
-                                            {player.username || truncatedAddress}
-                                        </p>
-                                        {player.username && (
-                                            <p className="text-xs text-gray-400 font-mono truncate">
-                                                {truncatedAddress}
-                                            </p>
-                                        )}
-                                    </div>
-                                </div>
-
-                                {/* Right Side: Boosts and Score */}
-                                <div className="flex items-center space-x-2 flex-shrink-0">
-                                    {/* Boost Badges */}
-                                     {(player.xpBoost && player.xpBoost > 1) && (
-                                        <span className="flex items-center text-xs font-semibold bg-black/50 text-purple-300 px-1.5 py-0.5 rounded border border-purple-500/50" title={`XP Boost x${player.xpBoost.toFixed(1)}`}>
-                                            <SparklesIcon className="h-3 w-3 mr-0.5"/> x{player.xpBoost.toFixed(1)}
-                                        </span>
-                                    )}
-                                     {/* Score (XP) */}
-                                     <div className="bg-gradient-to-r from-purple-600/70 to-blue-600/70 text-white px-2 py-0.5 rounded text-center min-w-[60px]">
-                                        <span className="text-xs font-bold">
-                                            {player.xp} XP
-                                        </span>
-                                     </div>
-                                </div>
-                            </div>
-                        );
-                    })}
-                </div>
-            )}
-             {!isLoading && !error && topPlayers.length === 0 && (
-                 <p className="text-gray-500 text-sm italic text-center py-6">Be the first on the leaderboard!</p>
-            )}
-        </div>
-    );
-};
-
-// Blockchain Node Animation Component
-const BlockchainNodes = () => {
-  const [nodes, setNodes] = useState<{id: number, x: number, y: number, size: number, delay: number}[]>([]);
-  
   useEffect(() => {
-    // Create random nodes
-    const newNodes = Array.from({ length: 20 }, (_, i) => ({
-      id: i,
-      x: Math.random() * 100,
-      y: Math.random() * 100,
-      size: Math.random() * 4 + 2,
-      delay: Math.random() * 5
-    }));
-    setNodes(newNodes);
-    
-    // Create random blockchain paths
-    const createPaths = () => {
-      const paths = document.querySelectorAll('.blockchain-path');
-      paths.forEach(path => path.remove());
-      
-      const container = document.querySelector('.blockchain-nodes');
-      if (!container) return;
-      
-      for (let i = 0; i < 5; i++) {
-        const path = document.createElement('div');
-        path.className = 'blockchain-path';
-        path.style.width = `${Math.random() * 30 + 10}%`;
-        path.style.top = `${Math.random() * 80 + 10}%`;
-        path.style.left = `${Math.random() * 20}%`;
-        path.style.animationDelay = `${Math.random() * 5}s`;
-        container.appendChild(path);
+    setIsMounted(true);
+  }, []);
+
+  useEffect(() => {
+    // Use the static paths instead of fetching from API
+    if (isMounted) {
+      setFeaturedPaths(STATIC_LEARNING_PATHS);
+      setIsLoadingPaths(false);
+    }
+  }, [isMounted]);
+
+  // Fetch top players for leaderboard
+  useEffect(() => {
+    const fetchTopPlayers = async () => {
+      setIsLoadingLeaderboard(true);
+      setLeaderboardError(null);
+      try {
+        // Make a real API call to get leaderboard data instead of using mock data
+        const response = await fetch(`${BACKEND_URL}/api/users/leaderboard?limit=3`);
+        
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.message || 'Failed to fetch leaderboard data');
+        }
+        
+        const leaderboardData = await response.json();
+        setTopPlayers(leaderboardData);
+      } catch (error: any) {
+        console.error('Error fetching top players:', error);
+        setLeaderboardError(error.message || 'Failed to load leaderboard data');
+      } finally {
+        setIsLoadingLeaderboard(false);
       }
     };
-    
-    createPaths();
-    const interval = setInterval(createPaths, 8000);
-    
-    return () => clearInterval(interval);
-  }, []);
-  
-  return (
-    <div className="blockchain-nodes">
-      {nodes.map(node => (
-        <div 
-          key={node.id}
-          className="node"
-          style={{
-            left: `${node.x}%`,
-            top: `${node.y}%`,
-            width: `${node.size}px`,
-            height: `${node.size}px`,
-            animationDelay: `${node.delay}s`
-          }}
-        />
-      ))}
-    </div>
-  );
-};
 
-// NFT Card Component
-const NFTCard = ({ image, title, description }: { image: string, title: string, description: string }) => {
-  return (
-    <div className="nft-card">
-      <div className="relative h-48 w-full overflow-hidden">
-        <Image 
-          src={image} 
-          alt={title}
-          fill
-          style={{ objectFit: 'cover' }}
-          className="transition-transform duration-500 hover:scale-110"
-        />
+    if (isMounted) {
+      fetchTopPlayers();
+    }
+  }, [isMounted]);
+
+  if (!isMounted) {
+    return (
+      <div className="flex justify-center items-center min-h-[calc(100vh-120px)]">
+        <p className="text-gray-400">Loading...</p>
       </div>
-      <div className="p-5">
-        <h3 className="text-lg font-semibold mb-2">{title}</h3>
-        <p className="text-gray-400 text-sm">{description}</p>
-        <div className="mt-4 flex justify-between items-center">
-          <span className="text-xs text-indigo-400">Exclusive Rewards</span>
-          <span className="text-xs bg-indigo-900/50 text-indigo-300 px-2 py-1 rounded-full">Coming Soon</span>
+    );
+  }
+
+  return (
+    <div className="w-full max-w-6xl mx-auto px-4 md:px-8 py-8">
+      {/* Wallet and Auth Section */}
+      <div className="flex justify-end mb-6">
+        {isLoadingAuth ? (
+          <div className="flex items-center">
+            <ArrowPathIcon className="animate-spin h-5 w-5 mr-2 text-white" />
+            <span className="text-white">Loading...</span>
+          </div>
+        ) : !isAuthenticated ? (
+          <div className="flex flex-wrap items-center gap-4">
+            <WalletMultiButtonDynamic className="!bg-gradient-to-r from-sol-gradient-from to-sol-gradient-to !rounded-md" />
+            <button
+              onClick={login}
+              className="px-5 py-2.5 bg-white text-purple-800 font-medium rounded-md hover:bg-gray-100 transition-colors"
+            >
+              Sign In
+            </button>
+          </div>
+        ) : (
+          <div className="flex items-center gap-4">
+            <div className="bg-gray-800/50 p-3 rounded-lg border border-gray-700">
+              <p className="text-sm text-gray-300">Welcome back,</p>
+              <p className="font-semibold text-white">{userProfile?.username || 'Explorer'}</p>
+            </div>
+            <Link 
+              href="/profile" 
+              className="inline-flex items-center px-4 py-2 bg-gradient-to-r from-sol-gradient-from to-sol-gradient-to text-white rounded-md hover:opacity-90 transition-colors"
+            >
+              View Profile <ArrowRightIcon className="h-4 w-4 ml-1" />
+            </Link>
+          </div>
+        )}
+      </div>
+      
+      {authError && (
+        <p className="mt-4 text-red-400 text-sm">{authError}</p>
+      )}
+
+      {/* Top Section: OG NFT and Leaderboard */}
+      <div className="grid md:grid-cols-5 gap-6 mb-8">
+        {/* OG NFT Card (2/5 width on md screens) */}
+        <div className="md:col-span-2 bg-gray-800/20 rounded-xl overflow-visible shadow-xl pb-12">
+          <OGNftCardDynamic />
+        </div>
+        
+        {/* Leaderboard (3/5 width on md screens) */}
+        <div className="md:col-span-3 bg-gray-800/20 border border-gray-700/50 p-6 rounded-xl shadow-xl">
+          <div className="flex justify-between items-center mb-5">
+            <h2 className="text-xl font-semibold text-gray-100 flex items-center">
+              <TrophyIcon className="w-6 h-6 mr-2 text-yellow-400" /> Top Questers
+            </h2>
+            <Link 
+              href="/leaderboard" 
+              className="text-xs text-purple-400 hover:text-purple-300 transition-colors font-medium"
+            >
+              View All &rarr;
+            </Link>
+          </div>
+          
+          {isLoadingLeaderboard ? (
+            <div className="space-y-2 animate-pulse">
+              {[...Array(3)].map((_, i) => (
+                <div key={i} className="flex items-center justify-between p-3 bg-gray-700/30 rounded-md">
+                  <div className="flex items-center space-x-3">
+                    <div className="w-6 h-6 bg-gray-600 rounded-md"></div>
+                    <div className="w-8 h-8 bg-gray-600 rounded-full"></div>
+                    <div className="h-4 w-24 bg-gray-600 rounded"></div>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <div className="h-4 w-12 bg-gray-600 rounded"></div>
+                    <div className="h-5 w-16 bg-gray-600 rounded-md"></div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : leaderboardError ? (
+            <p className="text-red-400 text-sm text-center py-4">Error: {leaderboardError}</p>
+          ) : topPlayers.length > 0 ? (
+            <div className="space-y-1">
+              {topPlayers.map((player, index) => {
+                const rank = player.rank ?? index + 1;
+                const rankClasses = getRankClasses(rank);
+                const truncatedAddress = shortenAddress(player.walletAddress, 4);
+                const gradientBg = rank === 1 ? 'bg-gradient-to-r from-yellow-500/15 to-gray-800/0' 
+                                  : rank === 2 ? 'bg-gradient-to-r from-gray-500/15 to-gray-800/0'
+                                  : rank === 3 ? 'bg-gradient-to-r from-orange-600/15 to-gray-800/0' 
+                                  : 'bg-gray-700/30';
+
+                return (
+                  <div 
+                    key={player._id} 
+                    className={`flex items-center justify-between p-3 rounded-lg ${gradientBg} hover:bg-gray-700/40 transition-colors duration-150`}
+                  >
+                    {/* Left Side: Rank, Avatar, User Info */}
+                    <div className="flex items-center space-x-3 flex-grow min-w-0 mr-3">
+                      <span className={`flex-shrink-0 w-6 h-6 flex items-center justify-center text-xs font-bold rounded-md ${rankClasses}`}>
+                        {rank}
+                      </span>
+                      <UserCircleIcon className="flex-shrink-0 w-8 h-8 text-gray-500" />
+                      <div className="min-w-0">
+                        <p className="text-sm font-medium text-gray-100 truncate">
+                          {player.username || truncatedAddress}
+                        </p>
+                        {player.username && (
+                          <p className="text-xs text-gray-400 font-mono truncate">
+                            {truncatedAddress}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Right Side: Boosts and Score */}
+                    <div className="flex items-center space-x-2 flex-shrink-0">
+                      {/* Boost Badges */}
+                      {(player.xpBoost && player.xpBoost > 1) && (
+                        <span className="flex items-center text-xs font-semibold bg-black/50 text-purple-300 px-1.5 py-0.5 rounded border border-purple-500/50" title={`XP Boost x${player.xpBoost.toFixed(1)}`}>
+                          <SparklesIcon className="h-3 w-3 mr-0.5"/> x{player.xpBoost.toFixed(1)}
+                        </span>
+                      )}
+                      {/* Score (XP) */}
+                      <div className="bg-gradient-to-r from-purple-600/70 to-blue-600/70 text-white px-2 py-0.5 rounded text-center min-w-[60px]">
+                        <span className="text-xs font-bold">
+                          {player.xp} XP
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          ) : (
+            <p className="text-gray-500 text-sm italic text-center py-6">Be the first on the leaderboard!</p>
+          )}
         </div>
       </div>
-    </div>
-  );
-};
 
-// Enhanced Stat Card Component
-const StatCard = ({ icon, value, label, color }: { icon: string, value: string, label: string, color: string }) => {
-  return (
-    <div className={`stat-card relative overflow-hidden group`}>
-      <div className={`absolute top-0 left-0 w-full h-1 ${color}`}></div>
-      <div className="flex items-center mb-3">
-        <div className={`text-3xl mr-4 p-2 rounded-lg ${color} bg-opacity-20 group-hover:bg-opacity-30 transition-all`}>
-          {icon}
+      {/* Learning Paths Section - revert to original implementation */}
+      <section className="mb-8">
+        <div className="mb-6">
+          <h2 className="text-3xl font-bold mb-3 text-white">Learning Paths</h2>
+          <p className="text-gray-400">Start your blockchain journey with our guided learning paths</p>
         </div>
-        <span className="text-gray-300 text-sm font-medium">{label}</span>
-      </div>
-      <div className="text-3xl font-bold solana-gradient-text">{value}</div>
-    </div>
-  );
-};
+        
+        {isLoadingPaths ? (
+          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+            {[1, 2, 3].map((i) => (
+              <div key={i} className="bg-gray-800/50 rounded-lg p-6 border border-gray-700/50 animate-pulse">
+                <div className="h-6 bg-gray-700 rounded mb-4 w-3/4"></div>
+                <div className="h-4 bg-gray-700 rounded mb-2 w-full"></div>
+                <div className="h-4 bg-gray-700 rounded mb-2 w-5/6"></div>
+                <div className="h-4 bg-gray-700 rounded mb-4 w-4/6"></div>
+                <div className="h-10 bg-gray-700 rounded w-full mt-6"></div>
+              </div>
+            ))}
+          </div>
+        ) : pathError ? (
+          <div className="bg-red-900/30 border border-red-800 text-red-200 p-4 rounded-lg">
+            <p>Failed to load learning paths: {pathError}</p>
+          </div>
+        ) : featuredPaths.length > 0 ? (
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {featuredPaths.map((path) => (
+              <div key={path.id} className="bg-slate-800/70 rounded-xl p-4 flex flex-col justify-between hover:border-purple-500 border border-transparent transition-all duration-200 shadow-lg hover:shadow-purple-500/30">
+                <div> {/* Top content area */} 
+                  <div className="flex items-start mb-3">
+                    <img 
+                      src={path.logoUrl || path.imageUrl || '/Union.svg'} 
+                      alt={`${path.shortTitle || path.title} logo`} 
+                      className="w-10 h-10 rounded-lg mr-3 object-cover border border-slate-700"
+                    />
+                    <div className="flex-grow">
+                      <h3 className="text-gray-100 font-semibold text-base leading-tight">{path.shortTitle || path.title}</h3>
+                    </div>
+                    <Link href={`/paths/${path.pathSlug}`} className="ml-2 flex-shrink-0">
+                      <ExternalLinkIcon className="w-5 h-5 text-gray-500 hover:text-purple-400 transition-colors" />
+                    </Link>
+                  </div>
 
-// Example Quest Card Component
-const ExampleQuestCard = ({ title, description, difficulty, xpReward, category, icon }: { 
-  title: string, 
-  description: string, 
-  difficulty: 'Beginner' | 'Intermediate' | 'Advanced', 
-  xpReward: number,
-  category: string,
-  icon: string
-}) => {
-  const difficultyColor = 
-    difficulty === 'Beginner' ? 'bg-green-500' : 
-    difficulty === 'Intermediate' ? 'bg-yellow-500' : 
-    'bg-red-500';
-  
-  return (
-    <div className="bg-gray-800/50 backdrop-blur-sm border border-gray-700/50 rounded-xl p-6 hover:border-indigo-500/30 transition-all duration-300">
-      <div className="flex items-center mb-4">
-        <div className="text-2xl mr-3">{icon}</div>
-        <div>
-          <h3 className="text-lg font-semibold">{title}</h3>
-          <div className="flex items-center gap-2 mt-1">
-            <span className={`text-xs px-2 py-0.5 rounded-full ${difficultyColor}`}>{difficulty}</span>
-            <span className="text-xs text-gray-400">{category}</span>
+                  {path.rewardTags && path.rewardTags.length > 0 && (
+                    <div className="flex flex-wrap gap-2 mb-3">
+                      {path.rewardTags.map((tag, index) => (
+                        <span 
+                          key={index} 
+                          className={`text-xs px-2 py-0.5 rounded-full font-medium 
+                            ${tag.variant === 'ethereum' ? 'bg-green-500/20 text-green-300' : 
+                              tag.variant === 'points' ? 'bg-purple-500/20 text-purple-300' : 
+                              'bg-slate-600/50 text-slate-300'}
+                          `}
+                        >
+                          {tag.text}
+                        </span>
+                      ))}
+                    </div>
+                  )}
+
+                  <div className="flex justify-between items-center text-xs text-gray-400 mb-1">
+                    <span>{path.questCount} Quests</span>
+                    {path.bonusPoints && <span>{path.bonusPoints.toLocaleString()} Bonus PTS</span>}
+                    {path.userCount && <span>{path.userCount} Users</span>}
+                  </div>
+
+                  {/* Progress/Status Section */}
+                  <div className="text-xs mt-2 mb-3 h-8"> {/* Fixed height for this section */} 
+                    {path.isPathCompleted ? (
+                      <div className="flex items-center text-green-400">
+                        <CheckCircleSolidIcon className="w-4 h-4 mr-1.5 flex-shrink-0" />
+                        <span>All quests completed</span>
+                      </div>
+                    ) : path.currentProgress !== undefined && path.questCount > 0 ? (
+                      <div>
+                        <div className="w-full bg-slate-700 rounded-full h-1.5 mb-1">
+                          <div 
+                            className="bg-purple-500 h-1.5 rounded-full transition-all duration-500 ease-out"
+                            style={{ width: `${(path.currentProgress / path.questCount) * 100}%` }}
+                          ></div>
+                        </div>
+                        <span className="text-slate-400">
+                          {path.statusTextOverride ? path.statusTextOverride : `${path.currentProgress}/${path.questCount} quests completed`}
+                        </span>
+                      </div>
+                    ) : path.statusTextOverride ? (
+                       <span className="text-slate-400 italic">{path.statusTextOverride}</span>
+                    ) : null}
+                  </div>
+                </div>
+
+                {/* Action Button - Pushed to bottom */} 
+                <Link 
+                  href={`/paths/${path.pathSlug}`}
+                  className="mt-auto block w-full text-center bg-purple-600 hover:bg-purple-700 text-white font-semibold py-2.5 px-4 rounded-lg text-sm transition-colors duration-150 shadow-md hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-opacity-50"
+                >
+                  {path.isPathCompleted ? 'View Path' : (path.currentProgress && path.currentProgress > 0 ? 'Continue Path' : 'Start Learning')}
+                </Link>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="text-center py-10">
+            <p className="text-gray-500">No learning paths are currently available. Check back soon!</p>
+          </div>
+        )}
+      </section>
+
+      {/* Features Section */}
+      <section className="py-8 mb-8 bg-gray-800/30 rounded-xl p-6">
+        <div className="text-center mb-8">
+          <h2 className="text-3xl font-bold mb-3 text-white">Why Learn With SolQuest</h2>
+          <p className="text-gray-400 max-w-2xl mx-auto">Our platform combines interactive learning with rewards to help you master blockchain development</p>
+        </div>
+
+        <div className="grid gap-6 md:grid-cols-3">
+          <div className="bg-gray-700/30 rounded-lg p-6 border border-gray-600/50">
+            <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-blue-400 rounded-lg flex items-center justify-center mb-4">
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+              </svg>
+            </div>
+            <h3 className="text-xl font-semibold mb-2 text-white">Learn by Doing</h3>
+            <p className="text-gray-400">Complete interactive tasks and quests that reinforce your understanding of blockchain concepts.</p>
+          </div>
+
+          <div className="bg-gray-700/30 rounded-lg p-6 border border-gray-600/50">
+            <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-blue-400 rounded-lg flex items-center justify-center mb-4">
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+            </div>
+            <h3 className="text-xl font-semibold mb-2 text-white">Earn Rewards</h3>
+            <p className="text-gray-400">Gain XP, badges, and potentially tokens as you complete challenges and milestones.</p>
+          </div>
+
+          <div className="bg-gray-700/30 rounded-lg p-6 border border-gray-600/50">
+            <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-blue-400 rounded-lg flex items-center justify-center mb-4">
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+              </svg>
+            </div>
+            <h3 className="text-xl font-semibold mb-2 text-white">Join the Community</h3>
+            <p className="text-gray-400">Connect with other blockchain developers, share knowledge, and collaborate on projects.</p>
           </div>
         </div>
-      </div>
-      <p className="text-gray-400 text-sm mb-4">{description}</p>
-      <div className="flex justify-between items-center text-sm">
-        <span className="text-yellow-400 font-medium">{xpReward} XP</span>
-        <span className="text-indigo-400">Coming Soon</span>
-      </div>
+      </section>
+
+      {/* Call to Action */}
+      <section className="py-8 bg-gradient-to-r from-purple-900 to-blue-900 rounded-xl">
+        <div className="max-w-4xl mx-auto px-4 md:px-8 text-center">
+          <h2 className="text-3xl font-bold mb-4 text-white">Ready to Start Your Blockchain Journey?</h2>
+          <p className="text-lg text-gray-300 mb-8">Join thousands of developers learning and building on various blockchains</p>
+          
+          {!isAuthenticated ? (
+            <div className="flex flex-wrap justify-center gap-4">
+              <WalletMultiButtonDynamic className="!bg-white !text-purple-900 !rounded-md !hover:bg-gray-100" />
+              <button
+                onClick={login}
+                className="px-6 py-3 bg-gradient-to-r from-sol-gradient-from to-sol-gradient-to text-white font-medium rounded-md hover:opacity-90 transition-colors"
+              >
+                Create Account
+              </button>
+            </div>
+          ) : (
+            <Link
+              href="/paths"
+              className="px-6 py-3 bg-white text-purple-900 font-medium rounded-md hover:bg-gray-100 transition-colors inline-flex items-center"
+            >
+              Explore Learning Paths <ArrowRightIcon className="h-4 w-4 ml-2" />
+            </Link>
+          )}
+        </div>
+      </section>
     </div>
   );
-};
-
-// --- Main Homepage Component --- 
-export default function LandingPage() {
-    return (
-        <LandingLayout>
-            <main className="min-h-screen">
-                {/* Simple Header */}
-                <header className="absolute top-0 left-0 right-0 z-10 py-4">
-                    <div className="container mx-auto px-4">
-                        <div className="flex justify-center">
-                            <div className="flex items-center">
-                                <Image 
-                                    src="/solana-logo.svg" 
-                                    alt="SolQuest Logo" 
-                                    width={32} 
-                                    height={32} 
-                                    className="mr-2"
-                                />
-                                <span className="text-xl font-bold solana-gradient-text">SolQuest.io</span>
-                            </div>
-                        </div>
-                    </div>
-                </header>
-
-                {/* Enhanced Hero Section with Web3 Background */}
-                <section className="relative pt-32 pb-40 overflow-hidden web3-grid w-full">
-                    <BlockchainNodes />
-                    <div className="hero-gradient absolute inset-0" />
-                    <div className="w-full max-w-4xl mx-auto px-4 relative">
-                        <div className="text-center w-full mx-auto">
-                            <div className="mb-8 flex justify-center">
-                                <div className="relative w-24 h-24">
-                                    <Image 
-                                        src="/solana-logo.svg" 
-                                        alt="Solana Logo"
-                                        width={96}
-                                        height={96}
-                                        className="token-float"
-                                    />
-                                </div>
-                            </div>
-                            <h1 className="text-6xl md:text-7xl lg:text-8xl font-bold mb-6">
-                                <span className="solana-gradient-text">SolQuest.io</span>
-                            </h1>
-                            <p className="text-xl md:text-2xl lg:text-3xl text-gray-300 mb-8 leading-relaxed">
-                                Your interactive quest-based learning platform for the Solana ecosystem.
-                                <br />
-                                <span className="text-indigo-400 font-semibold">Coming Soon!</span>
-                            </p>
-                            <div className="flex flex-wrap justify-center gap-6">
-                                <a
-                                    href="https://twitter.com/solquestio"
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="px-8 py-4 bg-indigo-600 hover:bg-indigo-700 rounded-lg font-medium text-lg transition-colors glow-button"
-                                >
-                                    Follow on Twitter
-                                </a>
-                                <a
-                                    href="mailto:hello@solquest.io"
-                                    className="px-8 py-4 bg-gray-800 hover:bg-gray-700 rounded-lg font-medium text-lg transition-colors"
-                                >
-                                    Contact Us
-                                </a>
-                            </div>
-                        </div>
-                    </div>
-                </section>
-
-                {/* Enhanced Stats Section */}
-                <section className="py-16 bg-gray-900/80 relative -mt-20">
-                    <div className="container mx-auto px-4">
-                        <div className="grid grid-cols-2 md:grid-cols-4 gap-6 max-w-5xl mx-auto">
-                            <StatCard 
-                                icon="🧭" 
-                                value="3+" 
-                                label="Learning Paths" 
-                                color="bg-indigo-500"
-                            />
-                            <StatCard 
-                                icon="🧩" 
-                                value="20+" 
-                                label="Interactive Quests" 
-                                color="bg-purple-500"
-                            />
-                            <StatCard 
-                                icon="🏆" 
-                                value="1000+" 
-                                label="XP per Path" 
-                                color="bg-yellow-500"
-                            />
-                            <StatCard 
-                                icon="💰" 
-                                value="$SOL" 
-                                label="Rewards" 
-                                color="bg-green-500"
-                            />
-                        </div>
-                    </div>
-                </section>
-
-                {/* Features Section */}
-                <section className="py-20 bg-gray-900/50">
-                    <div className="container mx-auto px-4">
-                        <h2 className="text-3xl md:text-4xl font-bold text-center mb-12">
-                            <span className="solana-gradient-text">Features Coming Soon</span>
-                        </h2>
-                        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-                            {features.map((feature, index) => (
-                                <div key={index} className="feature-card glow-effect">
-                                    <div className="text-2xl mb-4">{feature.icon}</div>
-                                    <h3 className="text-xl font-semibold mb-2">{feature.title}</h3>
-                                    <p className="text-gray-400">{feature.description}</p>
-                                </div>
-                            ))}
-                        </div>
-                    </div>
-                </section>
-
-                {/* Learning Paths Preview */}
-                <section className="py-20 relative overflow-hidden">
-                    <div className="absolute inset-0 opacity-10">
-                        <div className="absolute inset-0 bg-gradient-to-br from-indigo-600/20 to-purple-600/20" />
-                    </div>
-                    <div className="container mx-auto px-4 relative">
-                        <h2 className="text-3xl md:text-4xl font-bold text-center mb-6">
-                            <span className="gradient-text">Learning Paths</span>
-                        </h2>
-                        <p className="text-center text-gray-300 mb-12 max-w-2xl mx-auto">
-                            Explore our interactive learning paths designed to take you from beginner to expert in the Solana ecosystem.
-                        </p>
-                        
-                        <div className="grid md:grid-cols-3 gap-8">
-                            <div className="bg-gray-800/50 backdrop-blur-sm border border-gray-700/50 rounded-xl overflow-hidden">
-                                <div className="h-40 bg-gradient-to-r from-purple-900/80 to-indigo-900/80 flex items-center justify-center">
-                                    <Image src="/layerzero.jpg" alt="LayerZero" width={120} height={120} className="rounded-lg" />
-                                </div>
-                                <div className="p-6">
-                                    <h3 className="text-xl font-semibold mb-2">LayerZero Path</h3>
-                                    <p className="text-gray-400 text-sm mb-4">Master omnichain interactions with LayerZero V2. Send messages and tokens across blockchains.</p>
-                                    <div className="flex justify-between text-sm">
-                                        <span className="text-gray-500">3 Quests</span>
-                                        <span className="text-yellow-400">1500 XP</span>
-                                    </div>
-                                </div>
-                            </div>
-                            
-                            <div className="bg-gray-800/50 backdrop-blur-sm border border-gray-700/50 rounded-xl overflow-hidden">
-                                <div className="h-40 bg-gradient-to-r from-green-900/80 to-blue-900/80 flex items-center justify-center">
-                                    <Image src="/solana_v2_2b.jpg" alt="Solana Explorer" width={120} height={120} className="rounded-lg" />
-                                </div>
-                                <div className="p-6">
-                                    <h3 className="text-xl font-semibold mb-2">Solana Explorer Path</h3>
-                                    <p className="text-gray-400 text-sm mb-4">Dive deep into Solana's core concepts and learn to navigate the ecosystem.</p>
-                                    <div className="flex justify-between text-sm">
-                                        <span className="text-gray-500">7 Quests</span>
-                                        <span className="text-yellow-400">1650 XP</span>
-                                    </div>
-                                </div>
-                            </div>
-                            
-                            <div className="bg-gray-800/50 backdrop-blur-sm border border-gray-700/50 rounded-xl overflow-hidden">
-                                <div className="h-40 bg-gradient-to-r from-blue-900/80 to-cyan-900/80 flex items-center justify-center">
-                                    <Image src="/zk-compression.svg" alt="ZK Compression" width={120} height={120} className="rounded-lg" />
-                                </div>
-                                <div className="p-6">
-                                    <h3 className="text-xl font-semibold mb-2">ZK Compression Path</h3>
-                                    <p className="text-gray-400 text-sm mb-4">Build scalable, private, and secure applications using compressed tokens and accounts.</p>
-                                    <div className="flex justify-between text-sm">
-                                        <span className="text-gray-500">7 Quests</span>
-                                        <span className="text-yellow-400">1000 XP</span>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </section>
-
-                {/* Example Quests Section */}
-                <section className="py-20 bg-gray-900/70">
-                    <div className="container mx-auto px-4">
-                        <h2 className="text-3xl md:text-4xl font-bold text-center mb-6">
-                            <span className="gradient-text">Example Quests</span>
-                        </h2>
-                        <p className="text-center text-gray-300 mb-12 max-w-2xl mx-auto">
-                            Our quests range from beginner-friendly tutorials to advanced technical challenges, covering a wide range of Solana topics.
-                        </p>
-                        
-                        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-                            <ExampleQuestCard 
-                                title="LayerZero Messenger"
-                                description="Build and deploy a cross-chain messaging application using LayerZero's omnichain communication protocol."
-                                difficulty="Advanced"
-                                xpReward={500}
-                                category="Cross-Chain"
-                                icon="🔄"
-                            />
-                            <ExampleQuestCard 
-                                title="Create a Compressed NFT"
-                                description="Learn how to create and mint compressed NFTs using Solana's state compression technology for gas efficiency."
-                                difficulty="Intermediate"
-                                xpReward={350}
-                                category="NFTs"
-                                icon="🗜️"
-                            />
-                            <ExampleQuestCard 
-                                title="Build a Simple dApp"
-                                description="Create your first decentralized application on Solana using the web3.js library and connect it to a wallet."
-                                difficulty="Beginner"
-                                xpReward={200}
-                                category="Development"
-                                icon="🔨"
-                            />
-                            <ExampleQuestCard 
-                                title="Deploy a Solana Program"
-                                description="Write and deploy a Rust-based Solana program to the devnet and interact with it from a frontend."
-                                difficulty="Advanced"
-                                xpReward={450}
-                                category="Smart Contracts"
-                                icon="📦"
-                            />
-                            <ExampleQuestCard 
-                                title="Stake SOL Tokens"
-                                description="Learn how to stake SOL tokens with validators and earn staking rewards while supporting the network."
-                                difficulty="Beginner"
-                                xpReward={150}
-                                category="DeFi"
-                                icon="💰"
-                            />
-                            <ExampleQuestCard 
-                                title="Implement Account Compression"
-                                description="Optimize your Solana application by implementing account compression techniques for better performance."
-                                difficulty="Intermediate"
-                                xpReward={400}
-                                category="Optimization"
-                                icon="⚡"
-                            />
-                        </div>
-                    </div>
-                </section>
-
-                {/* NFT Showcase */}
-                <section className="py-20 bg-gray-900/50">
-                    <div className="container mx-auto px-4">
-                        <h2 className="text-3xl md:text-4xl font-bold text-center mb-6">
-                            <span className="gradient-text">Exclusive NFT Rewards</span>
-                        </h2>
-                        <p className="text-center text-gray-300 mb-12 max-w-2xl mx-auto">
-                            Complete quests and earn exclusive NFTs that provide special benefits in the SolQuest ecosystem.
-                        </p>
-                        
-                        <div className="grid md:grid-cols-3 gap-8">
-                            <NFTCard 
-                                image="/placeholder-nft.svg"
-                                title="SolQuest OG Pass"
-                                description="Early adopter NFT with exclusive XP boosts and special community perks."
-                            />
-                            <NFTCard 
-                                image="/placeholder-nft.svg"
-                                title="Path Completion Badge"
-                                description="Showcase your achievements and expertise in specific Solana domains."
-                            />
-                            <NFTCard 
-                                image="/placeholder-nft.svg"
-                                title="Quest Master Collection"
-                                description="Rare NFTs for users who complete all quests with perfect scores."
-                            />
-                        </div>
-                    </div>
-                </section>
-
-                {/* How It Works */}
-                <section className="py-20 relative overflow-hidden">
-                    <div className="container mx-auto px-4">
-                        <h2 className="text-3xl md:text-4xl font-bold text-center mb-12">
-                            <span className="solana-gradient-text">How SolQuest Works</span>
-                        </h2>
-                        
-                        <div className="grid md:grid-cols-4 gap-8 max-w-5xl mx-auto">
-                            <div className="text-center">
-                                <div className="w-16 h-16 bg-indigo-900/50 rounded-full flex items-center justify-center mx-auto mb-4">
-                                    <span className="text-2xl">1</span>
-                                </div>
-                                <h3 className="text-lg font-semibold mb-2">Connect Wallet</h3>
-                                <p className="text-gray-400 text-sm">Connect your Solana wallet to get started on your learning journey.</p>
-                            </div>
-                            
-                            <div className="text-center">
-                                <div className="w-16 h-16 bg-indigo-900/50 rounded-full flex items-center justify-center mx-auto mb-4">
-                                    <span className="text-2xl">2</span>
-                                </div>
-                                <h3 className="text-lg font-semibold mb-2">Choose a Path</h3>
-                                <p className="text-gray-400 text-sm">Select from various learning paths based on your interests.</p>
-                            </div>
-                            
-                            <div className="text-center">
-                                <div className="w-16 h-16 bg-indigo-900/50 rounded-full flex items-center justify-center mx-auto mb-4">
-                                    <span className="text-2xl">3</span>
-                                </div>
-                                <h3 className="text-lg font-semibold mb-2">Complete Quests</h3>
-                                <p className="text-gray-400 text-sm">Follow interactive tutorials and complete on-chain verification tasks.</p>
-                            </div>
-                            
-                            <div className="text-center">
-                                <div className="w-16 h-16 bg-indigo-900/50 rounded-full flex items-center justify-center mx-auto mb-4">
-                                    <span className="text-2xl">4</span>
-                                </div>
-                                <h3 className="text-lg font-semibold mb-2">Earn Rewards</h3>
-                                <p className="text-gray-400 text-sm">Gain XP, climb the leaderboard, and earn exclusive NFT rewards.</p>
-                            </div>
-                        </div>
-                    </div>
-                </section>
-
-                {/* CTA Section */}
-                <section className="py-20 bg-gradient-to-br from-gray-900 to-indigo-900/50">
-                    <div className="container mx-auto px-4 text-center">
-                        <h2 className="text-3xl md:text-4xl font-bold mb-6">
-                            Ready to Start Your Solana Journey?
-                        </h2>
-                        <p className="text-xl text-gray-300 mb-8 max-w-2xl mx-auto">
-                            Join our community and be the first to know when we launch.
-                            Follow us on Twitter for updates and early access opportunities.
-                        </p>
-                        <a
-                            href="https://twitter.com/solquestio"
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="inline-block px-8 py-4 bg-indigo-600 hover:bg-indigo-700 rounded-lg font-medium text-lg transition-colors glow-button"
-                        >
-                            Follow for Updates
-                        </a>
-                        
-                        <div className="mt-12 flex flex-wrap justify-center gap-8">
-                            <div className="flex items-center">
-                                <span className="text-2xl mr-3">📱</span>
-                                <span className="text-gray-300">Mobile Friendly</span>
-                            </div>
-                            <div className="flex items-center">
-                                <span className="text-2xl mr-3">🔒</span>
-                                <span className="text-gray-300">Secure & Non-Custodial</span>
-                            </div>
-                            <div className="flex items-center">
-                                <span className="text-2xl mr-3">🌐</span>
-                                <span className="text-gray-300">Web3 Native</span>
-                            </div>
-                        </div>
-                    </div>
-                </section>
-                
-                {/* Footer */}
-                <footer className="py-8 bg-gray-900 border-t border-gray-800">
-                    <div className="container mx-auto px-4">
-                        <div className="flex flex-col md:flex-row justify-between items-center">
-                            <div className="mb-4 md:mb-0">
-                                <h3 className="text-xl font-bold solana-gradient-text">SolQuest.io</h3>
-                                <p className="text-sm text-gray-500">Embark on your Solana Adventure</p>
-                            </div>
-                            <div className="flex gap-4">
-                                <a href="https://twitter.com/solquestio" target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-white">
-                                    Twitter
-                                </a>
-                                <a href="https://discord.gg/solquest" target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-white">
-                                    Discord
-                                </a>
-                                <a href="mailto:hello@solquest.io" className="text-gray-400 hover:text-white">
-                                    Contact
-                                </a>
-                            </div>
-                        </div>
-                        <div className="mt-6 text-center text-xs text-gray-600">
-                            &copy; {new Date().getFullYear()} SolQuest.io. All rights reserved.
-                        </div>
-                    </div>
-                </footer>
-            </main>
-        </LandingLayout>
-    );
-}
-
-const features = [
-    {
-        icon: "🧭",
-        title: "Interactive Learning Paths",
-        description: "Master Solana through structured quests covering LayerZero, ZK Compression, and more."
-    },
-    {
-        icon: "🏆",
-        title: "On-chain Verification",
-        description: "Complete quests and earn verifiable XP rewards on the Solana blockchain."
-    },
-    {
-        icon: "🎮",
-        title: "Gamified Experience",
-        description: "Learn through interactive challenges, achievements, and real-world projects."
-    },
-    {
-        icon: "👥",
-        title: "Community Driven",
-        description: "Join a vibrant community of learners, builders, and Solana enthusiasts."
-    },
-    {
-        icon: "🔒",
-        title: "Secure Authentication",
-        description: "Connect your Solana wallet for a seamless, secure learning experience."
-    },
-    {
-        icon: "🚀",
-        title: "Devnet & Mainnet",
-        description: "Practice on devnet, then apply your skills on mainnet with confidence."
-    },
-    {
-        icon: "🔄",
-        title: "Cross-Chain Learning",
-        description: "Explore interoperability between Solana and other blockchains."
-    },
-    {
-        icon: "📊",
-        title: "Progress Tracking",
-        description: "Monitor your learning journey with detailed progress analytics."
-    },
-    {
-        icon: "💎",
-        title: "NFT Rewards",
-        description: "Earn exclusive NFTs that showcase your achievements and provide benefits."
-    }
-]; 
+} 

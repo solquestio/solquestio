@@ -6,7 +6,7 @@
   "scripts": {
     "build": "tsc",
     "start": "node dist/server.js",
-    "dev": "vercel dev",
+    "dev": "ts-node src/server.ts",
     "dev:local": "nodemon src/server.ts",
     "deploy": "vercel deploy --prod",
     "test": "echo \"Error: no test specified\" && exit 1"

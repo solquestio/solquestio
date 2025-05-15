@@ -30,6 +30,7 @@ interface LeaderboardUser {
 
 // Backend URL
 const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:5000';
+console.log("Using backend URL:", BACKEND_URL);
 
 // Helper function to shorten wallet address
 const shortenAddress = (address: string, chars = 4): string => {
@@ -52,14 +53,30 @@ export default function LeaderboardPage() {
         setError(null);
         console.log(`Fetching leaderboard for timeframe: ${selectedTimeframe}`);
         try {
-            // TODO: Update backend to accept timeframe query param
-            const response = await fetch(`${BACKEND_URL}/users?path=leaderboard&limit=3&timeframe=${selectedTimeframe}`);
+            // Make an API call to get leaderboard data - using the direct endpoint structure from routes/user.ts
+            const response = await fetch(`${BACKEND_URL}/api/users/leaderboard?limit=20${selectedTimeframe === 'monthly' ? '&timeframe=monthly' : ''}`);
+            
+            // Check content type to debug response issues
+            const contentType = response.headers.get('content-type');
+            console.log(`API response content type: ${contentType}`);
+            
+            // Get raw response text first to debug any issues
+            const rawText = await response.text();
+            console.log('Raw API response:', rawText.substring(0, 200) + (rawText.length > 200 ? '...' : ''));
+            
             if (!response.ok) {
-                const errorData = await response.json();
-                throw new Error(errorData.message || 'Failed to fetch leaderboard');
+                throw new Error(`Failed to fetch leaderboard: ${response.status} ${response.statusText}`);
             }
-            let data: LeaderboardUser[] = await response.json();
-            setLeaderboard(data); // Assume backend returns sorted data for the timeframe
+            
+            // Parse the JSON manually after getting the text
+            let data: LeaderboardUser[];
+            try {
+                data = JSON.parse(rawText);
+                setLeaderboard(data); // Backend returns sorted data
+            } catch (parseError) {
+                console.error('JSON parse error:', parseError);
+                throw new Error('Invalid JSON response from server');
+            }
         } catch (error: any) {
             console.error(`Error fetching ${selectedTimeframe} leaderboard:`, error);
             setError(error.message || `Could not load ${selectedTimeframe} leaderboard data.`);
@@ -67,7 +84,7 @@ export default function LeaderboardPage() {
         } finally {
             setIsLoading(false);
         }
-    }, []); // No dependencies needed here as timeframe is passed in
+    }, []);
 
     // Effect to fetch data when timeframe changes
     useEffect(() => {
@@ -231,7 +248,13 @@ export default function LeaderboardPage() {
                             })}
                         </div>
                     ) : (
-                        <p className="text-center text-gray-500 py-10">The leaderboard is currently empty.</p>
+                        <div className="flex flex-col items-center justify-center py-16">
+                            <TrophyIcon className="w-16 h-16 text-gray-600 mb-4" />
+                            <p className="text-gray-400 text-lg mb-2">No Leaderboard Data Available</p>
+                            <p className="text-gray-500 text-sm max-w-md text-center">
+                                Complete quests to earn XP and claim your spot on the leaderboard!
+                            </p>
+                        </div>
                     )}
                 </div>
             </div>

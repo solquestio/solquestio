@@ -1,0 +1,20 @@
+{
+	"name": "solquestio",
+	"version": "1.0.0",
+	"description": "SolQuestio - An interactive blockchain education platform",
+	"main": "index.js",
+	"scripts": {
+		"start": "cd frontend && npm run dev",
+		"start:backend": "cd backend && npm start",
+		"build": "cd frontend && npm run build",
+		"clean": "cd frontend && powershell -Command \"Remove-Item -Recurse -Force .next\""
+	},
+	"keywords": [
+		"solana",
+		"blockchain",
+		"education",
+		"quests"
+	],
+	"author": "",
+	"license": "ISC"
+}

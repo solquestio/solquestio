@@ -4,7 +4,7 @@ import bs58 from 'bs58';
 import jwt from 'jsonwebtoken'; // Import jwt
 import { PublicKey } from '@solana/web3.js'; // Import PublicKey for validation
 import User, { IUser } from '../models/User'; // Import the User model and IUser interface
-import { QUEST_DEFINITIONS } from './quests'; // Import quest definitions
+import { QUEST_DEFINITIONS } from './quests'; // Import quest definitions as named import
 import { Helius } from "helius-sdk"; // Import Helius SDK
 import dotenv from 'dotenv';
 import crypto from 'crypto'; // Import crypto for random string generation

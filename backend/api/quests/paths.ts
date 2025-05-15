@@ -45,17 +45,27 @@ export default async function handler(request: VercelRequest, response: VercelRe
           title: "Solana Explorer Path",
           description: "Learn the basics of Solana blockchain and explore its ecosystem.",
           questCount: 7,
-          graphicType: "gradient",
-          totalXp: 300
+          graphicType: "image",
+          imageUrl: "/solana_v2_2b.jpg",
+          totalXp: 1650
         },
         {
-          id: "solquest-og",
-          title: "SolQuest OG Path",
-          description: "Become a SolQuest OG by completing these community quests.",
+          id: "layerzero-path",
+          title: "LayerZero Learning Path",
+          description: "Explore omnichain interactions! Start by funding your Devnet wallet, then dive into sending messages and tokens across blockchains with LayerZero V2.",
           questCount: 5,
           graphicType: "image",
-          imageUrl: "/placeholder-nft.png",
-          totalXp: 450
+          imageUrl: "/layerzero.jpg",
+          totalXp: 1500
+        },
+        {
+          id: "zk-compression-path",
+          title: "ZK Compression Innovators Path",
+          description: "Learn about ZK Compression on Solana. Discover how to build scalable, private, and secure applications using compressed tokens and accounts.",
+          questCount: 7,
+          graphicType: "image",
+          imageUrl: "/zk-compression.jpg",
+          totalXp: 1000
         }
       ];
     }

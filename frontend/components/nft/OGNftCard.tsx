@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
+import Link from 'next/link';
 import styles from './OGNftCard.module.css';
 
 interface Sparkle {
@@ -155,16 +156,41 @@ const OGNftCard: React.FC = () => {
                             <div className={`${styles.ray} ${styles.ray7}`}></div>
                             <div className={`${styles.ray} ${styles.ray8}`}></div>
                         </div>
-                        <div style={{ position: 'absolute', width: '100px', height: '100px', borderRadius: '50%', background: 'radial-gradient(circle, rgba(151,71,255,0.3) 0%, rgba(0,255,179,0.1) 70%, rgba(0,0,0,0) 100%)' }} className={styles.logoGlow}></div>
-                        <div style={{ position: 'absolute', width: '90px', height: '90px', borderRadius: '50%', background: 'radial-gradient(circle, rgba(255,255,255,0.15) 0%, rgba(255,255,255,0.05) 50%, rgba(0,0,0,0) 100%)' }} className={styles.logoGlowInner}></div>
-                        <img src="/SolQuestLogo_Main_EXPLAINED 2.png" className={styles.actualLogo} alt="SolQuest Logo" style={{ width: '75px', height: 'auto', position: 'relative', zIndex: 2 }} />
+                        <div style={{ position: 'absolute', width: '120px', height: '120px', borderRadius: '8px', background: 'radial-gradient(circle, rgba(151,71,255,0.3) 0%, rgba(0,255,179,0.1) 70%, rgba(0,0,0,0) 100%)' }} className={styles.logoGlow}></div>
+                        <div style={{ position: 'absolute', width: '110px', height: '110px', borderRadius: '8px', background: 'radial-gradient(circle, rgba(255,255,255,0.15) 0%, rgba(255,255,255,0.05) 50%, rgba(0,0,0,0) 100%)' }} className={styles.logoGlowInner}></div>
+                        {/* Inline SVG Logo - Reverted to Placeholder */}
+                        <svg
+                          width="100"
+                          height="50"
+                          viewBox="0 0 100 50"
+                          fill="none"
+                          xmlns="http://www.w3.org/2000/svg"
+                          className={styles.actualLogo}
+                          style={{ position: 'relative', zIndex: 2 }}
+                        >
+                          <defs>
+                            <linearGradient id="headerLogoGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                              <stop offset="0%" stopColor="#7B40C0" />
+                              <stop offset="100%" stopColor="#00D0B0" />
+                            </linearGradient>
+                          </defs>
+                          {/* Placeholder for the "okay" SVG version from approx. "5 actions ago". */}
+                          {/* The previous complex SVG was removed. Please provide the intended SVG code for the initial inline SVG. */}
+                          <text x="25" y="35" fontFamily="Arial, sans-serif" fontSize="30" fontWeight="bold" fill="url(#headerLogoGradient)">SQ</text>
+                        </svg>
                         <div style={{ position: 'absolute', width: '15px', height: '15px', background: 'radial-gradient(circle, rgba(255,255,255,0.9) 0%, rgba(255,255,255,0) 70%)', top: '30%', left: '30%' }} className={`${styles.shine} ${styles.spot1}`}></div>
                         <div style={{ position: 'absolute', width: '10px', height: '10px', background: 'radial-gradient(circle, rgba(255,255,255,0.8) 0%, rgba(255,255,255,0) 70%)', top: '40%', left: '60%' }} className={`${styles.shine} ${styles.spot2}`}></div>
                     </div>
-                    <div className={styles.ogBadge}>OG</div>
                 </div>
                 
+                <div className={styles.ogBadge}>OG</div>
                 <div className={styles.title}>SolQuest OG Pass</div>
+                
+                {/* Boost badges */}
+                <div className={styles.boostContainer}>
+                    <div className={styles.boostBadge}>+10% SOL</div>
+                    <div className={styles.boostBadge}>+10% XP</div>
+                </div>
 
                 {/* Render Sparkles */}
                 {sparkles.map(sparkle => (
@@ -195,6 +221,13 @@ const OGNftCard: React.FC = () => {
                         }}
                     />
                 ))}
+
+                {/* Mint Button */}
+                <div className={styles.mintButtonContainer}>
+                    <Link href="/claim-og-nft" className={styles.mintButton}>
+                        Mint OG NFT
+                    </Link>
+                </div>
             </div>
         </div>
     );
