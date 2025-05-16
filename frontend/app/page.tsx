@@ -238,7 +238,7 @@ export default function HomePage() {
       setLeaderboardError(null);
       try {
         // Make a real API call to get leaderboard data instead of using mock data
-        const response = await fetch(`${BACKEND_URL}/api/users/leaderboard?limit=3`);
+        const response = await fetch(`${BACKEND_URL}/api/users?path=leaderboard&limit=3`);
         
         if (!response.ok) {
           const errorData = await response.json();
@@ -270,24 +270,6 @@ export default function HomePage() {
 
   return (
     <div className="w-full max-w-6xl mx-auto px-4 md:px-8 py-8">
-      {/* Test video - will be visible on homepage */}
-      <div style={{position: "fixed", top: "150px", right: "20px", zIndex: 9999}}>
-        <video 
-          src="/OGNFT.mp4" 
-          width="200" 
-          height="200" 
-          autoPlay 
-          loop 
-          muted 
-          playsInline 
-          style={{
-            borderRadius: "16px", 
-            boxShadow: "0 0 40px 20px rgba(151,71,255,0.5)",
-            opacity: 0.9
-          }} 
-        />
-      </div>
-      
       {/* Wallet and Auth Section */}
       <div className="flex justify-end mb-6">
         {isLoadingAuth ? (

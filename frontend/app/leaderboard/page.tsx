@@ -54,7 +54,7 @@ export default function LeaderboardPage() {
         console.log(`Fetching leaderboard for timeframe: ${selectedTimeframe}`);
         try {
             // Make an API call to get leaderboard data - using the direct endpoint structure from routes/user.ts
-            const response = await fetch(`${BACKEND_URL}/api/users/leaderboard?limit=20${selectedTimeframe === 'monthly' ? '&timeframe=monthly' : ''}`);
+            const response = await fetch(`${BACKEND_URL}/api/users?path=leaderboard&limit=20${selectedTimeframe === 'monthly' ? '&timeframe=monthly' : ''}`);
             
             // Check content type to debug response issues
             const contentType = response.headers.get('content-type');
