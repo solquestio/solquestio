@@ -3,8 +3,7 @@ import { Connection, PublicKey, Transaction } from '@solana/web3.js';
 import { useWallet } from '@solana/wallet-adapter-react';
 import { createMint, getOrCreateAssociatedTokenAccount, mintTo } from '@solana/spl-token';
 import { createCreateMetadataAccountV3Instruction } from '@metaplex-foundation/mpl-token-metadata';
-import { CHAIN_ID_SOLANA, CHAIN_ID_ETH } from '@certusone/wormhole-sdk';
-import { transferFromSolana } from '@certusone/wormhole-sdk/lib/cjs/bridge/transfer';
+import { CHAIN_ID_SOLANA, CHAIN_ID_ETH, transferFromSolana } from '@certusone/wormhole-sdk';
 
 interface WormholeNFTQuestProps {
   onQuestComplete: () => void;

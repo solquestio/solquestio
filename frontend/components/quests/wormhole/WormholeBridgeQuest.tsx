@@ -3,8 +3,7 @@ import { Connection, PublicKey } from '@solana/web3.js';
 import { Token, TOKEN_PROGRAM_ID } from '@solana/spl-token';
 import { getAssociatedTokenAddress } from '@solana/spl-token';
 import { useWallet } from '@solana/wallet-adapter-react';
-import { CHAIN_ID_SOLANA, CHAIN_ID_ETH, CHAIN_ID_POLYGON } from '@certusone/wormhole-sdk';
-import { transferNativeSol, transferFromSolana } from '@certusone/wormhole-sdk/lib/cjs/bridge/transfer';
+import { CHAIN_ID_SOLANA, CHAIN_ID_ETH, CHAIN_ID_POLYGON, transferNativeSol, transferFromSolana } from '@certusone/wormhole-sdk';
 
 interface WormholeBridgeQuestProps {
   onQuestComplete: () => void;
