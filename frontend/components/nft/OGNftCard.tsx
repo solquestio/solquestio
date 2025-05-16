@@ -111,6 +111,29 @@ const OGNftCard: React.FC = () => {
             <div className={styles.nftCardInner} ref={cardInnerRef}>
                 <div className={styles.cardBg}></div>
                 <div className={styles.cardOverlay}></div>
+                
+                {/* Direct video element with absolute positioning for maximum visibility */}
+                <video
+                    src="/OGNFT.mp4"
+                    width="300px" 
+                    height="300px"
+                    autoPlay
+                    loop
+                    muted
+                    playsInline
+                    style={{
+                        position: "absolute",
+                        top: "50%",
+                        left: "50%",
+                        transform: "translate(-50%, -50%)",
+                        borderRadius: "16px",
+                        zIndex: 9999,
+                        opacity: 1,
+                        display: "block",
+                        boxShadow: "0 0 40px 20px rgba(151,71,255,0.5)"
+                    }}
+                />
+                
                 {/* SVG patterns and paths */}
                 <svg className={styles.hexagonPattern} width="800" height="500" viewBox="0 0 800 500" xmlns="http://www.w3.org/2000/svg">
                     <defs>
@@ -145,41 +168,37 @@ const OGNftCard: React.FC = () => {
                 <div className={styles.solquestText}>SOLQUEST.IO</div>
                 
                 <div className={styles.logoContainer}>
-                    <div style={{ width: '125px', height: '125px', position: 'relative', display: 'flex', justifyContent: 'center', alignItems: 'center' }} className={styles.logoShineContainer}>
-                        <div style={{ position: 'absolute', width: '100%', height: '100%', top: 0, left: 0, zIndex: 1 }} className={styles.lightRays}>
-                            <div className={`${styles.ray} ${styles.ray1}`}></div>
-                            <div className={`${styles.ray} ${styles.ray2}`}></div>
-                            <div className={`${styles.ray} ${styles.ray3}`}></div>
-                            <div className={`${styles.ray} ${styles.ray4}`}></div>
-                            <div className={`${styles.ray} ${styles.ray5}`}></div>
-                            <div className={`${styles.ray} ${styles.ray6}`}></div>
-                            <div className={`${styles.ray} ${styles.ray7}`}></div>
-                            <div className={`${styles.ray} ${styles.ray8}`}></div>
-                        </div>
-                        <div style={{ position: 'absolute', width: '120px', height: '120px', borderRadius: '8px', background: 'radial-gradient(circle, rgba(151,71,255,0.3) 0%, rgba(0,255,179,0.1) 70%, rgba(0,0,0,0) 100%)' }} className={styles.logoGlow}></div>
-                        <div style={{ position: 'absolute', width: '110px', height: '110px', borderRadius: '8px', background: 'radial-gradient(circle, rgba(255,255,255,0.15) 0%, rgba(255,255,255,0.05) 50%, rgba(0,0,0,0) 100%)' }} className={styles.logoGlowInner}></div>
-                        {/* Inline SVG Logo - Reverted to Placeholder */}
-                        <svg
-                          width="100"
-                          height="50"
-                          viewBox="0 0 100 50"
-                          fill="none"
-                          xmlns="http://www.w3.org/2000/svg"
-                          className={styles.actualLogo}
-                          style={{ position: 'relative', zIndex: 2 }}
-                        >
-                          <defs>
-                            <linearGradient id="headerLogoGradient" x1="0%" y1="0%" x2="100%" y2="0%">
-                              <stop offset="0%" stopColor="#7B40C0" />
-                              <stop offset="100%" stopColor="#00D0B0" />
-                            </linearGradient>
-                          </defs>
-                          {/* Placeholder for the "okay" SVG version from approx. "5 actions ago". */}
-                          {/* The previous complex SVG was removed. Please provide the intended SVG code for the initial inline SVG. */}
-                          <text x="25" y="35" fontFamily="Arial, sans-serif" fontSize="30" fontWeight="bold" fill="url(#headerLogoGradient)">SQ</text>
-                        </svg>
-                        <div style={{ position: 'absolute', width: '15px', height: '15px', background: 'radial-gradient(circle, rgba(255,255,255,0.9) 0%, rgba(255,255,255,0) 70%)', top: '30%', left: '30%' }} className={`${styles.shine} ${styles.spot1}`}></div>
-                        <div style={{ position: 'absolute', width: '10px', height: '10px', background: 'radial-gradient(circle, rgba(255,255,255,0.8) 0%, rgba(255,255,255,0) 70%)', top: '40%', left: '60%' }} className={`${styles.shine} ${styles.spot2}`}></div>
+                    <div style={{ 
+                        width: '100%', 
+                        height: '100%', 
+                        position: 'absolute', 
+                        top: 0, 
+                        left: 0, 
+                        display: 'flex', 
+                        justifyContent: 'center', 
+                        alignItems: 'center', 
+                        zIndex: 10 
+                    }} className={styles.logoShineContainer}>
+                        {/* Replace SVG/logo with looping video */}
+                        <video
+                          src="/OGNFT.mp4"
+                          width="100%"
+                          height="100%"
+                          autoPlay
+                          loop
+                          muted
+                          playsInline
+                          style={{ 
+                              width: '90%', 
+                              height: '90%', 
+                              borderRadius: '32px', 
+                              objectFit: 'cover', 
+                              boxShadow: '0 0 32px 12px rgba(151,71,255,0.3)',
+                              zIndex: 20,
+                              opacity: 1,
+                              display: 'block'
+                          }}
+                        />
                     </div>
                 </div>
                 

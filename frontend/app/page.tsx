@@ -161,6 +161,27 @@ const STATIC_LEARNING_PATHS: LearningPath[] = [
     rewardTags: [{ text: '+2200 ZK XP', variant: 'points' }, { text: '1000x Hackathon Ready', variant: 'generic' }],
     statusTextOverride: 'Become a ZK Compression Pro!',
     pathKey: 'zkCompression'
+  },
+  {
+    id: 'wormhole-path',
+    title: 'Wormhole Multichain Path',
+    shortTitle: 'Wormhole',
+    description: 'Master multichain development! Learn to build cross-chain dApps and transfer assets using Wormhole.',
+    questCount: 6,
+    difficulty: 'Advanced',
+    pathSlug: 'wormhole',
+    totalXp: 2000,
+    isLocked: false,
+    graphicType: 'image',
+    imageUrl: '/wormhole-logo.svg', // Add a Wormhole logo to public if available
+    logoUrl: '/wormhole-logo.svg',
+    bonusPoints: 1500,
+    userCount: '1K+',
+    isPathCompleted: false,
+    currentProgress: 0,
+    rewardTags: [{ text: '+2000 WH XP', variant: 'points' }, { text: 'Multichain Dev', variant: 'generic' }],
+    statusTextOverride: 'Become a Multichain Pro!',
+    pathKey: 'wormhole'
   }
 ];
 
@@ -249,6 +270,24 @@ export default function HomePage() {
 
   return (
     <div className="w-full max-w-6xl mx-auto px-4 md:px-8 py-8">
+      {/* Test video - will be visible on homepage */}
+      <div style={{position: "fixed", top: "150px", right: "20px", zIndex: 9999}}>
+        <video 
+          src="/OGNFT.mp4" 
+          width="200" 
+          height="200" 
+          autoPlay 
+          loop 
+          muted 
+          playsInline 
+          style={{
+            borderRadius: "16px", 
+            boxShadow: "0 0 40px 20px rgba(151,71,255,0.5)",
+            opacity: 0.9
+          }} 
+        />
+      </div>
+      
       {/* Wallet and Auth Section */}
       <div className="flex justify-end mb-6">
         {isLoadingAuth ? (
