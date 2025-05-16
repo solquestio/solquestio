@@ -34,9 +34,29 @@ connectDB(); // Attempt to connect to the database on startup
 // -------------------------
 
 // --- Middleware ---
-// Configure CORS
+const allowedOrigins = [
+  'https://solquest.io',
+  'https://www.solquest.io', 
+  'https://solquestio-frontend.vercel.app',
+  'https://solquestio.vercel.app',
+  'http://localhost:3000',
+  'http://localhost:3001',
+  'https://solquestio-git-main-solquest.vercel.app',
+  'https://solquestio-solquest.vercel.app',
+  'https://sol-quests.io',
+  'https://www.sol-quests.io'
+];
+
 const corsOptions = {
-  origin: frontendUrl || '*', // Allow specific frontend URL or all if not set
+  origin: function (origin: string | undefined, callback: (err: Error | null, allow?: boolean) => void) {
+    if (!origin) return callback(null, true);
+    if (allowedOrigins.includes(origin)) {
+      return callback(null, true);
+    } else {
+      return callback(new Error('Not allowed by CORS'));
+    }
+  },
+  credentials: true,
 };
 app.use(cors(corsOptions));
 

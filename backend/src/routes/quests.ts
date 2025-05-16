@@ -626,6 +626,31 @@ router.post('/verify-answer', protect, async (req: Request, res: Response) => {
     }
 });
 
+// === Wormhole Quest TX Verification ===
+router.post('/wormhole/verify-tx', async (req: Request, res: Response) => {
+  try {
+    const { userId, questId, txHash } = req.body;
+    if (!userId || !questId || !txHash) {
+      return res.status(400).json({ error: 'Missing userId, questId, or txHash' });
+    }
+    // TODO: Optionally, verify txHash on WormholeScan API
+    // For now, just mark quest as complete for the user
+    const user = await User.findById(userId);
+    if (!user) return res.status(404).json({ error: 'User not found' });
+    // Mark quest as complete (pseudo-code, adjust to your schema)
+    if (!user.completedQuestIds) user.completedQuestIds = [];
+    if (!user.completedQuestIds.includes(questId)) {
+      user.completedQuestIds.push(questId);
+      user.xp = (user.xp || 0) + 500; // Award XP (adjust as needed)
+      await user.save();
+    }
+    return res.json({ success: true, message: 'Quest completed!', xp: user.xp });
+  } catch (err) {
+    const errorMessage = err instanceof Error ? err.message : String(err);
+    return res.status(500).json({ error: 'Server error', details: errorMessage });
+  }
+});
+
 // Export quest definitions for use in other files
 export { QUEST_DEFINITIONS };
 
