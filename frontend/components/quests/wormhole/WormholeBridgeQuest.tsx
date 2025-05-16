@@ -1,9 +1,9 @@
-import React, { useState, useEffect } from 'react';
-import { Connection, PublicKey } from '@solana/web3.js';
-import { Token, TOKEN_PROGRAM_ID } from '@solana/spl-token';
-import { getAssociatedTokenAddress } from '@solana/spl-token';
+import React, { useState } from 'react';
 import { useWallet } from '@solana/wallet-adapter-react';
-import { CHAIN_ID_SOLANA, CHAIN_ID_ETH, CHAIN_ID_POLYGON, transferNativeSol, transferFromSolana } from '@certusone/wormhole-sdk';
+import { Connection } from '@solana/web3.js';
+import { wormhole } from '@wormhole-foundation/sdk';
+import solana from '@wormhole-foundation/sdk/solana';
+import evm from '@wormhole-foundation/sdk/evm';
 
 interface WormholeBridgeQuestProps {
   onQuestComplete: () => void;
@@ -16,12 +16,25 @@ const SUPPORTED_TOKENS = [
 ];
 
 const SUPPORTED_CHAINS = [
-  { id: CHAIN_ID_ETH, name: 'Ethereum' },
-  { id: CHAIN_ID_POLYGON, name: 'Polygon' },
+  { id: 'Ethereum', name: 'Ethereum' },
+  { id: 'Polygon', name: 'Polygon' },
 ];
 
+// Simple Signer wrapper for Solana Wallet Adapter
+class SolanaWalletSigner {
+  constructor(wallet: any) {
+    this.wallet = wallet;
+  }
+  chain() { return 'Solana'; }
+  address() { return this.wallet.publicKey?.toString(); }
+  async sign(txns: any[]) {
+    // signAllTransactions expects an array of Transaction objects
+    return await this.wallet.signAllTransactions(txns);
+  }
+}
+
 export const WormholeBridgeQuest: React.FC<WormholeBridgeQuestProps> = ({ onQuestComplete, xpReward = 400 }) => {
-  const { publicKey, signTransaction } = useWallet();
+  const wallet = useWallet();
   const [selectedToken, setSelectedToken] = useState(SUPPORTED_TOKENS[0]);
   const [selectedChain, setSelectedChain] = useState(SUPPORTED_CHAINS[0]);
   const [amount, setAmount] = useState('');
@@ -31,52 +44,34 @@ export const WormholeBridgeQuest: React.FC<WormholeBridgeQuestProps> = ({ onQues
   const [txHash, setTxHash] = useState<string | null>(null);
 
   const handleBridge = async () => {
-    if (!publicKey || !signTransaction) {
+    if (!wallet.publicKey || !wallet.signAllTransactions) {
       setError('Please connect your wallet first');
       return;
     }
-
     try {
       setIsBridging(true);
       setError(null);
-
-      const connection = new Connection(process.env.NEXT_PUBLIC_RPC_URL || 'https://api.mainnet-beta.solana.com');
-      
-      // For SOL transfers
-      if (selectedToken.symbol === 'SOL') {
-        const transferTx = await transferNativeSol(
-          connection,
-          publicKey,
-          selectedChain.id,
-          parseFloat(amount) * Math.pow(10, selectedToken.decimals)
-        );
-        
-        const signedTx = await signTransaction(transferTx);
-        const txHash = await connection.sendRawTransaction(signedTx.serialize());
-        await connection.confirmTransaction(txHash);
-        setTxHash(txHash);
-      } 
-      // For SPL token transfers
-      else {
-        const tokenPublicKey = new PublicKey(selectedToken.address);
-        const fromTokenAccount = await getAssociatedTokenAddress(
-          tokenPublicKey,
-          publicKey
-        );
-
-        const transferTx = await transferFromSolana(
-          connection,
-          fromTokenAccount,
-          selectedChain.id,
-          parseFloat(amount) * Math.pow(10, selectedToken.decimals)
-        );
-
-        const signedTx = await signTransaction(transferTx);
-        const txHash = await connection.sendRawTransaction(signedTx.serialize());
-        await connection.confirmTransaction(txHash);
-        setTxHash(txHash);
-      }
-
+      // 1. Initialize Wormhole
+      const wh = await wormhole('Mainnet', [solana, evm]);
+      // 2. Get Solana chain context
+      const solChain = wh.getChain('Solana');
+      // 3. Get TokenBridge client
+      const tb = await solChain.getTokenBridge();
+      // 4. Prepare transfer
+      const recipientChain = selectedChain.id;
+      const recipientAddress = wallet.publicKey.toString(); // For demo, send to self
+      const transferAmount = parseFloat(amount) * Math.pow(10, selectedToken.decimals);
+      // 5. Wrap wallet as Signer
+      const signer = new SolanaWalletSigner(wallet);
+      // 6. Initiate transfer
+      const txids = await tb.transfer(
+        signer,
+        selectedToken.address,
+        transferAmount,
+        recipientChain,
+        recipientAddress
+      );
+      setTxHash(txids[0]);
       setIsBridged(true);
       setTimeout(() => onQuestComplete(), 1200);
     } catch (err) {
@@ -89,7 +84,6 @@ export const WormholeBridgeQuest: React.FC<WormholeBridgeQuestProps> = ({ onQues
   return (
     <div className="p-6 bg-dark-card rounded-lg shadow-md">
       <h2 className="text-2xl font-bold text-white mb-4">Bridging Tokens with Wormhole</h2>
-      
       <div className="space-y-4 mb-6">
         <div>
           <label className="block text-gray-400 mb-2">Select Token</label>
@@ -103,12 +97,11 @@ export const WormholeBridgeQuest: React.FC<WormholeBridgeQuestProps> = ({ onQues
             ))}
           </select>
         </div>
-
         <div>
           <label className="block text-gray-400 mb-2">Select Destination Chain</label>
           <select
             value={selectedChain.id}
-            onChange={(e) => setSelectedChain(SUPPORTED_CHAINS.find(c => c.id === parseInt(e.target.value)) || SUPPORTED_CHAINS[0])}
+            onChange={(e) => setSelectedChain(SUPPORTED_CHAINS.find(c => c.id === e.target.value) || SUPPORTED_CHAINS[0])}
             className="w-full bg-gray-800 text-white rounded-lg p-2"
           >
             {SUPPORTED_CHAINS.map(chain => (
@@ -116,7 +109,6 @@ export const WormholeBridgeQuest: React.FC<WormholeBridgeQuestProps> = ({ onQues
             ))}
           </select>
         </div>
-
         <div>
           <label className="block text-gray-400 mb-2">Amount</label>
           <input
@@ -128,21 +120,18 @@ export const WormholeBridgeQuest: React.FC<WormholeBridgeQuestProps> = ({ onQues
           />
         </div>
       </div>
-
       {error && (
         <div className="text-red-400 mb-4">{error}</div>
       )}
-
       <div className="mb-4">
         <button
           onClick={handleBridge}
-          disabled={isBridging || isBridged || !amount || !publicKey}
+          disabled={isBridging || isBridged || !amount || !wallet.publicKey}
           className="bg-solana-purple hover:bg-solana-purple-dark text-white font-semibold py-2 px-6 rounded-lg transition-colors disabled:opacity-60"
         >
           {isBridging ? 'Bridging...' : isBridged ? 'Bridged!' : 'Bridge Tokens'}
         </button>
       </div>
-
       {txHash && (
         <div className="text-green-400 font-semibold mt-2">
           <p>Bridge successful! +{xpReward} XP</p>
