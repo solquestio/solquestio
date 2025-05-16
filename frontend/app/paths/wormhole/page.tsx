@@ -3,6 +3,11 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { QuestPageLayout, QuestListItem } from '@/components/layout/QuestPageLayout';
 import { loadQuestCompletions, updateQuestCompletion, calculateEarnedXP } from '@/lib/questStorage';
+import { WormholeIntroQuest } from '@/components/quests/wormhole/WormholeIntroQuest';
+import { WormholeSetupQuest } from '@/components/quests/wormhole/WormholeSetupQuest';
+import { WormholeBridgeQuest } from '@/components/quests/wormhole/WormholeBridgeQuest';
+import { WormholeNFTQuest } from '@/components/quests/wormhole/WormholeNFTQuest';
+import { WormholeExplorerQuest } from '@/components/quests/wormhole/WormholeExplorerQuest';
 
 // Define the structure for individual quests within this path
 interface WormholeQuest extends QuestListItem {
@@ -58,7 +63,7 @@ const WormholePathPage = () => {
       id: 'intro',
       title: 'Introduction to Wormhole and Multichain Concepts',
       description: 'Learn the fundamentals of cross-chain communication and how Wormhole enables secure messaging between blockchains.',
-      component: PlaceholderQuestComponent,
+      component: WormholeIntroQuest,
       xp: 250,
       props: { title: 'Introduction to Wormhole and Multichain Concepts' },
       isComplete: !!completedQuests['intro']
@@ -66,48 +71,39 @@ const WormholePathPage = () => {
     {
       id: 'setup',
       title: 'Setting Up Your Development Environment',
-      description: 'Configure your environment with the necessary tools and SDKs for Wormhole development.',
-      component: PlaceholderQuestComponent,
+      description: 'Install the Wormhole SDK and connect your wallet to get started building cross-chain apps.',
+      component: WormholeSetupQuest,
       xp: 300,
-      props: { title: 'Setting Up Your Development Environment' },
+      props: {},
       isComplete: !!completedQuests['setup']
     },
     {
-      id: 'first-transfer',
-      title: 'Building Your First Cross-Chain Transfer',
-      description: 'Learn to transfer tokens between Solana and another blockchain using Wormhole.',
-      component: PlaceholderQuestComponent,
-      xp: 350,
-      props: { title: 'Building Your First Cross-Chain Transfer' },
-      isComplete: !!completedQuests['first-transfer']
-    },
-    {
-      id: 'connect',
-      title: 'Integrating Wormhole Connect',
-      description: 'Implement the Wormhole Connect widget into a web application for easy cross-chain transfers.',
-      component: PlaceholderQuestComponent,
-      xp: 350,
-      props: { title: 'Integrating Wormhole Connect' },
-      isComplete: !!completedQuests['connect']
-    },
-    {
-      id: 'verify',
-      title: 'Submitting and Verifying Cross-Chain Transactions',
-      description: 'Learn to track and verify the status of messages sent through Wormhole.',
-      component: PlaceholderQuestComponent,
+      id: 'bridge',
+      title: 'Bridging Tokens with Wormhole',
+      description: 'Simulate bridging tokens between Solana and another chain using Wormhole.',
+      component: WormholeBridgeQuest,
       xp: 400,
-      props: { title: 'Submitting and Verifying Cross-Chain Transactions' },
-      isComplete: !!completedQuests['verify']
+      props: {},
+      isComplete: !!completedQuests['bridge']
     },
     {
-      id: 'capstone',
-      title: 'Capstone: Launch a Multichain Quest',
-      description: 'Build a small multichain application that demonstrates the concepts you\'ve learned.',
-      component: PlaceholderQuestComponent,
-      xp: 450,
-      props: { title: 'Capstone: Launch a Multichain Quest' },
-      isComplete: !!completedQuests['capstone']
-    }
+      id: 'nft',
+      title: 'Minting a Cross-Chain NFT',
+      description: 'Simulate minting an NFT that can move between chains using Wormhole.',
+      component: WormholeNFTQuest,
+      xp: 500,
+      props: {},
+      isComplete: !!completedQuests['nft']
+    },
+    {
+      id: 'explorer',
+      title: 'Exploring Wormhole Transactions',
+      description: 'Learn how to use Wormhole block explorers to track cross-chain activity.',
+      component: WormholeExplorerQuest,
+      xp: 200,
+      props: {},
+      isComplete: !!completedQuests['explorer']
+    },
   ];
 
   const quests: WormholeQuest[] = useMemo(() => getQuestsList(), [completedQuests]);
