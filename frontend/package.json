@@ -9,7 +9,9 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@certusone/wormhole-sdk": "^0.10.18",
     "@heroicons/react": "^2.2.0",
+    "@metaplex-foundation/mpl-token-metadata": "^3.4.0",
     "@solana/wallet-adapter-base": "^0.9.23",
     "@solana/wallet-adapter-react": "^0.15.35",
     "@solana/wallet-adapter-react-ui": "^0.9.34",
