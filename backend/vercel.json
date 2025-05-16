@@ -2,29 +2,40 @@
   "version": 2,
   "builds": [
     {
-      "src": "api/**/*.ts",
+      "src": "dist/server.js",
       "use": "@vercel/node"
     }
   ],
-  "rewrites": [
-    { "source": "/api/quests/paths", "destination": "/api/quests/paths.ts" },
-    { "source": "/api/quests/\\[id\\]", "destination": "/api/quests/[id].ts" },
-    { "source": "/api/quests/complete", "destination": "/api/quests/complete.ts" },
-    { "source": "/api/auth/challenge", "destination": "/api/auth/challenge.ts" },
-    { "source": "/api/auth/verify", "destination": "/api/auth/verify.ts" },
-    { "source": "/api/users", "destination": "/api/users/index.ts" },
-    { "source": "/api/users/check-in", "destination": "/api/users/check-in.ts" },
-    { "source": "/api/quests/check-balance", "destination": "/api/quests/check-balance.ts" },
-    { "source": "/api/quests/verify-answer", "destination": "/api/quests/verify-answer.ts" },
-    { "source": "/api/quests/path/(.*)", "destination": "/api/quests/path/[pathId].ts" },
-    { "source": "/api/utils", "destination": "/api/utils.ts" },
-    { "source": "/api/public", "destination": "/api/public.ts" },
-    { "source": "/api/health", "destination": "/api/utils.ts?path=health" },
-    { "source": "/api/auth", "destination": "/api/auth/index.ts" },
-    { "source": "/api/quests", "destination": "/api/quests/index.ts" },
-    { "source": "/api", "destination": "/api/index.ts" }
+  "routes": [
+    {
+      "src": "/(.*)",
+      "dest": "dist/server.js"
+    }
   ],
   "env": {
     "NODE_ENV": "production"
-  }
+  },
+  "github": {
+    "enabled": true,
+    "silent": true
+  },
+  "headers": [
+    {
+      "source": "/(.*)",
+      "headers": [
+        {
+          "key": "Access-Control-Allow-Origin",
+          "value": "https://solquestio-frontend.vercel.app"
+        },
+        {
+          "key": "Access-Control-Allow-Methods",
+          "value": "GET, POST, PUT, DELETE, OPTIONS"
+        },
+        {
+          "key": "Access-Control-Allow-Headers",
+          "value": "X-Requested-With, Content-Type, Accept, Authorization"
+        }
+      ]
+    }
+  ]
 }

@@ -167,3 +167,4 @@ backend/coverage/
 
 # Optional: if you have other local config files
 # local_config.json 
+.vercel
