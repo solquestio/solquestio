@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useWallet } from '@solana/wallet-adapter-react';
 import { Connection } from '@solana/web3.js';
-import { wormhole } from '@wormhole-foundation/sdk';
+import { wormhole, Wormhole, Chain, toNative } from '@wormhole-foundation/sdk';
 import solana from '@wormhole-foundation/sdk/solana';
 import evm from '@wormhole-foundation/sdk/evm';
 
@@ -16,20 +16,31 @@ const SUPPORTED_TOKENS = [
 ];
 
 const SUPPORTED_CHAINS = [
-  { id: 'Ethereum', name: 'Ethereum' },
-  { id: 'Polygon', name: 'Polygon' },
+  { id: 'Ethereum' as Chain, name: 'Ethereum' },
+  { id: 'Polygon' as Chain, name: 'Polygon' },
 ];
 
-// Simple Signer wrapper for Solana Wallet Adapter
+// SignAndSendSigner implementation for Solana Wallet Adapter
 class SolanaWalletSigner {
-  constructor(wallet: any) {
-    this.wallet = wallet;
+  private _wallet: ReturnType<typeof useWallet>;
+  constructor(wallet: ReturnType<typeof useWallet>) {
+    this._wallet = wallet;
   }
-  chain() { return 'Solana'; }
-  address() { return this.wallet.publicKey?.toString(); }
-  async sign(txns: any[]) {
-    // signAllTransactions expects an array of Transaction objects
-    return await this.wallet.signAllTransactions(txns);
+  chain(): 'Solana' { return 'Solana'; }
+  address(): string { return this._wallet.publicKey?.toString() || ''; }
+  async signAndSend(txns: any[]): Promise<string[]> {
+    if (!this._wallet.signAllTransactions) {
+      throw new Error('Wallet does not support signing transactions');
+    }
+    const signedTxns = await this._wallet.signAllTransactions(txns);
+    const connection = new Connection(process.env.NEXT_PUBLIC_RPC_URL || 'https://api.mainnet-beta.solana.com');
+    const txids: string[] = [];
+    for (const signed of signedTxns) {
+      const txid = await connection.sendRawTransaction(signed.serialize());
+      await connection.confirmTransaction(txid);
+      txids.push(txid);
+    }
+    return txids;
   }
 }
 
@@ -51,26 +62,29 @@ export const WormholeBridgeQuest: React.FC<WormholeBridgeQuestProps> = ({ onQues
     try {
       setIsBridging(true);
       setError(null);
-      // 1. Initialize Wormhole
       const wh = await wormhole('Mainnet', [solana, evm]);
-      // 2. Get Solana chain context
-      const solChain = wh.getChain('Solana');
-      // 3. Get TokenBridge client
-      const tb = await solChain.getTokenBridge();
-      // 4. Prepare transfer
-      const recipientChain = selectedChain.id;
-      const recipientAddress = wallet.publicKey.toString(); // For demo, send to self
-      const transferAmount = parseFloat(amount) * Math.pow(10, selectedToken.decimals);
-      // 5. Wrap wallet as Signer
-      const signer = new SolanaWalletSigner(wallet);
-      // 6. Initiate transfer
-      const txids = await tb.transfer(
-        signer,
-        selectedToken.address,
-        transferAmount,
-        recipientChain,
-        recipientAddress
+      const sourceAddress = toNative('Solana', wallet.publicKey.toString());
+      const destinationAddress = toNative(
+        selectedChain.id,
+        selectedChain.id === 'Solana'
+          ? wallet.publicKey.toString()
+          : '0x0000000000000000000000000000000000000000' // TODO: real EVM address
       );
+      const transferAmount = BigInt(Math.floor(parseFloat(amount) * Math.pow(10, selectedToken.decimals)));
+      // Use Wormhole.tokenId for the token
+      const tokenId = Wormhole.tokenId('Solana', selectedToken.address);
+      // 1. Create the transfer object
+      const xfer = await wh.tokenTransfer(
+        tokenId,
+        transferAmount,
+        { chain: 'Solana' as Chain, address: sourceAddress },
+        { chain: selectedChain.id, address: destinationAddress },
+        true // automatic delivery
+      );
+      // 2. Wrap wallet as SignAndSendSigner
+      const signer = new SolanaWalletSigner(wallet);
+      // 3. Initiate transfer
+      const txids = await xfer.initiateTransfer(signer);
       setTxHash(txids[0]);
       setIsBridged(true);
       setTimeout(() => onQuestComplete(), 1200);
