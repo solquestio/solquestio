@@ -2,8 +2,8 @@
 
 ## Project Structure
 
-- `frontend/`: Next.js frontend (deployed at https://solquest.io or https://solquestio-frontend.vercel.app)
-- `backend/`: Vercel serverless API backend (deployed at https://solquestio.vercel.app)
+- `frontend/`: Next.js frontend (deployed at https://solquest.io)
+- `backend/`: Vercel serverless API backend (deployed at https://api.solquest.io)
 
 ## Connecting Frontend and Backend
 
@@ -19,7 +19,7 @@ The frontend communicates with the backend via the `NEXT_PUBLIC_BACKEND_URL` env
 ### Production Deployment
 1. In the Vercel dashboard for the frontend project, set:
    - **Key:** `NEXT_PUBLIC_BACKEND_URL`
-   - **Value:** `https://solquestio.vercel.app`
+   - **Value:** `https://api.solquest.io`
 2. Redeploy the frontend after setting the variable.
 
 ## Troubleshooting

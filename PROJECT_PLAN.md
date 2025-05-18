@@ -74,7 +74,7 @@ The frontend communicates with the backend via the `NEXT_PUBLIC_BACKEND_URL` env
 ### Production Deployment
 1. In the Vercel dashboard for the frontend project, set:
    - **Key:** `NEXT_PUBLIC_BACKEND_URL`
-   - **Value:** `https://solquestio.vercel.app`
+   - **Value:** `https://api.solquest.io`
 2. Redeploy the frontend after setting the variable.
 
 ## Troubleshooting

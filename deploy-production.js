@@ -90,7 +90,7 @@ function checkProductionEnv() {
     console.log('Creating default .env.production file...');
     
     const envContent = `# Production environment configuration
-NEXT_PUBLIC_BACKEND_URL=https://solquestio.vercel.app
+NEXT_PUBLIC_BACKEND_URL=https://api.solquest.io
 NEXT_PUBLIC_HELIUS_RPC_URL=https://mainnet.helius-rpc.com/?api-key=0abb48db-ebdd-4297-aa63-5f4d79234d9e`;
     
     try {
@@ -171,7 +171,7 @@ async function deploy() {
   
   // Step 6: Final confirmation
   console.log('\n🎉 Deployment complete! URLs:');
-  console.log('Backend: https://solquestio.vercel.app');
+  console.log('Backend: https://api.solquest.io');
   console.log('Frontend: https://solquest.io (once DNS is configured)');
   console.log('Frontend Fallback: https://solquestio-frontend.vercel.app');
 }
