@@ -15,8 +15,8 @@ let authToken = null;
 const endpoints = [
   { path: '/api/health', method: 'GET', requiresAuth: false, description: 'Health check endpoint' },
   { path: '/api/public', method: 'GET', requiresAuth: false, description: 'Public endpoint for basic info' },
-  { path: '/api/auth/challenge', method: 'POST', requiresAuth: false, description: 'Generate authentication challenge' },
-  { path: '/api/auth/verify', method: 'POST', requiresAuth: false, description: 'Verify authentication' },
+  { path: '/api/auth?action=challenge', method: 'POST', requiresAuth: false, description: 'Generate authentication challenge' },
+  { path: '/api/auth?action=verify', method: 'POST', requiresAuth: false, description: 'Verify authentication' },
   { path: '/api/users?path=me', method: 'GET', requiresAuth: true, description: 'Get user profile' },
   { path: '/api/users/check-in', method: 'POST', requiresAuth: true, description: 'Daily check-in' },
   { path: '/api/quests', method: 'GET', requiresAuth: true, description: 'Get all quests' },

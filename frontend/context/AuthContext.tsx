@@ -125,7 +125,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       const signature = bs58.encode(signedMessageBytes);
       console.log('[AuthContext] Signature obtained. Verifying with backend...');
 
-      const response = await fetch(`${BACKEND_URL}/api/auth/verify`, {
+      const response = await fetch(`${BACKEND_URL}/api/auth?action=verify`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
