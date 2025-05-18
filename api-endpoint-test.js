@@ -17,7 +17,7 @@ const endpoints = [
   { path: '/api/public', method: 'GET', requiresAuth: false, description: 'Public endpoint for basic info' },
   { path: '/api/auth/challenge', method: 'POST', requiresAuth: false, description: 'Generate authentication challenge' },
   { path: '/api/auth/verify', method: 'POST', requiresAuth: false, description: 'Verify authentication' },
-  { path: '/api/users/me', method: 'GET', requiresAuth: true, description: 'Get user profile' },
+  { path: '/api/users?path=me', method: 'GET', requiresAuth: true, description: 'Get user profile' },
   { path: '/api/users/check-in', method: 'POST', requiresAuth: true, description: 'Daily check-in' },
   { path: '/api/quests', method: 'GET', requiresAuth: true, description: 'Get all quests' },
   { path: '/api/quests/paths', method: 'GET', requiresAuth: false, description: 'Get all quest paths' },
@@ -25,7 +25,7 @@ const endpoints = [
   { path: '/api/quests/path/layerzero', method: 'GET', requiresAuth: true, description: 'Get LayerZero path quests' },
   { path: '/api/quests/path/substreams', method: 'GET', requiresAuth: true, description: 'Get Substreams path quests' },
   { path: '/api/quests/path/bitcoin-solana', method: 'GET', requiresAuth: true, description: 'Get Bitcoin-Solana path quests' },
-  { path: '/api/users/leaderboard', method: 'GET', requiresAuth: false, description: 'Get leaderboard' },
+  { path: '/api/users?path=leaderboard', method: 'GET', requiresAuth: false, description: 'Get leaderboard' },
 ];
 
 // Helper to print results with color
