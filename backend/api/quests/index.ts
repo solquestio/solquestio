@@ -3,70 +3,59 @@ import { enableCors } from '../../lib/middleware/cors';
 import { connectDB } from '../../lib/database';
 import QuestModel from '../../lib/models/Quest';
 
-export default async function handler(request: VercelRequest, response: VercelResponse) {
+export default async function handler(req: VercelRequest, res: VercelResponse) {
+  await connectDB();
+  const { path, id } = req.query;
+
   // Enable CORS for this endpoint
-  enableCors(request, response);
-  // Only allow GET requests
-  if (request.method !== 'GET') {
-    return response.status(405).json({ error: 'Method not allowed' });
+  enableCors(req, res);
+
+  // Handle /api/quests/paths
+  if (req.method === 'GET' && path === 'paths') {
+    // --- Begin paths.ts logic ---
+    try {
+      const paths = await QuestModel.distinct('path');
+      res.status(200).json({ paths });
+    } catch (error) {
+      res.status(500).json({ error: 'Failed to fetch quest paths', message: error instanceof Error ? error.message : 'Unknown error' });
+    }
+    return;
   }
 
-  try {
-    // Connect to the database
-    await connectDB();
-    
-    // Extract query parameters
-    const { path, difficulty } = request.query;
-    
-    // Build query based on optional filters
-    const query: any = {};
-    
-    if (path) {
-      query.path = path;
-    }
-    
-    if (difficulty) {
-      query.difficulty = difficulty;
-    }
-    
-    // For demo purposes, return static data since we might not have quests in the database yet
-    const demoQuests = [
-      {
-        id: 'verify-wallet',
-        title: 'Connect Your Wallet',
-        shortDescription: 'Connect your Solana wallet to SolQuest',
-        difficulty: 'beginner',
-        xpReward: 100,
-        path: 'solana-foundations',
-        order: 1
-      },
-      {
-        id: 'explore-transaction-1',
-        title: 'Explore a Transaction',
-        shortDescription: 'Learn how to read Solana transaction details',
-        difficulty: 'beginner',
-        xpReward: 150,
-        path: 'solana-foundations',
-        order: 2
-      },
-      {
-        id: 'visit-x-og',
-        title: 'Follow Us on X',
-        shortDescription: 'Follow SolQuest on X (Twitter)',
-        difficulty: 'beginner',
-        xpReward: 100,
-        path: 'solquest-og',
-        order: 1
-      }
-    ];
-    
-    // Return quests (using demo data for now)
-    response.status(200).json(demoQuests);
-  } catch (error) {
-    console.error('Error fetching quests:', error);
-    response.status(500).json({ 
-      error: 'An unexpected error occurred',
-      message: error instanceof Error ? error.message : 'Unknown error'
-    });
+  // Handle /api/quests/complete
+  if (req.method === 'POST' && path === 'complete') {
+    // --- Begin complete.ts logic ---
+    // (You may need to copy your quest completion logic here)
+    res.status(501).json({ error: 'Quest completion not implemented in this combined handler yet.' });
+    return;
   }
+
+  // Handle /api/quests/[id]
+  if (id) {
+    // --- Begin [id].ts logic ---
+    try {
+      const quest = await QuestModel.findById(id);
+      if (!quest) {
+        res.status(404).json({ error: 'Quest not found' });
+        return;
+      }
+      res.status(200).json(quest);
+    } catch (error) {
+      res.status(500).json({ error: 'Failed to fetch quest', message: error instanceof Error ? error.message : 'Unknown error' });
+    }
+    return;
+  }
+
+  // Default: /api/quests
+  if (req.method === 'GET') {
+    try {
+      const quests = await QuestModel.find();
+      res.status(200).json(quests);
+    } catch (error) {
+      res.status(500).json({ error: 'Failed to fetch quests', message: error instanceof Error ? error.message : 'Unknown error' });
+    }
+    return;
+  }
+
+  res.status(405).json({ error: 'Method not allowed' });
 }
