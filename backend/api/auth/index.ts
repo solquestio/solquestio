@@ -3,12 +3,18 @@ import { enableCors } from '../../lib/middleware/cors';
 import jwt from 'jsonwebtoken';
 import UserModel from '../../lib/models/User';
 import { verifySignature } from '../../lib/utils/solana';
+import { connectDB } from '../../lib/database';
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   const { action } = req.query;
 
   // Enable CORS for this endpoint
   enableCors(req, res);
+
+  // Ensure DB connection for all actions that need it
+  if (action === 'verify') {
+    await connectDB();
+  }
 
   // Handle /api/auth/challenge
   if (action === 'challenge') {
@@ -20,7 +26,15 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   // Handle /api/auth/verify
   if (action === 'verify') {
-    const { walletAddress, signature, message } = req.body;
+    let body = req.body;
+    if (req.method === 'POST' && typeof req.body === 'string') {
+      try {
+        body = JSON.parse(req.body);
+      } catch (e) {
+        return res.status(400).json({ message: 'Invalid JSON body' });
+      }
+    }
+    const { walletAddress, signature, message } = body || {};
 
     if (!walletAddress || !signature || !message) {
       return res.status(400).json({ message: 'Missing walletAddress, signature, or message' });
