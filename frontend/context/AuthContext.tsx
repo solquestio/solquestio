@@ -24,6 +24,12 @@ interface UserProfile {
     username?: string;
     photo_url?: string;
   };
+  xpHistory?: { description: string; timestamp: string; amount: number }[];
+  social?: {
+    github?: string;
+    twitter?: string;
+    photo_url?: string;
+  };
 }
 
 interface AuthContextType {

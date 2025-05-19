@@ -17,6 +17,12 @@ export interface IUser extends Document {
   checkInStreak?: number; // Add checkInStreak field
   ownsOgNft?: boolean; // Add ownsOgNft field
   xpEvents?: IXpEvent[];
+  xpHistory?: { description: string; timestamp: Date; amount: number }[];
+  social?: {
+    github?: string;
+    twitter?: string;
+    photo_url?: string;
+  };
 
   createdAt: Date;
   updatedAt: Date;
@@ -66,10 +72,22 @@ const UserSchema: Schema = new Schema(
       {
         type: { type: String, required: true },
         amount: { type: Number, required: true },
-        description: { type: String, required: true },
-        date: { type: Date, default: Date.now }
+        timestamp: { type: Date, default: Date.now },
+        description: { type: String }
       }
     ],
+    xpHistory: [
+      {
+        description: { type: String, required: true },
+        timestamp: { type: Date, default: Date.now },
+        amount: { type: Number, required: true }
+      }
+    ],
+    social: {
+      github: { type: String, unique: true, sparse: true },
+      twitter: { type: String, unique: true, sparse: true },
+      photo_url: { type: String }
+    }
   },
   {
     timestamps: true, // Automatically add createdAt and updatedAt fields
