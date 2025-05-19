@@ -9,39 +9,22 @@ interface FaucetQuestProps {
   xpReward?: number;
 }
 
-const SOLANA_FAUCET_URL = "https://solfaucet.com";
-const DEVNET_RPC_URL = "https://api.devnet.solana.com";
+const MAINNET_RPC_URL = "https://api.mainnet-beta.solana.com";
 
 export const FaucetQuest: React.FC<FaucetQuestProps> = ({
   minRequiredSOL,
   onQuestComplete,
   xpReward,
 }) => {
-  const { connection } = useConnection();
-  const { publicKey, connected, wallet } = useWallet();
+  const { publicKey, connected } = useWallet();
 
   const [currentSolBalance, setCurrentSolBalance] = useState<number | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [questAttempted, setQuestAttempted] = useState(false);
   const [isQuestMarkedComplete, setIsQuestMarkedComplete] = useState(false);
-  const [isActuallyOnDevnet, setIsActuallyOnDevnet] = useState<boolean | null>(null);
-  
-  // Create a direct Devnet connection
-  const devnetConnection = new Connection(DEVNET_RPC_URL);
 
-  const checkNetwork = useCallback(async () => {
-    // Always set to true to bypass the network check
-    setIsActuallyOnDevnet(true);
-    return;
-  }, []);
-
-  useEffect(() => {
-    if (connected) {
-      checkNetwork();
-    } else {
-      setIsActuallyOnDevnet(null);
-    }
-  }, [connected, checkNetwork]);
+  // Create a direct Mainnet connection
+  const mainnetConnection = new Connection(MAINNET_RPC_URL);
 
   const handleVerifyBalance = useCallback(async () => {
     if (!connected || !publicKey) {
@@ -54,36 +37,29 @@ export const FaucetQuest: React.FC<FaucetQuestProps> = ({
     setCurrentSolBalance(null);
 
     try {
-      console.log("Checking balance on Devnet for:", publicKey.toBase58());
-      // Use direct Devnet connection instead of the wallet's connection
-      const balanceLamports = await devnetConnection.getBalance(publicKey);
-      console.log("Raw balance in lamports:", balanceLamports);
+      // Use direct Mainnet connection
+      const balanceLamports = await mainnetConnection.getBalance(publicKey);
       const balanceSOL = balanceLamports / LAMPORTS_PER_SOL;
-      console.log("Converted balance in SOL:", balanceSOL);
-      
       setCurrentSolBalance(balanceSOL);
 
       if (balanceSOL >= minRequiredSOL) {
-        console.log("Quest completed! Balance sufficient:", balanceSOL, "≥", minRequiredSOL);
         setIsQuestMarkedComplete(true);
         onQuestComplete();
       } else {
-        console.log("Quest not completed. Insufficient balance:", balanceSOL, "<", minRequiredSOL);
         setIsQuestMarkedComplete(false);
       }
     } catch (error) {
-      console.error('Error verifying SOL balance:', error);
       alert(`Error checking balance: ${error instanceof Error ? error.message : String(error)}`);
       setIsQuestMarkedComplete(false);
     } finally {
       setIsLoading(false);
     }
-  }, [connected, publicKey, devnetConnection, minRequiredSOL, onQuestComplete]);
+  }, [connected, publicKey, mainnetConnection, minRequiredSOL, onQuestComplete]);
 
   if (!connected || !publicKey) {
     return (
       <div style={styles.questContainer}>
-        <h4>LayerZero Learning Path - Prerequisite</h4>
+        <h4>Solana Learning Path - Prerequisite</h4>
         <p>Please connect your Solana wallet to begin the quests.</p>
       </div>
     );
@@ -91,14 +67,14 @@ export const FaucetQuest: React.FC<FaucetQuestProps> = ({
 
   return (
     <div style={styles.questContainer}>
-      <h3 style={styles.questTitle}>Quest 1: Fund Your Devnet Wallet</h3>
+      <h3 style={styles.questTitle}>Quest: Fund Your Wallet</h3>
       {xpReward !== undefined && (
         <p style={styles.xpTextUnderTitle}>+{xpReward} XP</p>
       )}
       {isQuestMarkedComplete ? (
         <div style={styles.successMessage}>
-          <p>✅ Quest Complete! You have {currentSolBalance?.toFixed(4)} Devnet SOL.</p>
-          <p>You can now proceed to the next LayerZero quest.</p>
+          <p>✅ Quest Complete! You have {currentSolBalance?.toFixed(4)} SOL.</p>
+          <p>You can now proceed to the next quest.</p>
         </div>
       ) : (
         <>
@@ -106,50 +82,35 @@ export const FaucetQuest: React.FC<FaucetQuestProps> = ({
             <div style={styles.descriptionParagraph}>
               <span style={styles.greenBullet}></span>
               <span style={styles.descriptionText}>
-                Welcome to your first step in the LayerZero Learning Path! Before you can send cross-chain messages or bridge tokens, your Solana Devnet wallet needs a bit of "gas money."
+                To interact with the Solana blockchain, your wallet needs a small amount of SOL to pay for transaction fees.
               </span>
             </div>
             <div style={styles.descriptionParagraph}>
               <span style={styles.greenBullet}></span>
               <span style={styles.descriptionText}>
-                <strong>Why do you need Devnet SOL?</strong> Transactions on any blockchain, including Solana's Devnet (a test network), require a small fee. This quest ensures you have enough Devnet SOL to cover these fees for the subsequent LayerZero quests.
+                <strong>How to fund your wallet?</strong> Purchase or transfer at least {minRequiredSOL} SOL to your wallet address: <strong style={styles.address}>{publicKey.toBase58()}</strong> from an exchange or another wallet.
               </span>
             </div>
             <div style={styles.descriptionParagraph}>
               <span style={styles.greenBullet}></span>
               <span style={styles.descriptionText}>
-                Follow the steps below to get free Devnet SOL from a faucet. It's like a virtual ATM for test tokens!
+                Once you have funded your wallet, click the button below to verify your balance.
               </span>
             </div>
           </div>
 
-          <p style={styles.text}>
-            1. Click the link below to visit a Solana Devnet faucet.
-            <br />
-            2. Request Devnet SOL to your connected wallet address: <strong style={styles.address}>{publicKey.toBase58()}</strong>
-            <br />
-            3. Once you've received the SOL, come back here and click "Verify My Balance".
-          </p>
-          <a
-            href={SOLANA_FAUCET_URL}
-            target="_blank"
-            rel="noopener noreferrer"
-            style={{ ...styles.button, ...styles.linkButton, margin: '10px 0' }}
-          >
-            Go to solfaucet.com
-          </a>
           <button
             onClick={handleVerifyBalance}
             disabled={isLoading}
             style={styles.button}
           >
-            {isLoading ? 'Verifying...' : 'Verify My Devnet SOL Balance'}
+            {isLoading ? 'Verifying...' : 'Verify My SOL Balance'}
           </button>
 
           {questAttempted && !isLoading && currentSolBalance !== null && !isQuestMarkedComplete && (
             <p style={styles.errorMessage}>
-              Verification Failed. You currently have {currentSolBalance?.toFixed(4) || '0'} Devnet SOL.
-              Please ensure you have at least {minRequiredSOL} Devnet SOL from the faucet and try again.
+              Verification Failed. You currently have {currentSolBalance?.toFixed(4) || '0'} SOL.
+              Please ensure you have at least {minRequiredSOL} SOL and try again.
             </p>
           )}
           {questAttempted && !isLoading && currentSolBalance === null && !isQuestMarkedComplete && (

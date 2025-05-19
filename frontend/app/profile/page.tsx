@@ -15,7 +15,7 @@ import { XpIcon } from '@/components/icons/XpIcon';
 // Dynamically import the WalletMultiButton with no SSR
 const WalletMultiButtonDynamic = dynamic(
   async () => (await import('@solana/wallet-adapter-react-ui')).WalletMultiButton,
-  { ssr: false, loading: () => <button className="px-4 py-2 bg-gray-600 rounded-md">Loading Wallet...</button> }
+  { ssr: false }
 );
 
 // Define the Quest structure from backend
@@ -113,7 +113,7 @@ export default function ProfilePage() {
   
   // Hooks
   const { connection } = useConnection();
-  const { publicKey, connected } = useWallet();
+  const { publicKey, connected, disconnect } = useWallet();
   const router = useRouter();
 
   // State
@@ -638,6 +638,32 @@ export default function ProfilePage() {
             Social Connections
           </h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="rounded-xl bg-white/5 p-6 flex flex-col items-center gap-2 min-w-[220px] border border-white/10">
+              <div className="flex items-center gap-2 mb-2">
+                <span className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-gradient-to-br from-sol-gradient-from to-sol-gradient-to">
+                  <span className="text-white text-lg font-bold">SOL</span>
+                </span>
+                <span className="text-base font-semibold text-white">On-chain wallet</span>
+              </div>
+              {connected && publicKey ? (
+                <>
+                  <div className="flex items-center gap-2 text-green-400 text-sm font-medium">
+                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
+                    Connected
+                  </div>
+                  <div className="text-xs font-mono text-gray-300 break-all">{publicKey.toBase58()}</div>
+                  <button
+                    onClick={disconnect}
+                    className="text-xs text-red-400 hover:underline mt-1"
+                  >
+                    Disconnect
+                  </button>
+                </>
+              ) : (
+                <WalletMultiButtonDynamic className="!bg-gradient-to-r from-sol-gradient-from to-sol-gradient-to hover:opacity-90 transition-opacity !rounded-md !h-10 !w-full !text-sm !font-semibold" />
+              )}
+              <p className="text-xs text-gray-400 mt-2 text-center">Connect your wallet to check your on-chain activity.</p>
+            </div>
             <button className="flex items-center gap-3 p-4 bg-dark-card-secondary rounded-lg border border-white/10 hover:border-blue-500/30 transition-colors">
               <svg className="w-6 h-6 text-blue-400" fill="currentColor" viewBox="0 0 24 24">
                 <path d="M12 2C6.477 2 2 6.477 2 12c0 4.42 2.865 8.166 6.839 9.489.5.092.682-.217.682-.482 0-.237-.008-.866-.013-1.7-2.782.604-3.369-1.34-3.369-1.34-.454-1.156-1.11-1.464-1.11-1.464-.908-.62.069-.608.069-.608 1.003.07 1.531 1.03 1.531 1.03.892 1.529 2.341 1.087 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.11-4.555-4.943 0-1.091.39-1.984 1.029-2.683-.103-.253-.446-1.27.098-2.647 0 0 .84-.269 2.75 1.025A9.578 9.578 0 0112 6.836c.85.004 1.705.114 2.504.336 1.909-1.294 2.747-1.025 2.747-1.025.546 1.377.203 2.394.1 2.647.64.699 1.028 1.592 1.028 2.683 0 3.842-2.339 4.687-4.566 4.935.359.309.678.919.678 1.852 0 1.336-.012 2.415-.012 2.743 0 .267.18.578.688.48C19.138 20.161 22 16.416 22 12c0-5.523-4.477-10-10-10z"/>
