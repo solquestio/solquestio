@@ -30,6 +30,13 @@ interface UserProfile {
   createdAt: string;
   updatedAt: string;
   ownsOgNft?: boolean; // Ensure this is here
+  telegram?: {
+    id: number;
+    first_name: string;
+    last_name?: string;
+    username?: string;
+    photo_url?: string;
+  };
 }
 
 // Define the Quest structure from backend

@@ -23,8 +23,18 @@ interface UserProfile { // Needed for updating state after quest completion
   username?: string;
   completedQuestIds: string[];
   xp: number;
+  lastCheckedInAt?: string | Date;
+  checkInStreak?: number;
   createdAt: string;
   updatedAt: string;
+  ownsOgNft?: boolean;
+  telegram?: {
+    id: number;
+    first_name: string;
+    last_name?: string;
+    username?: string;
+    photo_url?: string;
+  };
 }
 
 // Constants
