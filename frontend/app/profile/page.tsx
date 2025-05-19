@@ -5,11 +5,12 @@ import { useConnection, useWallet } from '@solana/wallet-adapter-react';
 import { LAMPORTS_PER_SOL, Connection } from '@solana/web3.js';
 import dynamic from 'next/dynamic';
 import { useRouter } from 'next/navigation';
-import { PencilIcon, CheckIcon, XMarkIcon, CalendarDaysIcon, ArrowPathIcon, FireIcon } from '@heroicons/react/24/solid';
+import { PencilIcon, CheckIcon, XMarkIcon, CalendarDaysIcon, ArrowPathIcon, FireIcon, CheckCircleIcon, SparklesIcon } from '@heroicons/react/24/solid';
 import Skeleton, { SkeletonTheme } from 'react-loading-skeleton';
 import { useAuth } from '@/context/AuthContext';
 import NetworkSwitcher, { NetworkContext, useNetwork } from '@/components/NetworkSwitcher';
 import TelegramConnectCard from '@/components/social/TelegramConnectCard';
+import { XpIcon } from '@/components/icons/XpIcon';
 
 // Dynamically import the WalletMultiButton with no SSR
 const WalletMultiButtonDynamic = dynamic(
@@ -544,18 +545,23 @@ export default function ProfilePage() {
       <div className="max-w-3xl mx-auto py-10 flex flex-col gap-8">
         {/* Profile Header Card */}
         <div className="bg-dark-card rounded-xl shadow-lg p-6 flex flex-col md:flex-row items-center gap-6 border border-white/10">
-          <div className="flex-shrink-0 w-20 h-20 rounded-full bg-gradient-to-br from-solana-purple to-solana-green flex items-center justify-center text-3xl font-bold text-white">
+          <div className="flex-shrink-0 w-24 h-24 rounded-full bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center text-4xl font-bold text-white shadow-lg">
             {userProfile?.username ? userProfile.username.charAt(0).toUpperCase() : '?'}
           </div>
           <div className="flex-1 flex flex-col gap-2">
             <div className="flex items-center gap-2">
               <h2 className="text-2xl font-semibold text-gray-100 truncate">{userProfile?.username || 'Unnamed User'}</h2>
-              <button onClick={handleEditUsername} className="text-xs text-blue-400 hover:text-blue-300" title="Edit Username">
+              <button onClick={handleEditUsername} className="text-xs text-blue-400 hover:text-blue-300 transition-colors" title="Edit Username">
                 <PencilIcon className="h-4 w-4" />
               </button>
             </div>
             {publicKey && (
               <p className="text-xs text-gray-400 font-mono">{publicKey.toString()}</p>
+            )}
+            {userProfile?.ownsOgNft && (
+              <span className="inline-flex items-center text-xs font-semibold bg-purple-500/20 text-purple-300 px-2 py-0.5 rounded-full border border-purple-500/30">
+                <SparklesIcon className="h-3 w-3 mr-1"/> OG NFT Holder
+              </span>
             )}
           </div>
           <div className="flex-shrink-0">
@@ -563,111 +569,88 @@ export default function ProfilePage() {
           </div>
         </div>
 
-        {/* Stats Row */}
+        {/* Stats Grid */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div className="bg-dark-card-secondary rounded-lg p-4 text-center border border-white/10">
-            <p className="text-xs text-gray-400 uppercase mb-1">XP</p>
+          <div className="bg-dark-card-secondary rounded-lg p-4 text-center border border-white/10 hover:border-purple-500/30 transition-colors">
+            <div className="flex items-center justify-center gap-2 mb-2">
+              <XpIcon className="w-5 h-5 text-yellow-400" />
+              <p className="text-xs text-gray-400 uppercase">Total XP</p>
+            </div>
             <p className="text-2xl font-bold text-yellow-400">{userProfile?.xp ?? 0}</p>
           </div>
-          <div className="bg-dark-card-secondary rounded-lg p-4 text-center border border-white/10">
-            <p className="text-xs text-gray-400 uppercase mb-1">Balance</p>
-            {isLoadingBalance ? (
-              <Skeleton height={28} width="60%" className="mx-auto mt-1"/>
-            ) : (
-              <p className="text-2xl font-bold bg-gradient-to-r from-sol-gradient-from to-sol-gradient-to bg-clip-text text-transparent">
-                {balance !== null ? `${balance.toLocaleString(undefined, { minimumFractionDigits: 4, maximumFractionDigits: 4 })} SOL` : 'N/A'}
-              </p>
-            )}
+          <div className="bg-dark-card-secondary rounded-lg p-4 text-center border border-white/10 hover:border-purple-500/30 transition-colors">
+            <div className="flex items-center justify-center gap-2 mb-2">
+              <CalendarDaysIcon className="w-5 h-5 text-blue-400" />
+              <p className="text-xs text-gray-400 uppercase">Check-in Streak</p>
+            </div>
+            <p className="text-2xl font-bold text-blue-400">{userProfile?.checkInStreak ?? 0} days</p>
           </div>
-          <div className="bg-dark-card-secondary rounded-lg p-4 text-center border border-white/10">
-            <p className="text-xs text-gray-400 uppercase mb-1">Quests Completed</p>
-            <p className="text-2xl font-bold text-gray-100">{completedQuestsCount}</p>
+          <div className="bg-dark-card-secondary rounded-lg p-4 text-center border border-white/10 hover:border-purple-500/30 transition-colors">
+            <div className="flex items-center justify-center gap-2 mb-2">
+              <CheckCircleIcon className="w-5 h-5 text-green-400" />
+              <p className="text-xs text-gray-400 uppercase">Quests Completed</p>
+            </div>
+            <p className="text-2xl font-bold text-green-400">{completedQuestsCount}</p>
           </div>
         </div>
 
-        {/* Daily Check-in Card */}
-        <div className="bg-dark-card-secondary rounded-lg p-6 border border-white/10 flex flex-col gap-2">
-          <div className="flex justify-between items-center mb-2">
-            <h3 className="text-lg font-semibold text-gray-100">Daily Check-in</h3>
-            {checkInData.currentStreak > 0 && (
-              <div className="flex items-center text-sm text-orange-400 font-medium bg-orange-900/30 px-2 py-1 rounded">
-                <FireIcon className="h-4 w-4 mr-1"/>
-                {checkInData.currentStreak} Day Streak
+        {/* Balance Card */}
+        <div className="bg-dark-card-secondary rounded-lg p-4 border border-white/10">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <div className="w-8 h-8 rounded-full bg-gradient-to-br from-sol-gradient-from to-sol-gradient-to flex items-center justify-center">
+                <span className="text-white text-sm font-bold">SOL</span>
               </div>
-            )}
-          </div>
-          {checkInError && <p className="text-red-500 text-xs mb-2">Error: {checkInError}</p>}
-          {lastXpAwarded && <p className="text-green-400 text-xs mb-2">+{lastXpAwarded} XP awarded!</p>}
-          <button 
-            onClick={handleCheckIn}
-            disabled={!checkInData.canCheckIn || isCheckingIn}
-            className={`w-full sm:w-auto inline-flex items-center justify-center px-6 py-2 rounded-md text-sm font-medium transition-opacity ${checkInData.canCheckIn ? 'bg-gradient-to-r from-sol-gradient-from to-sol-gradient-to text-white hover:opacity-90' : 'bg-gray-600 text-gray-400 cursor-not-allowed'} disabled:opacity-50`}
-          >
-            {isCheckingIn ? <ArrowPathIcon className="animate-spin h-4 w-4 mr-2"/> : <CalendarDaysIcon className="h-4 w-4 mr-2"/>}
-            {isCheckingIn ? 'Checking in...' : (checkInData.canCheckIn ? `Check In (+${checkInData.potentialXp} XP)` : 'Checked in Today')}
-          </button>
-          {!checkInData.canCheckIn && !isCheckingIn && userProfile?.lastCheckedInAt && (
-            <p className="text-xs text-gray-500 mt-2">Last check-in: {new Date(userProfile.lastCheckedInAt).toLocaleString()}</p>
-          )}
-        </div>
-
-        {/* Social Connect Card */}
-        <div className="bg-dark-card-secondary rounded-lg p-4 border border-white/10 flex flex-col gap-2 max-w-md mx-auto">
-          <h3 className="text-base font-semibold text-gray-100 mb-2">Social Connect</h3>
-          <div className="flex flex-col items-center gap-2">
-            <TelegramConnectCard userId={userProfile?.id || ''} connectedTelegram={userProfile?.telegram} />
-            {/* Add more social cards here in the future */}
+              <div>
+                <p className="text-xs text-gray-400 uppercase">Wallet Balance</p>
+                {isLoadingBalance ? (
+                  <Skeleton height={24} width={100} />
+                ) : (
+                  <p className="text-xl font-bold bg-gradient-to-r from-sol-gradient-from to-sol-gradient-to bg-clip-text text-transparent">
+                    {balance !== null ? `${balance.toLocaleString(undefined, { minimumFractionDigits: 4, maximumFractionDigits: 4 })} SOL` : 'N/A'}
+                  </p>
+                )}
+              </div>
+            </div>
+            <button 
+              onClick={refreshBalanceManually}
+              disabled={isManuallyRefreshing}
+              className="p-2 text-gray-400 hover:text-white transition-colors disabled:opacity-50"
+              title="Refresh Balance"
+            >
+              <ArrowPathIcon className={`w-5 h-5 ${isManuallyRefreshing ? 'animate-spin' : ''}`} />
+            </button>
           </div>
         </div>
 
-        {/* XP/Points History Card */}
-        <div className="bg-dark-card-secondary rounded-lg p-6 border border-white/10 max-w-2xl mx-auto">
-          <h3 className="text-lg font-semibold mb-4 text-gray-100">XP / Points History</h3>
-          <ul className="divide-y divide-gray-700 max-h-64 overflow-y-auto pr-2">
-            {mockXpHistory.map((event, idx) => (
-              <li key={idx} className="flex items-center justify-between py-2">
-                <div>
-                  <p className="text-sm text-gray-100 font-medium">{event.description}</p>
-                  <p className="text-xs text-gray-400">{event.type} &middot; {new Date(event.date).toLocaleString()}</p>
+        {/* Completed Quests Section */}
+        <div className="bg-dark-card rounded-xl shadow-lg p-6 border border-white/10">
+          <h3 className="text-xl font-semibold text-gray-100 mb-4 flex items-center gap-2">
+            <CheckCircleIcon className="w-5 h-5 text-green-400" />
+            Completed Quests
+          </h3>
+          {completedQuests.length > 0 ? (
+            <div className="space-y-3">
+              {completedQuests.map((quest) => (
+                <div key={quest.id} className="bg-dark-card-secondary rounded-lg p-4 border border-white/10">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h4 className="font-medium text-gray-100">{quest.title}</h4>
+                      <p className="text-sm text-gray-400 mt-1">{quest.description}</p>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs font-semibold bg-purple-500/20 text-purple-300 px-2 py-0.5 rounded-full">
+                        {quest.xpReward} XP
+                      </span>
+                      <CheckCircleIcon className="w-5 h-5 text-green-400" />
+                    </div>
+                  </div>
                 </div>
-                <span className={`text-sm font-bold ${event.amount > 0 ? 'text-green-400' : 'text-red-400'}`}>{event.amount > 0 ? '+' : ''}{event.amount} XP</span>
-              </li>
-            ))}
-          </ul>
-        </div>
-
-        {/* Completed Quests Card */}
-        <div className="bg-dark-card-secondary rounded-lg p-6 border border-white/10">
-          <h3 className="text-lg font-semibold mb-4 text-gray-100">Completed Quest History</h3>
-          {(() => {
-            if (questError && !isLoadingQuests) {
-              return <p className="text-red-500 text-sm">Error loading quest history: {questError}</p>;
-            }
-            if (isLoadingQuests) {
-              return (
-                <ul className="space-y-3">
-                  <li><Skeleton height={50} /></li>
-                  <li><Skeleton height={50} /></li>
-                </ul>
-              );
-            }
-            if (completedQuests.length > 0) {
-              return (
-                <ul className="space-y-3 max-h-64 overflow-y-auto pr-2">
-                  {completedQuests.map((quest) => (
-                    <li key={quest.id} className="p-3 rounded-lg border border-green-700/50 bg-green-900/20 flex justify-between items-center">
-                      <div>
-                        <h4 className="font-semibold text-green-300">{quest.title}</h4>
-                      </div>
-                      <span className="text-sm font-medium text-yellow-500 whitespace-nowrap ml-4">+{quest.xpReward} XP</span>
-                    </li>
-                  ))}
-                </ul>
-              );
-            } else {
-              return <p className="text-gray-500 text-sm italic">No quests completed yet.</p>;
-            }
-          })()}
+              ))}
+            </div>
+          ) : (
+            <p className="text-gray-500 text-center py-4">No quests completed yet. Start your journey!</p>
+          )}
         </div>
       </div>
     </SkeletonTheme>

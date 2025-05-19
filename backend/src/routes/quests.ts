@@ -360,10 +360,17 @@ router.post('/check-balance', protect, async (req: Request, res: Response) => {
         console.log(`User ${userId} balance: ${balanceSOL} SOL`);
 
         if (balanceSOL >= balanceThresholdSOL) {
+            // Add XP event
+            const xpEvent = {
+              type: 'quest',
+              amount: finalReward,
+              description: questDefinition.title,
+              date: new Date()
+            };
             const updatedUserDoc = await User.findByIdAndUpdate(
                 userId,
                 {
-                    $push: { completedQuestIds: FUND_WALLET_QUEST_ID },
+                    $push: { completedQuestIds: FUND_WALLET_QUEST_ID, xpEvents: xpEvent },
                     $inc: { xp: finalReward } 
                 },
                 { new: true } 
@@ -525,10 +532,17 @@ router.post('/verify-transaction', protect, async (req: Request, res: Response) 
          const baseReward = questDefinition.xpReward || 0;
          const finalReward = Math.round(baseReward * (user.ownsOgNft ? OG_NFT_XP_BOOST : 1));
          
+         // Add XP event
+         const xpEvent = {
+           type: 'quest',
+           amount: finalReward,
+           description: questDefinition.title,
+           date: new Date()
+         };
          const updatedUser = await User.findByIdAndUpdate(
             userId,
             {
-                $push: { completedQuestIds: verifiedQuestId },
+                $push: { completedQuestIds: verifiedQuestId, xpEvents: xpEvent },
                 $inc: { xp: finalReward }
             },
             { new: true }
@@ -613,7 +627,14 @@ router.post('/verify-answer', protect, async (req: Request, res: Response) => {
         const baseReward = questDefinition.xpReward || 0;
         const finalReward = Math.round(baseReward * (user.ownsOgNft ? OG_NFT_XP_BOOST : 1));
         
-        const updatedUserDoc = await User.findByIdAndUpdate(userId, { $push: { completedQuestIds: questId }, $inc: { xp: finalReward } }, { new: true }).select('-__v');
+        // Add XP event
+        const xpEvent = {
+          type: 'quest',
+          amount: finalReward,
+          description: questDefinition.title,
+          date: new Date()
+        };
+        const updatedUserDoc = await User.findByIdAndUpdate(userId, { $push: { completedQuestIds: questId, xpEvents: xpEvent }, $inc: { xp: finalReward } }, { new: true }).select('-__v');
         if (!updatedUserDoc) return res.status(500).json({ message: 'Failed to update user data.' });
         
         const updatedUser = updatedUserDoc as IUser;
@@ -637,11 +658,17 @@ router.post('/wormhole/verify-tx', async (req: Request, res: Response) => {
     // For now, just mark quest as complete for the user
     const user = await User.findById(userId);
     if (!user) return res.status(404).json({ error: 'User not found' });
-    // Mark quest as complete (pseudo-code, adjust to your schema)
     if (!user.completedQuestIds) user.completedQuestIds = [];
     if (!user.completedQuestIds.includes(questId)) {
       user.completedQuestIds.push(questId);
       user.xp = (user.xp || 0) + 500; // Award XP (adjust as needed)
+      if (!user.xpEvents) user.xpEvents = [];
+      user.xpEvents.push({
+        type: 'quest',
+        amount: 500,
+        description: `Wormhole Quest: ${questId}`,
+        date: new Date()
+      });
       await user.save();
     }
     return res.json({ success: true, message: 'Quest completed!', xp: user.xp });

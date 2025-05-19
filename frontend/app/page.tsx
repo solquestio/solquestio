@@ -322,9 +322,9 @@ export default function HomePage() {
             </h2>
             <Link 
               href="/leaderboard" 
-              className="text-xs text-purple-400 hover:text-purple-300 transition-colors font-medium"
+              className="text-xs text-purple-400 hover:text-purple-300 transition-colors font-medium flex items-center"
             >
-              View All &rarr;
+              View All <ArrowRightIcon className="w-4 h-4 ml-1" />
             </Link>
           </div>
           
@@ -347,27 +347,28 @@ export default function HomePage() {
           ) : leaderboardError ? (
             <p className="text-red-400 text-sm text-center py-4">Error: {leaderboardError}</p>
           ) : topPlayers.length > 0 ? (
-            <div className="space-y-1">
+            <div className="space-y-2">
               {topPlayers.map((player, index) => {
                 const rank = player.rank ?? index + 1;
                 const rankClasses = getRankClasses(rank);
                 const truncatedAddress = shortenAddress(player.walletAddress, 4);
                 const gradientBg = rank === 1 ? 'bg-gradient-to-r from-yellow-500/15 to-gray-800/0' 
-                                  : rank === 2 ? 'bg-gradient-to-r from-gray-500/15 to-gray-800/0'
-                                  : rank === 3 ? 'bg-gradient-to-r from-orange-600/15 to-gray-800/0' 
-                                  : 'bg-gray-700/30';
-
+                              : rank === 2 ? 'bg-gradient-to-r from-gray-500/15 to-gray-800/0'
+                              : rank === 3 ? 'bg-gradient-to-r from-orange-600/15 to-gray-800/0' 
+                              : 'bg-gray-700/30';
+                
                 return (
                   <div 
                     key={player._id} 
-                    className={`flex items-center justify-between p-3 rounded-lg ${gradientBg} hover:bg-gray-700/40 transition-colors duration-150`}
+                    className={`flex items-center justify-between p-3 ${gradientBg} hover:bg-gray-700/40 transition-colors duration-150 rounded-lg`}
                   >
-                    {/* Left Side: Rank, Avatar, User Info */}
-                    <div className="flex items-center space-x-3 flex-grow min-w-0 mr-3">
+                    <div className="flex items-center space-x-3 flex-grow min-w-0">
                       <span className={`flex-shrink-0 w-6 h-6 flex items-center justify-center text-xs font-bold rounded-md ${rankClasses}`}>
                         {rank}
                       </span>
-                      <UserCircleIcon className="flex-shrink-0 w-8 h-8 text-gray-500" />
+                      <div className="flex-shrink-0 w-8 h-8 rounded-full bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center text-white font-semibold text-sm">
+                        {player.username ? player.username.charAt(0).toUpperCase() : truncatedAddress.charAt(0).toUpperCase()}
+                      </div>
                       <div className="min-w-0">
                         <p className="text-sm font-medium text-gray-100 truncate">
                           {player.username || truncatedAddress}
@@ -379,8 +380,7 @@ export default function HomePage() {
                         )}
                       </div>
                     </div>
-
-                    {/* Right Side: Boosts and Score */}
+                    
                     <div className="flex items-center space-x-2 flex-shrink-0">
                       {/* Boost Badges */}
                       {(player.xpBoost && player.xpBoost > 1) && (

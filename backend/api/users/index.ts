@@ -215,6 +215,14 @@ async function handleCheckIn(request: VercelRequest, response: VercelResponse) {
     user.lastCheckedInAt = now;
     user.checkInStreak = currentStreak;
     user.xp += finalXpAwarded;
+    // Add XP event
+    if (!user.xpEvents) user.xpEvents = [];
+    user.xpEvents.push({
+      type: 'check-in',
+      amount: finalXpAwarded,
+      description: `Daily check-in (streak: ${currentStreak})`,
+      date: now
+    });
     const updatedUser = await user.save();
     return response.status(200).json({
       message: 'Check-in successful!',

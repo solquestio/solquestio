@@ -100,6 +100,12 @@ router.post('/verify', async (req: Request, res: Response) => {
         xp: questRewardForVerification,
         checkInStreak: 0,
         ownsOgNft: false,
+        xpEvents: [{
+          type: 'quest',
+          amount: questRewardForVerification,
+          description: 'Verify Wallet',
+          date: new Date()
+        }],
         // Referral code removed
       };
 
@@ -125,10 +131,16 @@ router.post('/verify', async (req: Request, res: Response) => {
       let awardedXpThisSession = 0; // Track if XP was awarded in this specific login for this quest
 
       if (!userDoc.completedQuestIds.includes(VERIFY_WALLET_QUEST_ID)) {
+        const xpEvent = {
+          type: 'quest',
+          amount: questRewardForVerification,
+          description: 'Verify Wallet',
+          date: new Date()
+        };
         const result = await User.findByIdAndUpdate(
           userDoc._id,
           {
-            $push: { completedQuestIds: VERIFY_WALLET_QUEST_ID },
+            $push: { completedQuestIds: VERIFY_WALLET_QUEST_ID, xpEvents: xpEvent },
             $inc: { xp: questRewardForVerification }
           },
           { new: true }

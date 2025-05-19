@@ -1,6 +1,13 @@
 import mongoose, { Schema, Document } from 'mongoose';
 
 // Interface representing a document in MongoDB.
+export interface IXpEvent {
+  type: string;
+  amount: number;
+  description: string;
+  date: Date;
+}
+
 export interface IUser extends Document {
   walletAddress: string;
   username?: string; // Optional username
@@ -9,6 +16,7 @@ export interface IUser extends Document {
   lastCheckedInAt?: Date; // Add lastCheckedInAt field
   checkInStreak?: number; // Add checkInStreak field
   ownsOgNft?: boolean; // Add ownsOgNft field
+  xpEvents?: IXpEvent[];
 
   createdAt: Date;
   updatedAt: Date;
@@ -53,7 +61,15 @@ const UserSchema: Schema = new Schema(
         type: Boolean,
         required: true,
         default: false, // Default to false
-    }
+    },
+    xpEvents: [
+      {
+        type: { type: String, required: true },
+        amount: { type: Number, required: true },
+        description: { type: String, required: true },
+        date: { type: Date, default: Date.now }
+      }
+    ],
   },
   {
     timestamps: true, // Automatically add createdAt and updatedAt fields

@@ -174,7 +174,14 @@ router.post('/check-in', protect, async (req: Request, res: Response) => {
         user.lastCheckedInAt = now;
         user.checkInStreak = currentStreak;
         user.xp += finalXpAwarded; // Use final XP
-
+        // Add XP event
+        if (!user.xpEvents) user.xpEvents = [];
+        user.xpEvents.push({
+          type: 'check-in',
+          amount: finalXpAwarded,
+          description: `Daily check-in (streak: ${currentStreak})`,
+          date: now
+        });
         const updatedUser = await user.save();
         console.log(`User ${userId} checked in. Streak: ${currentStreak}. BaseXP: ${baseXpAwarded}. NFT Boost: ${user.ownsOgNft}. Final XP: ${finalXpAwarded}.`);
 
