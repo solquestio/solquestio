@@ -533,182 +533,115 @@ export default function ProfilePage() {
 
   return (
     <SkeletonTheme baseColor="#2d3748" highlightColor="#4a5568">
-      <div className="max-w-4xl mx-auto py-8">
-        <div className="bg-dark-card shadow-lg rounded-lg backdrop-blur-lg border border-white/10 overflow-hidden">
-          <div className="p-6 border-b border-white/10 flex justify-between items-center">
-            <NetworkSwitcher />
+      <div className="max-w-3xl mx-auto py-10 flex flex-col gap-8">
+        {/* Profile Header Card */}
+        <div className="bg-dark-card rounded-xl shadow-lg p-6 flex flex-col md:flex-row items-center gap-6 border border-white/10">
+          <div className="flex-shrink-0 w-20 h-20 rounded-full bg-gradient-to-br from-solana-purple to-solana-green flex items-center justify-center text-3xl font-bold text-white">
+            {userProfile?.username ? userProfile.username.charAt(0).toUpperCase() : '?'}
+          </div>
+          <div className="flex-1 flex flex-col gap-2">
+            <div className="flex items-center gap-2">
+              <h2 className="text-2xl font-semibold text-gray-100 truncate">{userProfile?.username || 'Unnamed User'}</h2>
+              <button onClick={handleEditUsername} className="text-xs text-blue-400 hover:text-blue-300" title="Edit Username">
+                <PencilIcon className="h-4 w-4" />
+              </button>
+            </div>
+            {publicKey && (
+              <p className="text-xs text-gray-400 font-mono">{publicKey.toString()}</p>
+            )}
+          </div>
+          <div className="flex-shrink-0">
             <WalletMultiButtonDynamic className="!bg-gradient-to-r from-sol-gradient-from to-sol-gradient-to hover:opacity-90 transition-opacity !rounded-md !h-10" />
           </div>
+        </div>
 
-          <div className="p-6">
-            {authError && <p className="text-red-500 mb-4 text-sm text-center">Error: {authError}</p>}
-
-            <div className="flex items-center gap-3 mb-6">
-              <div className="w-12 h-12 bg-gradient-to-br from-solana-purple to-solana-green rounded-full flex items-center justify-center text-xl font-bold">
-                {userProfile?.username ? userProfile.username.charAt(0).toUpperCase() : '?'}
-              </div>
-              <div>
-                {isEditingUsername ? (
-                  <div className="relative">
-                    <input 
-                      type="text" 
-                      value={newUsername} 
-                      onChange={(e) => setNewUsername(e.target.value)}
-                      className="w-full px-3 py-1.5 bg-dark-input border border-gray-600 rounded-md text-white focus:outline-none focus:ring-1 focus:ring-solana-purple text-sm"
-                      maxLength={15}
-                      placeholder="Enter username"
-                    />
-                    {usernameError && <p className="text-red-500 text-xs mt-1 absolute -bottom-5 left-0">{usernameError}</p>}
-                    <div className="flex items-center space-x-1 absolute top-1/2 right-2 transform -translate-y-1/2">
-                      <button onClick={handleUpdateUsername}> 
-                        {isUpdatingUsername ? <span className="text-xs">...</span> : <CheckIcon className="h-4 w-4" />}
-                      </button>
-                      <button onClick={handleCancelEdit}> 
-                        <XMarkIcon className="h-4 w-4" /> 
-                      </button>
-                    </div>
-                  </div>
-                ) : (
-                  <div className="flex items-center gap-2">
-                    <h2 className="text-xl font-semibold text-gray-100 truncate">{userProfile?.username || 'Unnamed User'}</h2>
-                    <button onClick={handleEditUsername} className="text-xs text-blue-400 hover:text-blue-300" title="Edit Username">
-                      <PencilIcon className="h-4 w-4" />
-                    </button>
-                  </div>
-                )}
-              </div>
-            </div>
-
-            {/* --- Social Connect Cards --- */}
-            <div className="flex flex-wrap gap-4 mb-8">
-              <TelegramConnectCard userId={userProfile?.id || ''} connectedTelegram={userProfile?.telegram} />
-              {/* Add GitHubConnectCard, TwitterHandleCard, etc. here in the future */}
-            </div>
-
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-px bg-white/10 mb-6 border-t border-b border-white/10"> 
-              <div className="bg-dark-card p-4 text-center">
-                <p className="text-xs text-gray-400 uppercase mb-1">XP</p>
-                <p className="text-xl font-bold text-yellow-400">{userProfile?.xp ?? 0}</p>
-              </div>
-              <div className="bg-dark-card p-4 text-center">
-                <p className="text-xs text-gray-400 uppercase mb-1">Balance</p>
-                {isLoadingBalance ? (
-                  <Skeleton height={28} width="60%" className="mx-auto mt-1"/>
-                ) : (
-                  <div className="flex flex-col items-center">
-                    <p className="text-xl font-bold bg-gradient-to-r from-sol-gradient-from to-sol-gradient-to bg-clip-text text-transparent">
-                      {balance !== null 
-                        ? `${balance.toLocaleString(undefined, { minimumFractionDigits: 4, maximumFractionDigits: 9 })} SOL` 
-                        : (rpcError ? 'RPC Error' : 'Connect Wallet')}
-                    </p>
-                    {balance !== null && (
-                      <div className="flex flex-col items-center mt-1">
-                        <div className="flex items-center gap-1">
-                          <p className="text-xs text-gray-400">Updated automatically</p>
-                          <button 
-                            onClick={refreshBalanceManually} 
-                            disabled={isManuallyRefreshing}
-                            className="text-xs bg-blue-600 hover:bg-blue-700 text-white rounded px-2 py-0.5 disabled:opacity-50 flex items-center"
-                          >
-                            {isManuallyRefreshing ? (
-                              <ArrowPathIcon className="h-3 w-3 animate-spin mr-1" />
-                            ) : (
-                              <ArrowPathIcon className="h-3 w-3 mr-1" />
-                            )}
-                            Refresh
-                          </button>
-                        </div>
-                        <p className="text-xs text-gray-400">{network} network</p>
-                      </div>
-                    )}
-                  </div>
-                )}
-                {rpcError && (
-                  <div className="mt-1">
-                    <p className="text-xs text-red-400">RPC endpoint is rate limited.</p>
-                    <button 
-                      onClick={refreshBalanceManually}
-                      disabled={isManuallyRefreshing}
-                      className="text-xs bg-red-600 hover:bg-red-700 text-white rounded px-2 py-0.5 mt-1 disabled:opacity-50 flex items-center mx-auto"
-                    >
-                      {isManuallyRefreshing ? (
-                        <ArrowPathIcon className="h-3 w-3 animate-spin mr-1" />
-                      ) : (
-                        <ArrowPathIcon className="h-3 w-3 mr-1" />
-                      )}
-                      Try direct connection
-                    </button>
-                  </div>
-                )}
-              </div>
-              <div className="bg-dark-card p-4 text-center col-span-2 md:col-span-1">
-                <p className="text-xs text-gray-400 uppercase mb-1">Quests Completed</p>
-                <p className="text-xl font-bold text-gray-100">{completedQuestsCount}</p>
-              </div>
-            </div>
-
-            <div className="mb-8 p-4 bg-dark-card-secondary rounded-lg border border-white/10">
-              <div className="flex justify-between items-start mb-3">
-                <h3 className="text-lg font-semibold text-gray-100">Daily Check-in</h3>
-                {checkInData.currentStreak > 0 && (
-                  <div className="flex items-center text-sm text-orange-400 font-medium bg-orange-900/30 px-2 py-1 rounded">
-                    <FireIcon className="h-4 w-4 mr-1"/>
-                    {checkInData.currentStreak} Day Streak
-                  </div>
-                )}
-              </div>
-
-              {checkInError && <p className="text-red-500 text-xs mb-2">Error: {checkInError}</p>}
-              {lastXpAwarded && <p className="text-green-400 text-xs mb-2">+{lastXpAwarded} XP awarded!</p>}
-
-              <button 
-                onClick={handleCheckIn}
-                disabled={!checkInData.canCheckIn || isCheckingIn}
-                className={`w-full sm:w-auto inline-flex items-center justify-center px-6 py-2 rounded-md text-sm font-medium transition-opacity ${checkInData.canCheckIn ? 'bg-gradient-to-r from-sol-gradient-from to-sol-gradient-to text-white hover:opacity-90' : 'bg-gray-600 text-gray-400 cursor-not-allowed'} disabled:opacity-50`}
-              >
-                {isCheckingIn ? <ArrowPathIcon className="animate-spin h-4 w-4 mr-2"/> : <CalendarDaysIcon className="h-4 w-4 mr-2"/>}
-                {isCheckingIn ? 'Checking in...' : 
-                  (checkInData.canCheckIn ? `Check In (+${checkInData.potentialXp} XP)` : 'Checked in Today')
-                }
-              </button>
-              {!checkInData.canCheckIn && !isCheckingIn && userProfile?.lastCheckedInAt && (
-                <p className="text-xs text-gray-500 mt-2">Last check-in: {new Date(userProfile.lastCheckedInAt).toLocaleString()}</p>
-              )}
-            </div>
-
-            <div>
-              <h3 className="text-lg font-semibold mb-4 text-gray-100">Completed Quest History</h3>
-              {(() => {
-                if (questError && !isLoadingQuests) {
-                  return <p className="text-red-500 text-sm">Error loading quest history: {questError}</p>;
-                }
-                if (isLoadingQuests) {
-                  return (
-                    <ul className="space-y-3">
-                      <li><Skeleton height={50} /></li>
-                      <li><Skeleton height={50} /></li>
-                    </ul>
-                  );
-                }
-                if (completedQuests.length > 0) {
-                  return (
-                    <ul className="space-y-3">
-                      {completedQuests.map((quest) => (
-                        <li key={quest.id} className="p-3 rounded-lg border border-green-700/50 bg-green-900/20 flex justify-between items-center">
-                          <div>
-                            <h4 className="font-semibold text-green-300">{quest.title}</h4>
-                          </div>
-                          <span className="text-sm font-medium text-yellow-500 whitespace-nowrap ml-4">+{quest.xpReward} XP</span>
-                        </li>
-                      ))}
-                    </ul>
-                  );
-                } else {
-                  return <p className="text-gray-500 text-sm italic">No quests completed yet.</p>;
-                }
-              })()}
-            </div>
+        {/* Stats Row */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="bg-dark-card-secondary rounded-lg p-4 text-center border border-white/10">
+            <p className="text-xs text-gray-400 uppercase mb-1">XP</p>
+            <p className="text-2xl font-bold text-yellow-400">{userProfile?.xp ?? 0}</p>
           </div>
+          <div className="bg-dark-card-secondary rounded-lg p-4 text-center border border-white/10">
+            <p className="text-xs text-gray-400 uppercase mb-1">Balance</p>
+            {isLoadingBalance ? (
+              <Skeleton height={28} width="60%" className="mx-auto mt-1"/>
+            ) : (
+              <p className="text-2xl font-bold bg-gradient-to-r from-sol-gradient-from to-sol-gradient-to bg-clip-text text-transparent">
+                {balance !== null ? `${balance.toLocaleString(undefined, { minimumFractionDigits: 4, maximumFractionDigits: 4 })} SOL` : 'N/A'}
+              </p>
+            )}
+          </div>
+          <div className="bg-dark-card-secondary rounded-lg p-4 text-center border border-white/10">
+            <p className="text-xs text-gray-400 uppercase mb-1">Quests Completed</p>
+            <p className="text-2xl font-bold text-gray-100">{completedQuestsCount}</p>
+          </div>
+        </div>
+
+        {/* Daily Check-in Card */}
+        <div className="bg-dark-card-secondary rounded-lg p-6 border border-white/10 flex flex-col gap-2">
+          <div className="flex justify-between items-center mb-2">
+            <h3 className="text-lg font-semibold text-gray-100">Daily Check-in</h3>
+            {checkInData.currentStreak > 0 && (
+              <div className="flex items-center text-sm text-orange-400 font-medium bg-orange-900/30 px-2 py-1 rounded">
+                <FireIcon className="h-4 w-4 mr-1"/>
+                {checkInData.currentStreak} Day Streak
+              </div>
+            )}
+          </div>
+          {checkInError && <p className="text-red-500 text-xs mb-2">Error: {checkInError}</p>}
+          {lastXpAwarded && <p className="text-green-400 text-xs mb-2">+{lastXpAwarded} XP awarded!</p>}
+          <button 
+            onClick={handleCheckIn}
+            disabled={!checkInData.canCheckIn || isCheckingIn}
+            className={`w-full sm:w-auto inline-flex items-center justify-center px-6 py-2 rounded-md text-sm font-medium transition-opacity ${checkInData.canCheckIn ? 'bg-gradient-to-r from-sol-gradient-from to-sol-gradient-to text-white hover:opacity-90' : 'bg-gray-600 text-gray-400 cursor-not-allowed'} disabled:opacity-50`}
+          >
+            {isCheckingIn ? <ArrowPathIcon className="animate-spin h-4 w-4 mr-2"/> : <CalendarDaysIcon className="h-4 w-4 mr-2"/>}
+            {isCheckingIn ? 'Checking in...' : (checkInData.canCheckIn ? `Check In (+${checkInData.potentialXp} XP)` : 'Checked in Today')}
+          </button>
+          {!checkInData.canCheckIn && !isCheckingIn && userProfile?.lastCheckedInAt && (
+            <p className="text-xs text-gray-500 mt-2">Last check-in: {new Date(userProfile.lastCheckedInAt).toLocaleString()}</p>
+          )}
+        </div>
+
+        {/* Social Connect Card */}
+        <div className="bg-dark-card-secondary rounded-lg p-6 border border-white/10 flex flex-col gap-2">
+          <h3 className="text-lg font-semibold text-gray-100 mb-2">Social Connect</h3>
+          <TelegramConnectCard userId={userProfile?.id || ''} connectedTelegram={userProfile?.telegram} />
+          {/* Add more social cards here in the future */}
+        </div>
+
+        {/* Completed Quests Card */}
+        <div className="bg-dark-card-secondary rounded-lg p-6 border border-white/10">
+          <h3 className="text-lg font-semibold mb-4 text-gray-100">Completed Quest History</h3>
+          {(() => {
+            if (questError && !isLoadingQuests) {
+              return <p className="text-red-500 text-sm">Error loading quest history: {questError}</p>;
+            }
+            if (isLoadingQuests) {
+              return (
+                <ul className="space-y-3">
+                  <li><Skeleton height={50} /></li>
+                  <li><Skeleton height={50} /></li>
+                </ul>
+              );
+            }
+            if (completedQuests.length > 0) {
+              return (
+                <ul className="space-y-3 max-h-64 overflow-y-auto pr-2">
+                  {completedQuests.map((quest) => (
+                    <li key={quest.id} className="p-3 rounded-lg border border-green-700/50 bg-green-900/20 flex justify-between items-center">
+                      <div>
+                        <h4 className="font-semibold text-green-300">{quest.title}</h4>
+                      </div>
+                      <span className="text-sm font-medium text-yellow-500 whitespace-nowrap ml-4">+{quest.xpReward} XP</span>
+                    </li>
+                  ))}
+                </ul>
+              );
+            } else {
+              return <p className="text-gray-500 text-sm italic">No quests completed yet.</p>;
+            }
+          })()}
         </div>
       </div>
     </SkeletonTheme>

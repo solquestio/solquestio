@@ -51,7 +51,7 @@ interface LeaderboardUser {
     xp: number;
     rank?: number; // Optional rank if provided by API or calculated client-side
     xpBoost?: number; // Added xpBoost
-    // avatar?: string; // Placeholder for avatar images later
+    avatar?: string; // Placeholder for avatar images later
 }
 
 // --- Constants --- 
@@ -109,9 +109,10 @@ interface LearningPathCardProps {
     promptLogin: () => void;
     graphicType?: 'image' | 'gradient' | 'none';
     imageUrl?: string | null;
+    logoUrl?: string;
 }
 
-const LearningPathCard: React.FC<LearningPathCardProps> = ({ title, description, isLocked, pathSlug, totalXp, questCount, isAuthenticated, promptLogin, graphicType = 'none', imageUrl }) => {
+const LearningPathCard: React.FC<LearningPathCardProps> = ({ title, description, isLocked, pathSlug, totalXp, questCount, isAuthenticated, promptLogin, graphicType = 'none', imageUrl, logoUrl }) => {
     const cardClasses = isLocked
         ? "bg-dark-card-secondary border-gray-700 cursor-not-allowed opacity-60"
         : "bg-dark-card border-gray-800 hover:border-solana-purple transition-all duration-200 ease-in-out transform hover:-translate-y-1 shadow-lg hover:shadow-solana-purple/30";
@@ -332,7 +333,13 @@ const LeaderboardSnippet: React.FC = () => {
                                     <span className={`flex-shrink-0 w-6 h-6 flex items-center justify-center text-xs font-bold rounded-md ${rankClasses}`}>
                                         {rank}
                                     </span>
-                                    <UserCircleIcon className="flex-shrink-0 w-8 h-8 text-gray-500" /> {/* Placeholder Avatar */}
+                                    {player.avatar ? (
+                                        <img src={player.avatar} alt={player.username || truncatedAddress} className="flex-shrink-0 w-8 h-8 rounded-full shadow border-2 border-white/30 bg-white/10" />
+                                    ) : (
+                                        <div className="flex-shrink-0 w-8 h-8 rounded-full bg-gray-700 text-gray-300 flex items-center justify-center">
+                                            {player.username ? player.username.slice(0, 2) : truncatedAddress.slice(0, 2)}
+                                        </div>
+                                    )}
                                     <div className="min-w-0">
                                         <p className="text-sm font-medium text-gray-100 truncate">
                                             {player.username || truncatedAddress}
@@ -518,6 +525,7 @@ interface PathCardProps {
   highlightTag?: string;
   gradient?: string;
   onClick?: () => void;
+  logoUrl?: string;
 }
 
 const PathCard: React.FC<PathCardProps> = ({
@@ -530,6 +538,7 @@ const PathCard: React.FC<PathCardProps> = ({
   highlightTag,
   gradient = 'from-blue-500 to-purple-500',
   onClick,
+  logoUrl,
 }) => (
   <div
     className={`relative rounded-2xl shadow-lg bg-gradient-to-br ${gradient} p-6 flex flex-col justify-between min-h-[220px] cursor-pointer transition-transform hover:-translate-y-1 hover:shadow-2xl`}
@@ -543,8 +552,8 @@ const PathCard: React.FC<PathCardProps> = ({
     )}
     {/* Top Row: Icon + Title */}
     <div className="flex items-center gap-3 mb-2">
-      {imageUrl && (
-        <img src={imageUrl} alt="Path Icon" className="w-10 h-10 rounded-full border-2 border-white/30" />
+      {logoUrl && (
+        <img src={logoUrl} alt="Protocol Logo" className="w-10 h-10 rounded-full shadow border-2 border-white/30 bg-white/10" />
       )}
       <div>
         <h3 className="text-xl font-bold text-white drop-shadow-md">{title}</h3>
@@ -657,6 +666,18 @@ export default function LandingPage() {
         </div>
       </section>
 
+      {/* Update the NFT + Leaderboard section */}
+      <section className="py-12 px-4">
+        <div className="max-w-6xl mx-auto flex flex-col md:flex-row gap-8 items-start">
+          <div className="flex-1 min-w-[320px]">
+            <OgNftShowcase isAuthenticated={false} promptLogin={() => {}} />
+          </div>
+          <div className="w-full md:w-[340px] lg:w-[320px] xl:w-[300px] flex-shrink-0">
+            <LeaderboardSnippet />
+          </div>
+        </div>
+      </section>
+
       {/* Explore More Quests */}
       <section className="py-12 px-4">
         <div className="max-w-6xl mx-auto">
@@ -719,3 +740,12 @@ const features = [
         description: "Earn exclusive NFTs that showcase your achievements and provide benefits."
     }
 ]; 
+
+// --- Add a mapping for protocol logos ---
+const protocolLogos: Record<string, string> = {
+  solana: '/solana-logo.svg',
+  layerzero: '/layerzero.jpg',
+  zkcompression: '/zk-compression.svg',
+  wormhole: '/wormhole-logo.svg',
+  metadao: '/metadao-logo.svg',
+}; 
