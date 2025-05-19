@@ -31,6 +31,12 @@ export default async function handler(request: VercelRequest, response: VercelRe
         return handleMe(request, response);
       case 'leaderboard':
         return handleLeaderboard(request, response);
+      case 'check-in':
+        if (request.method === 'POST') {
+          return handleCheckIn(request, response);
+        } else {
+          return response.status(405).json({ error: 'Method not allowed' });
+        }
       default:
         // Default user endpoint info
         return response.status(200).json({
@@ -161,5 +167,63 @@ async function handleLeaderboard(request: VercelRequest, response: VercelRespons
       error: 'Failed to fetch leaderboard data',
       message: error instanceof Error ? error.message : 'Unknown error'
     });
+  }
+}
+
+// Handler for check-in endpoint
+async function handleCheckIn(request: VercelRequest, response: VercelResponse) {
+  try {
+    // Authenticate user
+    const authHeader = request.headers.authorization;
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      return response.status(401).json({ message: 'Not authorized' });
+    }
+    const token = authHeader.split(' ')[1];
+    let decoded: any;
+    try {
+      decoded = jwt.verify(token, process.env.JWT_SECRET || 'default_secret');
+    } catch (err) {
+      return response.status(401).json({ message: 'Invalid token' });
+    }
+    const userId = decoded.id;
+    const user = await UserModel.findById(userId);
+    if (!user) {
+      return response.status(404).json({ message: 'User not found' });
+    }
+    const now = new Date();
+    const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const yesterdayStart = new Date(todayStart);
+    yesterdayStart.setDate(todayStart.getDate() - 1);
+    let currentStreak = user.checkInStreak || 0;
+    let baseXpAwarded = 0;
+    // Already checked in today?
+    if (user.lastCheckedInAt && user.lastCheckedInAt >= todayStart) {
+      return response.status(400).json({ 
+        message: 'Already checked in today.', 
+        user
+      });
+    }
+    // Streak logic
+    if (user.lastCheckedInAt && user.lastCheckedInAt >= yesterdayStart) {
+      currentStreak += 1;
+    } else {
+      currentStreak = 1;
+    }
+    baseXpAwarded = Math.min(currentStreak, 30);
+    const OG_NFT_XP_BOOST = 1.2;
+    const finalXpAwarded = Math.round(baseXpAwarded * (user.ownsOgNft ? OG_NFT_XP_BOOST : 1));
+    user.lastCheckedInAt = now;
+    user.checkInStreak = currentStreak;
+    user.xp += finalXpAwarded;
+    const updatedUser = await user.save();
+    return response.status(200).json({
+      message: 'Check-in successful!',
+      xpAwarded: finalXpAwarded,
+      streak: currentStreak,
+      user: updatedUser
+    });
+  } catch (error: any) {
+    console.error('Error during check-in:', error);
+    response.status(500).json({ message: 'Server error during check-in', error: error.message });
   }
 }

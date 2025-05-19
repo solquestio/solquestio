@@ -9,6 +9,7 @@ import { PencilIcon, CheckIcon, XMarkIcon, CalendarDaysIcon, ArrowPathIcon, Fire
 import Skeleton, { SkeletonTheme } from 'react-loading-skeleton';
 import { useAuth } from '@/context/AuthContext';
 import NetworkSwitcher, { NetworkContext, useNetwork } from '@/components/NetworkSwitcher';
+import TelegramConnectCard from '@/components/social/TelegramConnectCard';
 
 // Dynamically import the WalletMultiButton with no SSR
 const WalletMultiButtonDynamic = dynamic(
@@ -36,6 +37,27 @@ const FUND_WALLET_QUEST_ID = 'fund-wallet';
 // Define reliable RPC endpoints for both networks
 const HELIUS_RPC_URL = 'https://mainnet.helius-rpc.com/?api-key=0abb48db-ebdd-4297-aa63-5f4d79234d9e';
 const DEVNET_RPC_URL = 'https://api.devnet.solana.com'; // Reliable devnet endpoint
+
+// Define the UserProfile interface
+interface UserProfile {
+  id: string;
+  walletAddress: string;
+  username?: string;
+  completedQuestIds: string[];
+  xp: number;
+  lastCheckedInAt?: string | Date;
+  checkInStreak?: number;
+  createdAt: string;
+  updatedAt: string;
+  ownsOgNft?: boolean;
+  telegram?: {
+    id: number;
+    first_name: string;
+    last_name?: string;
+    username?: string;
+    photo_url?: string;
+  };
+}
 
 // --- Helper: Check if eligible for check-in & Calculate Potential XP --- 
 const getCheckInStatus = (userProfile?: any): { canCheckIn: boolean; potentialXp: number; currentStreak: number } => {
@@ -355,7 +377,7 @@ export default function ProfilePage() {
     setCheckInError(null);
     setLastXpAwarded(null);
     try {
-      const response = await fetch(`${BACKEND_URL}/api/users/check-in`, {
+      const response = await fetch(`${BACKEND_URL}/api/users?path=check-in`, {
         method: 'POST',
         headers: { 'Authorization': `Bearer ${authToken}` }
       });
@@ -458,18 +480,18 @@ export default function ProfilePage() {
     }
   };
 
-  // --- Render Logic ---
-  if (!isMounted) {
-    // Render placeholder or spinner until mounted
-    return (
-      <div className="flex justify-center items-center min-h-[calc(100vh-200px)]">
-        <p className="text-gray-400">Loading Profile...</p>
-      </div>
-    );
-  }
+  // --- Social Connect Section ---
+  // Place this section after the username/wallet info, before stats/quests
+  // You may want to add more social cards later (GitHub, Twitter, etc)
 
   // Calculate completed quests count
   const completedQuestsCount = isAuthenticated ? quests.filter(q => q.isCompleted).length : 0;
+
+  // --- Completed Quest History ---
+  // Only show quests that are in userProfile.completedQuestIds
+  const completedQuests = quests.filter(
+    (quest) => userProfile?.completedQuestIds?.includes(quest.id)
+  );
 
   // Add console log here to inspect userProfile before render
   console.log("ProfilePage - userProfile state:", userProfile);
@@ -555,6 +577,12 @@ export default function ProfilePage() {
                   </div>
                 )}
               </div>
+            </div>
+
+            {/* --- Social Connect Cards --- */}
+            <div className="flex flex-wrap gap-4 mb-8">
+              <TelegramConnectCard userId={userProfile?.id || ''} connectedTelegram={userProfile?.telegram} />
+              {/* Add GitHubConnectCard, TwitterHandleCard, etc. here in the future */}
             </div>
 
             <div className="grid grid-cols-2 md:grid-cols-3 gap-px bg-white/10 mb-6 border-t border-b border-white/10"> 
@@ -650,9 +678,7 @@ export default function ProfilePage() {
 
             <div>
               <h3 className="text-lg font-semibold mb-4 text-gray-100">Completed Quest History</h3>
-              { (() => {
-                const completedQuests = quests.filter(quest => quest.isCompleted);
-
+              {(() => {
                 if (questError && !isLoadingQuests) {
                   return <p className="text-red-500 text-sm">Error loading quest history: {questError}</p>;
                 }
@@ -680,7 +706,7 @@ export default function ProfilePage() {
                 } else {
                   return <p className="text-gray-500 text-sm italic">No quests completed yet.</p>;
                 }
-              })() } 
+              })()}
             </div>
           </div>
         </div>
