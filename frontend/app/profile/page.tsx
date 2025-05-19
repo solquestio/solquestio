@@ -91,6 +91,14 @@ const getCheckInStatus = (userProfile?: any): { canCheckIn: boolean; potentialXp
     return { canCheckIn: true, potentialXp, currentStreak }; 
 };
 
+// --- Mock XP/Points History ---
+const mockXpHistory = [
+  { date: '2024-05-19T14:37:21Z', type: 'Check-in', description: 'Daily check-in', amount: 5 },
+  { date: '2024-05-18T13:12:00Z', type: 'Quest', description: 'Completed "Connect Your Wallet"', amount: 100 },
+  { date: '2024-05-18T12:00:00Z', type: 'Quest', description: 'Completed "Explore a Transaction"', amount: 150 },
+  // Add more mock events as needed
+];
+
 export default function ProfilePage() { 
   // Use the AuthContext and NetworkContext
   const { authToken, userProfile, isAuthenticated, isLoading: isLoadingAuth, error: authError, login } = useAuth();
@@ -604,10 +612,28 @@ export default function ProfilePage() {
         </div>
 
         {/* Social Connect Card */}
-        <div className="bg-dark-card-secondary rounded-lg p-6 border border-white/10 flex flex-col gap-2">
-          <h3 className="text-lg font-semibold text-gray-100 mb-2">Social Connect</h3>
-          <TelegramConnectCard userId={userProfile?.id || ''} connectedTelegram={userProfile?.telegram} />
-          {/* Add more social cards here in the future */}
+        <div className="bg-dark-card-secondary rounded-lg p-4 border border-white/10 flex flex-col gap-2 max-w-md mx-auto">
+          <h3 className="text-base font-semibold text-gray-100 mb-2">Social Connect</h3>
+          <div className="flex flex-col items-center gap-2">
+            <TelegramConnectCard userId={userProfile?.id || ''} connectedTelegram={userProfile?.telegram} />
+            {/* Add more social cards here in the future */}
+          </div>
+        </div>
+
+        {/* XP/Points History Card */}
+        <div className="bg-dark-card-secondary rounded-lg p-6 border border-white/10 max-w-2xl mx-auto">
+          <h3 className="text-lg font-semibold mb-4 text-gray-100">XP / Points History</h3>
+          <ul className="divide-y divide-gray-700 max-h-64 overflow-y-auto pr-2">
+            {mockXpHistory.map((event, idx) => (
+              <li key={idx} className="flex items-center justify-between py-2">
+                <div>
+                  <p className="text-sm text-gray-100 font-medium">{event.description}</p>
+                  <p className="text-xs text-gray-400">{event.type} &middot; {new Date(event.date).toLocaleString()}</p>
+                </div>
+                <span className={`text-sm font-bold ${event.amount > 0 ? 'text-green-400' : 'text-red-400'}`}>{event.amount > 0 ? '+' : ''}{event.amount} XP</span>
+              </li>
+            ))}
+          </ul>
         </div>
 
         {/* Completed Quests Card */}
