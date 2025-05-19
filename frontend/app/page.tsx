@@ -7,6 +7,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { ArrowRightIcon, ArrowPathIcon, UserCircleIcon, TrophyIcon, SparklesIcon, ArrowTopRightOnSquareIcon as ExternalLinkIcon, CheckCircleIcon as CheckCircleSolidIcon } from '@heroicons/react/24/solid';
 import { useAuth } from '@/context/AuthContext';
+import Image from 'next/image';
 
 // Define learning path type
 interface LearningPath {
@@ -68,8 +69,8 @@ const STATIC_LEARNING_PATHS: LearningPath[] = [
     totalXp: 2450,
     isLocked: false,
     graphicType: 'image',
-    imageUrl: '/bitcoin/zeusbtc.png', // Bitcoin-specific image
-    logoUrl: '/bitcoin/zeusbtc.png', // Bitcoin-specific logo
+    imageUrl: '/images/paths/zeusbtc.png',
+    logoUrl: '/images/paths/zeusbtc.png',
     bonusPoints: 2000,
     userCount: '2K+',
     isPathCompleted: false,
@@ -89,8 +90,8 @@ const STATIC_LEARNING_PATHS: LearningPath[] = [
     totalXp: 2500,
     isLocked: false,
     graphicType: 'image',
-    imageUrl: '/layerzero.jpg',
-    logoUrl: '/layerzero.jpg',
+    imageUrl: '/images/paths/layerzero.png',
+    logoUrl: '/images/paths/layerzero.png',
     bonusPoints: 1500,
     userCount: '5K',
     isPathCompleted: false,
@@ -110,10 +111,10 @@ const STATIC_LEARNING_PATHS: LearningPath[] = [
     totalXp: 2150,
     isLocked: false,
     graphicType: 'image',
-    imageUrl: '/the-graph-grt-logo.svg', 
-    logoUrl: '/the-graph-grt-logo.svg',
+    imageUrl: '/images/paths/thegraph.png',
+    logoUrl: '/images/paths/thegraph.png',
     bonusPoints: 1800,
-    userCount: '2K', 
+    userCount: '2K',
     isPathCompleted: false,
     currentProgress: 0,
     rewardTags: [{ text: '+2150 XP', variant: 'points' }, { text: 'Hackathon Ready', variant: 'generic' }],
@@ -131,8 +132,8 @@ const STATIC_LEARNING_PATHS: LearningPath[] = [
     totalXp: 1650,
     isLocked: false,
     graphicType: 'image',
-    imageUrl: '/solana_v2_2b.jpg',
-    logoUrl: '/solana_v2_2b.jpg',
+    imageUrl: '/images/paths/solana.png',
+    logoUrl: '/images/paths/solana.png',
     bonusPoints: 1200,
     userCount: '25K',
     isPathCompleted: false,
@@ -152,8 +153,8 @@ const STATIC_LEARNING_PATHS: LearningPath[] = [
     totalXp: 2200,
     isLocked: false,
     graphicType: 'image',
-    imageUrl: '/zk-compression.jpg',
-    logoUrl: '/zk-compression.jpg',
+    imageUrl: '/images/paths/zk.png',
+    logoUrl: '/images/paths/zk.png',
     bonusPoints: 1800,
     userCount: '10K+',
     isPathCompleted: false,
@@ -173,8 +174,8 @@ const STATIC_LEARNING_PATHS: LearningPath[] = [
     totalXp: 2000,
     isLocked: false,
     graphicType: 'image',
-    imageUrl: '/wormhole-logo.svg', // Add a Wormhole logo to public if available
-    logoUrl: '/wormhole-logo.svg',
+    imageUrl: '/images/paths/wormhole.png',
+    logoUrl: '/images/paths/wormhole.png',
     bonusPoints: 1500,
     userCount: '1K+',
     isPathCompleted: false,
@@ -218,6 +219,7 @@ export default function HomePage() {
   const [topPlayers, setTopPlayers] = useState<LeaderboardUser[]>([]);
   const [isLoadingLeaderboard, setIsLoadingLeaderboard] = useState(true);
   const [leaderboardError, setLeaderboardError] = useState<string | null>(null);
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
   useEffect(() => {
     setIsMounted(true);
@@ -259,6 +261,28 @@ export default function HomePage() {
       fetchTopPlayers();
     }
   }, [isMounted]);
+
+  const refreshLeaderboard = async () => {
+    setIsRefreshing(true);
+    setLeaderboardError(null);
+    try {
+      // Make a real API call to refresh leaderboard data
+      const response = await fetch(`${BACKEND_URL}/api/users?path=leaderboard&limit=3`);
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Failed to refresh leaderboard data');
+      }
+      
+      const leaderboardData = await response.json();
+      setTopPlayers(leaderboardData);
+    } catch (error: any) {
+      console.error('Error refreshing leaderboard:', error);
+      setLeaderboardError(error.message || 'Failed to refresh leaderboard data');
+    } finally {
+      setIsRefreshing(false);
+    }
+  };
 
   if (!isMounted) {
     return (
@@ -315,39 +339,42 @@ export default function HomePage() {
         </div>
         
         {/* Leaderboard (3/5 width on md screens) */}
-        <div className="md:col-span-3 bg-gray-800/20 border border-gray-700/50 p-6 rounded-xl shadow-xl">
-          <div className="flex justify-between items-center mb-5">
-            <h2 className="text-xl font-semibold text-gray-100 flex items-center">
-              <TrophyIcon className="w-6 h-6 mr-2 text-yellow-400" /> Top Questers
+        <div className="md:col-span-3 bg-gray-800/20 border border-gray-700/50 p-4 rounded-xl shadow-xl max-w-2xl">
+          <div className="flex items-center justify-between mb-3">
+            <h2 className="text-lg font-semibold text-gray-100 flex items-center gap-2">
+              <TrophyIcon className="w-5 h-5 text-yellow-400" />
+              Leaderboard
             </h2>
-            <Link 
-              href="/leaderboard" 
-              className="text-xs text-purple-400 hover:text-purple-300 transition-colors font-medium flex items-center"
+            <button 
+              onClick={refreshLeaderboard}
+              disabled={isRefreshing}
+              className="p-1.5 text-gray-400 hover:text-white transition-colors disabled:opacity-50"
+              title="Refresh Leaderboard"
             >
-              View All <ArrowRightIcon className="w-4 h-4 ml-1" />
-            </Link>
+              <ArrowPathIcon className={`w-4 h-4 ${isRefreshing ? 'animate-spin' : ''}`} />
+            </button>
           </div>
           
           {isLoadingLeaderboard ? (
             <div className="space-y-2 animate-pulse">
               {[...Array(3)].map((_, i) => (
-                <div key={i} className="flex items-center justify-between p-3 bg-gray-700/30 rounded-md">
-                  <div className="flex items-center space-x-3">
-                    <div className="w-6 h-6 bg-gray-600 rounded-md"></div>
-                    <div className="w-8 h-8 bg-gray-600 rounded-full"></div>
-                    <div className="h-4 w-24 bg-gray-600 rounded"></div>
+                <div key={i} className="flex items-center justify-between p-2.5 bg-gray-700/30 rounded-md">
+                  <div className="flex items-center space-x-2">
+                    <div className="w-5 h-5 bg-gray-600 rounded-md"></div>
+                    <div className="w-7 h-7 bg-gray-600 rounded-full"></div>
+                    <div className="h-4 w-20 bg-gray-600 rounded"></div>
                   </div>
                   <div className="flex items-center space-x-2">
-                    <div className="h-4 w-12 bg-gray-600 rounded"></div>
-                    <div className="h-5 w-16 bg-gray-600 rounded-md"></div>
+                    <div className="h-4 w-10 bg-gray-600 rounded"></div>
+                    <div className="h-4 w-14 bg-gray-600 rounded-md"></div>
                   </div>
                 </div>
               ))}
             </div>
           ) : leaderboardError ? (
-            <p className="text-red-400 text-sm text-center py-4">Error: {leaderboardError}</p>
+            <p className="text-red-400 text-sm text-center py-3">Error: {leaderboardError}</p>
           ) : topPlayers.length > 0 ? (
-            <div className="space-y-2">
+            <div className="space-y-1.5">
               {topPlayers.map((player, index) => {
                 const rank = player.rank ?? index + 1;
                 const rankClasses = getRankClasses(rank);
@@ -360,13 +387,13 @@ export default function HomePage() {
                 return (
                   <div 
                     key={player._id} 
-                    className={`flex items-center justify-between p-3 ${gradientBg} hover:bg-gray-700/40 transition-colors duration-150 rounded-lg`}
+                    className={`flex items-center justify-between p-2.5 ${gradientBg} hover:bg-gray-700/40 transition-colors duration-150 rounded-lg`}
                   >
-                    <div className="flex items-center space-x-3 flex-grow min-w-0">
-                      <span className={`flex-shrink-0 w-6 h-6 flex items-center justify-center text-xs font-bold rounded-md ${rankClasses}`}>
+                    <div className="flex items-center space-x-2 flex-grow min-w-0">
+                      <span className={`flex-shrink-0 w-5 h-5 flex items-center justify-center text-xs font-bold rounded-md ${rankClasses}`}>
                         {rank}
                       </span>
-                      <div className="flex-shrink-0 w-8 h-8 rounded-full bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center text-white font-semibold text-sm">
+                      <div className="flex-shrink-0 w-7 h-7 rounded-full bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center text-white font-semibold text-xs">
                         {player.username ? player.username.charAt(0).toUpperCase() : truncatedAddress.charAt(0).toUpperCase()}
                       </div>
                       <div className="min-w-0">
@@ -389,7 +416,7 @@ export default function HomePage() {
                         </span>
                       )}
                       {/* Score (XP) */}
-                      <div className="bg-gradient-to-r from-purple-600/70 to-blue-600/70 text-white px-2 py-0.5 rounded text-center min-w-[60px]">
+                      <div className="bg-gradient-to-r from-purple-600/70 to-blue-600/70 text-white px-2 py-0.5 rounded text-center min-w-[50px]">
                         <span className="text-xs font-bold">
                           {player.xp} XP
                         </span>
@@ -400,7 +427,7 @@ export default function HomePage() {
               })}
             </div>
           ) : (
-            <p className="text-gray-500 text-sm italic text-center py-6">Be the first on the leaderboard!</p>
+            <p className="text-gray-500 text-sm italic text-center py-4">Be the first on the leaderboard!</p>
           )}
         </div>
       </div>
@@ -434,11 +461,15 @@ export default function HomePage() {
               <div key={path.id} className="bg-slate-800/70 rounded-xl p-4 flex flex-col justify-between hover:border-purple-500 border border-transparent transition-all duration-200 shadow-lg hover:shadow-purple-500/30">
                 <div> {/* Top content area */} 
                   <div className="flex items-start mb-3">
-                    <img 
-                      src={path.logoUrl || path.imageUrl || '/Union.svg'} 
-                      alt={`${path.shortTitle || path.title} logo`} 
-                      className="w-10 h-10 rounded-lg mr-3 object-cover border border-slate-700"
-                    />
+                    <div className="w-10 h-10 rounded-lg mr-3 overflow-hidden relative border border-slate-700">
+                      <Image
+                        src={path.logoUrl || path.imageUrl || '/images/paths/default.png'}
+                        alt={`${path.shortTitle || path.title} logo`}
+                        width={40}
+                        height={40}
+                        className="object-cover"
+                      />
+                    </div>
                     <div className="flex-grow">
                       <h3 className="text-gray-100 font-semibold text-base leading-tight">{path.shortTitle || path.title}</h3>
                     </div>

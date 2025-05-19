@@ -24,7 +24,7 @@ interface LearningPath {
     pathSlug?: string; // STEP 1.1: Add pathSlug back to the interface
 }
 
-interface UserProfile {
+interface UserProfile { 
   id: string;
   walletAddress: string;
   username?: string;
@@ -548,7 +548,7 @@ const PathCard: React.FC<PathCardProps> = ({
     {highlightTag && (
       <div className="absolute top-4 right-4 bg-yellow-400 text-black text-xs px-2 py-1 rounded-full font-bold z-10">
         {highlightTag}
-      </div>
+                                </div>
     )}
     {/* Top Row: Icon + Title */}
     <div className="flex items-center gap-3 mb-2">
@@ -562,9 +562,9 @@ const PathCard: React.FC<PathCardProps> = ({
           {totalXp && (
             <span className="bg-green-400/80 text-xs px-2 py-1 rounded-full">+{totalXp} XP</span>
           )}
-        </div>
-      </div>
-    </div>
+                            </div>
+                        </div>
+                    </div>
     {/* Description */}
     <p className="text-white mt-2 text-sm flex-grow">{description}</p>
     {/* Progress & Stats */}
@@ -572,15 +572,15 @@ const PathCard: React.FC<PathCardProps> = ({
       {userCount && (
         <div className="flex items-center gap-2">
           <span className="text-white text-xs">{userCount}</span>
-        </div>
+                        </div>
       )}
       <div className="bg-white/20 text-white text-xs px-3 py-1 rounded-full">View Path</div>
-    </div>
+                    </div>
     {/* Action Icon */}
     <div className="absolute bottom-4 right-4 bg-black/30 rounded-full p-2 hover:bg-black/50 transition">
       <svg width="20" height="20" fill="none"><path d="M7 5l5 5-5 5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
-    </div>
-  </div>
+                        </div>
+                    </div>
 );
 
 // --- Refactored Homepage ---
@@ -648,11 +648,11 @@ export default function LandingPage() {
               <button className="bg-blue-900/40 text-white font-semibold px-5 py-2 rounded-full shadow hover:bg-blue-800/60 transition">DEX</button>
               <button className="bg-blue-900/40 text-white font-semibold px-5 py-2 rounded-full shadow hover:bg-blue-800/60 transition">Staking</button>
               <button className="bg-blue-900/40 text-white font-semibold px-5 py-2 rounded-full shadow hover:bg-blue-800/60 transition">Bridge</button>
-            </div>
-          </div>
+                                    </div>
+                                </div>
           <img src="/hero-ninja.png" alt="Hero" className="w-80 h-80 object-contain drop-shadow-2xl hidden md:block" />
-        </div>
-      </section>
+                    </div>
+                </section>
 
       {/* Spotlight Projects */}
       <section className="py-12 px-4">
@@ -662,21 +662,21 @@ export default function LandingPage() {
             {spotlightProjects.map((proj, i) => (
               <PathCard key={i} {...proj} />
             ))}
-          </div>
-        </div>
-      </section>
+                        </div>
+                    </div>
+                </section>
 
       {/* Update the NFT + Leaderboard section */}
       <section className="py-12 px-4">
         <div className="max-w-6xl mx-auto flex flex-col md:flex-row gap-8 items-start">
           <div className="flex-1 min-w-[320px]">
             <OgNftShowcase isAuthenticated={false} promptLogin={() => {}} />
-          </div>
+                        </div>
           <div className="w-full md:w-[340px] lg:w-[320px] xl:w-[300px] flex-shrink-0">
             <LeaderboardSnippet />
-          </div>
-        </div>
-      </section>
+                        </div>
+                    </div>
+                </section>
 
       {/* Explore More Quests */}
       <section className="py-12 px-4">
@@ -686,11 +686,11 @@ export default function LandingPage() {
             {moreQuests.map((quest, i) => (
               <PathCard key={i} {...quest} />
             ))}
-          </div>
-        </div>
-      </section>
-    </div>
-  );
+                        </div>
+                    </div>
+                </section>
+                    </div>
+    );
 }
 
 const features = [
