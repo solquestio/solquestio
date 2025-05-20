@@ -2,6 +2,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useConnection, useWallet } from '@solana/wallet-adapter-react';
 import { LAMPORTS_PER_SOL, PublicKey, Connection } from '@solana/web3.js';
+import Link from 'next/link';
 
 interface FaucetQuestProps {
   minRequiredSOL: number;
@@ -14,7 +15,7 @@ const MAINNET_RPC_URL = "https://api.mainnet-beta.solana.com";
 export const FaucetQuest: React.FC<FaucetQuestProps> = ({
   minRequiredSOL,
   onQuestComplete,
-  xpReward,
+  xpReward = 150,
 }) => {
   const { publicKey, connected } = useWallet();
 
@@ -22,9 +23,35 @@ export const FaucetQuest: React.FC<FaucetQuestProps> = ({
   const [isLoading, setIsLoading] = useState(false);
   const [questAttempted, setQuestAttempted] = useState(false);
   const [isQuestMarkedComplete, setIsQuestMarkedComplete] = useState(false);
+  const [showSuggestions, setShowSuggestions] = useState(false);
 
   // Create a direct Mainnet connection
   const mainnetConnection = new Connection(MAINNET_RPC_URL);
+
+  // Automatically check balance when component loads
+  useEffect(() => {
+    if (connected && publicKey) {
+      checkBalance();
+    }
+  }, [connected, publicKey]);
+
+  const checkBalance = async () => {
+    if (!connected || !publicKey) return;
+    
+    try {
+      const balanceLamports = await mainnetConnection.getBalance(publicKey);
+      const balanceSOL = balanceLamports / LAMPORTS_PER_SOL;
+      setCurrentSolBalance(balanceSOL);
+      
+      // Automatically complete the quest if they already have enough SOL
+      if (balanceSOL >= minRequiredSOL) {
+        setIsQuestMarkedComplete(true);
+        onQuestComplete();
+      }
+    } catch (error) {
+      console.error('Error checking initial balance:', error);
+    }
+  };
 
   const handleVerifyBalance = useCallback(async () => {
     if (!connected || !publicKey) {
@@ -56,166 +83,132 @@ export const FaucetQuest: React.FC<FaucetQuestProps> = ({
     }
   }, [connected, publicKey, mainnetConnection, minRequiredSOL, onQuestComplete]);
 
+  const toggleSuggestions = () => {
+    setShowSuggestions(!showSuggestions);
+  };
+
   if (!connected || !publicKey) {
     return (
-      <div style={styles.questContainer}>
-        <h4>Solana Learning Path - Prerequisite</h4>
-        <p>Please connect your Solana wallet to begin the quests.</p>
+      <div className="p-6 bg-dark-card rounded-lg shadow-md">
+        <h2 className="text-2xl font-bold text-white mb-4">Fund Your Wallet</h2>
+        <p className="text-gray-300 mb-6">Please connect your Solana wallet to begin this quest.</p>
       </div>
     );
   }
 
   return (
-    <div style={styles.questContainer}>
-      <h3 style={styles.questTitle}>Quest: Fund Your Wallet</h3>
-      {xpReward !== undefined && (
-        <p style={styles.xpTextUnderTitle}>+{xpReward} XP</p>
-      )}
+    <div className="p-6 bg-dark-card rounded-lg shadow-md">
+      <h2 className="text-2xl font-bold text-white mb-1">Fund Your Wallet</h2>
+      <p className="text-yellow-400 text-sm font-medium mb-4">+{xpReward} XP</p>
+      
       {isQuestMarkedComplete ? (
-        <div style={styles.successMessage}>
-          <p>✅ Quest Complete! You have {currentSolBalance?.toFixed(4)} SOL.</p>
-          <p>You can now proceed to the next quest.</p>
+        <div className="bg-green-900/30 border border-green-700 rounded-lg p-4 text-green-300">
+          <h3 className="font-bold text-lg mb-2 flex items-center">
+            <svg className="w-5 h-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+            </svg>
+            Quest Complete!
+          </h3>
+          <p>You have {currentSolBalance?.toFixed(4)} SOL in your wallet.</p>
+          <p className="mt-2">You've earned {xpReward} XP and can now proceed to the next quest.</p>
         </div>
       ) : (
         <>
-          <div style={styles.descriptionContainer}>
-            <div style={styles.descriptionParagraph}>
-              <span style={styles.greenBullet}></span>
-              <span style={styles.descriptionText}>
+          <div className="space-y-6">
+            <div className="bg-blue-900/20 border border-blue-800/50 rounded-lg p-4">
+              <p className="text-gray-300 mb-3">
                 To interact with the Solana blockchain, your wallet needs a small amount of SOL to pay for transaction fees.
-              </span>
+              </p>
+              
+              <div className="flex items-center bg-gray-800/70 rounded p-3 mt-2 mb-3">
+                <span className="font-mono text-sm text-gray-300 break-all">{publicKey.toBase58()}</span>
+                <button 
+                  onClick={() => {navigator.clipboard.writeText(publicKey.toBase58())}}
+                  className="ml-2 p-1.5 bg-gray-700 hover:bg-gray-600 rounded text-xs text-gray-300"
+                >
+                  Copy
+                </button>
+              </div>
+
+              <p className="text-gray-300">
+                You need <span className="font-bold text-yellow-400">{minRequiredSOL} SOL</span> to complete this quest.
+                {currentSolBalance !== null && (
+                  <span> Currently, you have <span className={currentSolBalance >= minRequiredSOL ? "text-green-400" : "text-red-400"}>{currentSolBalance.toFixed(4)} SOL</span>.</span>
+                )}
+              </p>
             </div>
-            <div style={styles.descriptionParagraph}>
-              <span style={styles.greenBullet}></span>
-              <span style={styles.descriptionText}>
-                <strong>How to fund your wallet?</strong> Purchase or transfer at least {minRequiredSOL} SOL to your wallet address: <strong style={styles.address}>{publicKey.toBase58()}</strong> from an exchange or another wallet.
-              </span>
+
+            <div className="border border-amber-600/30 rounded-lg overflow-hidden">
+              <button 
+                onClick={toggleSuggestions}
+                className="w-full bg-amber-700/40 hover:bg-amber-700/60 py-3 px-4 text-left text-white font-medium flex justify-between items-center"
+              >
+                <span>Need SOL? Here's how to get it</span>
+                <svg 
+                  className={`w-5 h-5 transition-transform ${showSuggestions ? 'rotate-180' : ''}`} 
+                  fill="none" 
+                  viewBox="0 0 24 24" 
+                  stroke="currentColor"
+                >
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                </svg>
+              </button>
+              
+              {showSuggestions && (
+                <div className="p-4 bg-gray-800/50">
+                  <h4 className="font-medium text-white mb-3">Ways to acquire SOL:</h4>
+                  <ul className="space-y-4">
+                    <li className="flex">
+                      <span className="text-amber-500 mr-2">1.</span>
+                      <div>
+                        <p className="text-white font-medium">Cryptocurrency Exchanges</p>
+                        <p className="text-gray-300 text-sm">Buy SOL from exchanges like <a href="https://www.coinbase.com" target="_blank" rel="noopener noreferrer" className="text-blue-400 hover:underline">Coinbase</a>, <a href="https://www.binance.com" target="_blank" rel="noopener noreferrer" className="text-blue-400 hover:underline">Binance</a>, or <a href="https://www.kraken.com" target="_blank" rel="noopener noreferrer" className="text-blue-400 hover:underline">Kraken</a>.</p>
+                      </div>
+                    </li>
+                    <li className="flex">
+                      <span className="text-amber-500 mr-2">2.</span>
+                      <div>
+                        <p className="text-white font-medium">Get some from a friend</p>
+                        <p className="text-gray-300 text-sm">If you know someone with SOL, they can send you a small amount to get started.</p>
+                      </div>
+                    </li>
+                    <li className="flex">
+                      <span className="text-amber-500 mr-2">3.</span>
+                      <div>
+                        <p className="text-white font-medium">Use a Solana faucet (Devnet only)</p>
+                        <p className="text-gray-300 text-sm">If you're on Devnet, you can use <a href="https://solfaucet.com" target="_blank" rel="noopener noreferrer" className="text-blue-400 hover:underline">solfaucet.com</a>.</p>
+                      </div>
+                    </li>
+                  </ul>
+                  <div className="mt-4 p-3 bg-gray-900/60 rounded-lg text-amber-300 text-sm">
+                    <p className="font-medium">Note: For this tutorial you only need a tiny amount of SOL!</p>
+                    <p>Just {minRequiredSOL} SOL (about $0.02 USD) is needed for this quest.</p>
+                  </div>
+                </div>
+              )}
             </div>
-            <div style={styles.descriptionParagraph}>
-              <span style={styles.greenBullet}></span>
-              <span style={styles.descriptionText}>
-                Once you have funded your wallet, click the button below to verify your balance.
-              </span>
+
+            <div className="flex justify-center">
+              <button
+                onClick={handleVerifyBalance}
+                disabled={isLoading}
+                className="px-6 py-3 bg-purple-600 hover:bg-purple-700 text-white font-medium rounded-md transition-colors shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {isLoading ? 'Verifying...' : 'Verify My SOL Balance'}
+              </button>
             </div>
+
+            {questAttempted && !isLoading && currentSolBalance !== null && !isQuestMarkedComplete && (
+              <div className="bg-red-900/30 border border-red-700 rounded-lg p-4 text-red-300">
+                <p>
+                  <span className="font-bold">Verification Failed.</span> You currently have {currentSolBalance?.toFixed(4) || '0'} SOL.
+                  Please ensure you have at least {minRequiredSOL} SOL and try again.
+                </p>
+              </div>
+            )}
           </div>
-
-          <button
-            onClick={handleVerifyBalance}
-            disabled={isLoading}
-            style={styles.button}
-          >
-            {isLoading ? 'Verifying...' : 'Verify My SOL Balance'}
-          </button>
-
-          {questAttempted && !isLoading && currentSolBalance !== null && !isQuestMarkedComplete && (
-            <p style={styles.errorMessage}>
-              Verification Failed. You currently have {currentSolBalance?.toFixed(4) || '0'} SOL.
-              Please ensure you have at least {minRequiredSOL} SOL and try again.
-            </p>
-          )}
-          {questAttempted && !isLoading && currentSolBalance === null && !isQuestMarkedComplete && (
-            <p style={styles.errorMessage}>
-              Could not retrieve balance. Please ensure you have a valid Solana wallet address and try again.
-            </p>
-          )}
         </>
       )}
     </div>
   );
-};
-
-const styles: { [key: string]: React.CSSProperties } = {
-  questContainer: {
-    padding: '20px',
-    border: '1px solid #444',
-    borderRadius: '8px',
-    margin: '20px 0',
-    backgroundColor: '#2a2a2a',
-    color: '#e0e0e0',
-  },
-  questTitle: {
-    fontSize: '1.5rem',
-    fontWeight: 'bold',
-    color: '#ffffff',
-    marginBottom: '4px',
-  },
-  xpText: {
-    fontSize: '0.9em',
-    fontWeight: 'bold',
-    color: '#FFD700',
-    backgroundColor: 'rgba(255, 215, 0, 0.1)',
-    padding: '3px 8px',
-    borderRadius: '12px',
-    border: '1px solid rgba(255, 215, 0, 0.3)',
-  },
-  xpTextUnderTitle: {
-    fontSize: '0.875rem',
-    fontWeight: '600',
-    color: '#FFD700',
-    marginBottom: '1rem',
-  },
-  descriptionContainer: {
-    marginBottom: '20px',
-    color: '#c0c0c0',
-  },
-  descriptionParagraph: {
-    display: 'flex',
-    alignItems: 'flex-start',
-    marginBottom: '10px',
-  },
-  greenBullet: {
-    flexShrink: 0,
-    display: 'inline-block',
-    width: '8px',
-    height: '8px',
-    backgroundColor: '#4CAF50',
-    borderRadius: '50%',
-    marginRight: '12px',
-    marginTop: '6px',
-  },
-  descriptionText: {
-    lineHeight: '1.6',
-  },
-  text: {
-    marginBottom: '10px',
-    lineHeight: '1.6',
-  },
-  address: {
-    fontFamily: 'monospace',
-    backgroundColor: '#333',
-    padding: '2px 5px',
-    borderRadius: '4px',
-    wordBreak: 'break-all',
-  },
-  button: {
-    padding: '10px 15px',
-    margin: '5px',
-    border: 'none',
-    borderRadius: '5px',
-    cursor: 'pointer',
-    backgroundColor: '#6c00ff',
-    color: 'white',
-    fontSize: '1em',
-    opacity: 1,
-  },
-  linkButton: {
-    textDecoration: 'none',
-    display: 'inline-block',
-  },
-  successMessage: {
-    color: '#4CAF50',
-    padding: '10px',
-    border: '1px solid #4CAF50',
-    borderRadius: '5px',
-    backgroundColor: '#354e35',
-    textAlign: 'center',
-  },
-  errorMessage: {
-    color: '#f44336',
-    marginTop: '15px',
-    padding: '10px',
-    border: '1px solid #f44336',
-    borderRadius: '5px',
-    backgroundColor: '#5b3535',
-  },
 }; 

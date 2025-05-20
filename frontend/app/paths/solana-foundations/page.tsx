@@ -50,7 +50,7 @@ const SolanaExplorerPathPage = () => {
       title: '1. Connect Your Wallet',
       description: 'Connect your Solana wallet to get started with your learning journey.',
       component: WalletConnectQuest,
-      xp: 100,
+      xp: 50,
       props: { title: 'Connect Your Wallet' },
       isComplete: !!completedQuests['connect-wallet']
     },
