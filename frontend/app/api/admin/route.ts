@@ -60,50 +60,77 @@ async function connectToMongo() {
   const mongoUri = process.env.MONGO_URI;
   
   if (!mongoUri) {
-    throw new Error('MONGO_URI is not defined');
+    throw new Error('MONGO_URI environment variable is not defined. Please set it in your Vercel project settings or environment.');
   }
   
-  // Connect to MongoDB if not already connected
-  if (mongoose.connection.readyState !== 1) {
-    await mongoose.connect(mongoUri);
-    console.log('Connected to MongoDB');
+  try {
+    // Connect to MongoDB if not already connected
+    if (mongoose.connection.readyState !== 1) {
+      await mongoose.connect(mongoUri);
+      console.log('Connected to MongoDB');
+    }
+  } catch (error) {
+    console.error('Failed to connect to MongoDB:', error);
+    throw new Error(`MongoDB connection failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
   }
 }
 
 async function countUsers() {
-  await connectToMongo();
-  const usersCollection = mongoose.connection.collection('users');
-  const count = await usersCollection.countDocuments();
-  
-  return NextResponse.json(
-    { 
-      action: 'count-users', 
-      count, 
-      timestamp: new Date().toISOString(),
-      message: `Found ${count} users in the database.`
-    },
-    { status: 200 }
-  );
+  try {
+    await connectToMongo();
+    const usersCollection = mongoose.connection.collection('users');
+    const count = await usersCollection.countDocuments();
+    
+    return NextResponse.json(
+      { 
+        action: 'count-users', 
+        count, 
+        timestamp: new Date().toISOString(),
+        message: `Found ${count} users in the database.`
+      },
+      { status: 200 }
+    );
+  } catch (error) {
+    return NextResponse.json(
+      { 
+        error: 'Database operation failed', 
+        message: error instanceof Error ? error.message : 'Unknown error',
+        timestamp: new Date().toISOString()
+      },
+      { status: 500 }
+    );
+  }
 }
 
 async function deleteAllUsers() {
-  await connectToMongo();
-  const usersCollection = mongoose.connection.collection('users');
-  
-  // Count before deletion
-  const countBefore = await usersCollection.countDocuments();
-  
-  // Delete all users
-  const result = await usersCollection.deleteMany({});
-  
-  return NextResponse.json(
-    { 
-      action: 'delete-all-users',
-      deletedCount: result.deletedCount,
-      countBefore,
-      timestamp: new Date().toISOString(),
-      message: `Successfully deleted ${result.deletedCount} users from the database.`
-    },
-    { status: 200 }
-  );
+  try {
+    await connectToMongo();
+    const usersCollection = mongoose.connection.collection('users');
+    
+    // Count before deletion
+    const countBefore = await usersCollection.countDocuments();
+    
+    // Delete all users
+    const result = await usersCollection.deleteMany({});
+    
+    return NextResponse.json(
+      { 
+        action: 'delete-all-users',
+        deletedCount: result.deletedCount,
+        countBefore,
+        timestamp: new Date().toISOString(),
+        message: `Successfully deleted ${result.deletedCount} users from the database.`
+      },
+      { status: 200 }
+    );
+  } catch (error) {
+    return NextResponse.json(
+      { 
+        error: 'Database operation failed', 
+        message: error instanceof Error ? error.message : 'Unknown error',
+        timestamp: new Date().toISOString()
+      },
+      { status: 500 }
+    );
+  }
 } 
