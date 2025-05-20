@@ -1,8 +1,9 @@
 // frontend/components/quests/FaucetQuest.tsx
 import React, { useState, useEffect, useCallback } from 'react';
-import { useConnection, useWallet } from '@solana/wallet-adapter-react';
-import { LAMPORTS_PER_SOL, PublicKey, Connection } from '@solana/web3.js';
+import { useWallet } from '@solana/wallet-adapter-react';
+import { LAMPORTS_PER_SOL, Connection } from '@solana/web3.js';
 import Link from 'next/link';
+import { ArrowPathIcon } from '@heroicons/react/24/outline';
 
 interface FaucetQuestProps {
   minRequiredSOL: number;
@@ -10,7 +11,9 @@ interface FaucetQuestProps {
   xpReward?: number;
 }
 
+// RPC endpoints - use the same ones as in profile page for consistency
 const MAINNET_RPC_URL = "https://api.mainnet-beta.solana.com";
+const HELIUS_RPC_URL = process.env.NEXT_PUBLIC_HELIUS_RPC_URL || "https://mainnet.helius-rpc.com/?api-key=15319bbd-8d8b-443b-a9c3-9f4af6459add";
 
 export const FaucetQuest: React.FC<FaucetQuestProps> = ({
   minRequiredSOL,
@@ -21,12 +24,84 @@ export const FaucetQuest: React.FC<FaucetQuestProps> = ({
 
   const [currentSolBalance, setCurrentSolBalance] = useState<number | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [isRefreshing, setIsRefreshing] = useState(false);
   const [questAttempted, setQuestAttempted] = useState(false);
   const [isQuestMarkedComplete, setIsQuestMarkedComplete] = useState(false);
   const [showSuggestions, setShowSuggestions] = useState(false);
+  const [rpcError, setRpcError] = useState(false);
 
-  // Create a direct Mainnet connection
-  const mainnetConnection = new Connection(MAINNET_RPC_URL);
+  // Check balance with improved reliability
+  const checkBalance = async (isManualRefresh = false) => {
+    if (!connected || !publicKey) return;
+    
+    if (isManualRefresh) {
+      setIsRefreshing(true);
+    } else {
+      setIsLoading(true);
+    }
+    
+    setRpcError(false);
+    
+    try {
+      // Try to get the balance with a small retry mechanism
+      let attempts = 0;
+      let success = false;
+      let balanceSOL = 0;
+      
+      // Try Helius RPC first (more reliable), then fallback to public RPC
+      const endpoints = [HELIUS_RPC_URL, MAINNET_RPC_URL];
+      
+      while (attempts < endpoints.length && !success) {
+        try {
+          const endpoint = endpoints[attempts];
+          console.log(`Attempting to fetch balance from: ${endpoint.substring(0, 30)}...`);
+          
+          // Create a fresh connection for each attempt
+          const connection = new Connection(endpoint, 'confirmed');
+          const balanceLamports = await connection.getBalance(publicKey);
+          balanceSOL = balanceLamports / LAMPORTS_PER_SOL;
+          
+          success = true;
+          console.log(`Successfully fetched balance: ${balanceSOL} SOL`);
+        } catch (retryError: any) {
+          // Handle 403 errors specifically
+          if (retryError.message && (retryError.message.includes('403') || retryError.message.includes('forbidden'))) {
+            console.warn(`Access forbidden (403) from RPC endpoint. Trying next endpoint.`);
+          } else {
+            console.warn(`Balance fetch attempt ${attempts + 1} failed:`, retryError);
+          }
+          attempts++;
+        }
+      }
+      
+      if (success) {
+        setCurrentSolBalance(balanceSOL);
+        setRpcError(false);
+        
+        // Automatically complete the quest if they already have enough SOL
+        if (balanceSOL >= minRequiredSOL) {
+          setIsQuestMarkedComplete(true);
+          onQuestComplete();
+          // Dispatch custom event to trigger profile update for XP
+          window.dispatchEvent(new CustomEvent('quest-completed', { 
+            detail: { 
+              questId: 'fund-wallet', 
+              xpAmount: xpReward 
+            } 
+          }));
+        }
+      } else {
+        console.error('Failed to fetch balance - All RPC endpoints failed');
+        setRpcError(true);
+      }
+    } catch (error) {
+      console.error('Error checking balance:', error);
+      setRpcError(true);
+    } finally {
+      setIsLoading(false);
+      setIsRefreshing(false);
+    }
+  };
 
   // Automatically check balance when component loads
   useEffect(() => {
@@ -35,53 +110,25 @@ export const FaucetQuest: React.FC<FaucetQuestProps> = ({
     }
   }, [connected, publicKey]);
 
-  const checkBalance = async () => {
-    if (!connected || !publicKey) return;
-    
-    try {
-      const balanceLamports = await mainnetConnection.getBalance(publicKey);
-      const balanceSOL = balanceLamports / LAMPORTS_PER_SOL;
-      setCurrentSolBalance(balanceSOL);
-      
-      // Automatically complete the quest if they already have enough SOL
-      if (balanceSOL >= minRequiredSOL) {
-        setIsQuestMarkedComplete(true);
-        onQuestComplete();
-      }
-    } catch (error) {
-      console.error('Error checking initial balance:', error);
-    }
-  };
-
   const handleVerifyBalance = useCallback(async () => {
     if (!connected || !publicKey) {
-      alert('Please connect your Solana wallet first.');
       return;
     }
 
-    setIsLoading(true);
     setQuestAttempted(true);
-    setCurrentSolBalance(null);
-
-    try {
-      // Use direct Mainnet connection
-      const balanceLamports = await mainnetConnection.getBalance(publicKey);
-      const balanceSOL = balanceLamports / LAMPORTS_PER_SOL;
-      setCurrentSolBalance(balanceSOL);
-
-      if (balanceSOL >= minRequiredSOL) {
-        setIsQuestMarkedComplete(true);
-        onQuestComplete();
-      } else {
-        setIsQuestMarkedComplete(false);
-      }
-    } catch (error) {
-      alert(`Error checking balance: ${error instanceof Error ? error.message : String(error)}`);
-      setIsQuestMarkedComplete(false);
-    } finally {
-      setIsLoading(false);
+    await checkBalance();
+    
+    // If balance is enough after verification, dispatch the XP update event
+    if (currentSolBalance !== null && currentSolBalance >= minRequiredSOL) {
+      // Dispatch custom event to trigger profile update for XP
+      window.dispatchEvent(new CustomEvent('quest-completed', { 
+        detail: { 
+          questId: 'fund-wallet', 
+          xpAmount: xpReward 
+        } 
+      }));
     }
-  }, [connected, publicKey, mainnetConnection, minRequiredSOL, onQuestComplete]);
+  }, [connected, publicKey, minRequiredSOL, currentSolBalance, xpReward]);
 
   const toggleSuggestions = () => {
     setShowSuggestions(!showSuggestions);
@@ -115,12 +162,21 @@ export const FaucetQuest: React.FC<FaucetQuestProps> = ({
       ) : (
         <>
           <div className="space-y-6">
-            <div className="bg-blue-900/20 border border-blue-800/50 rounded-lg p-4">
-              <p className="text-gray-300 mb-3">
-                To interact with the Solana blockchain, your wallet needs a small amount of SOL to pay for transaction fees.
-              </p>
+            {/* Balance card with refresh button */}
+            <div className="bg-dark-card-secondary rounded-lg p-4 border border-white/10 mb-6">
+              <div className="flex justify-between items-center mb-3">
+                <h3 className="text-lg font-medium text-white">Your Wallet</h3>
+                <button 
+                  onClick={() => checkBalance(true)}
+                  disabled={isRefreshing}
+                  className="p-1.5 bg-gray-700 hover:bg-gray-600 rounded text-gray-300 hover:text-white disabled:opacity-50"
+                  title="Refresh Balance"
+                >
+                  <ArrowPathIcon className={`w-4 h-4 ${isRefreshing ? 'animate-spin' : ''}`} />
+                </button>
+              </div>
               
-              <div className="flex items-center bg-gray-800/70 rounded p-3 mt-2 mb-3">
+              <div className="flex items-center bg-gray-800/70 rounded p-3 mb-4">
                 <span className="font-mono text-sm text-gray-300 break-all">{publicKey.toBase58()}</span>
                 <button 
                   onClick={() => {navigator.clipboard.writeText(publicKey.toBase58())}}
@@ -130,12 +186,40 @@ export const FaucetQuest: React.FC<FaucetQuestProps> = ({
                 </button>
               </div>
 
-              <p className="text-gray-300">
-                You need <span className="font-bold text-yellow-400">{minRequiredSOL} SOL</span> to complete this quest.
-                {currentSolBalance !== null && (
-                  <span> Currently, you have <span className={currentSolBalance >= minRequiredSOL ? "text-green-400" : "text-red-400"}>{currentSolBalance.toFixed(4)} SOL</span>.</span>
-                )}
+              <div className="flex items-center gap-3">
+                <div className="w-12 h-12 rounded-full bg-gradient-to-br from-sol-gradient-from to-sol-gradient-to flex items-center justify-center">
+                  <span className="text-white text-lg font-bold">SOL</span>
+                </div>
+                <div>
+                  <p className="text-sm text-gray-400">Current Balance</p>
+                  {isLoading ? (
+                    <div className="h-7 w-24 bg-gray-700 animate-pulse rounded-md"></div>
+                  ) : rpcError ? (
+                    <p className="text-red-400 text-sm">Error loading balance</p>
+                  ) : (
+                    <p className="text-xl font-bold bg-gradient-to-r from-sol-gradient-from to-sol-gradient-to bg-clip-text text-transparent">
+                      {currentSolBalance !== null ? `${currentSolBalance.toFixed(4)} SOL` : 'N/A'}
+                    </p>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            <div className="bg-blue-900/20 border border-blue-800/50 rounded-lg p-4">
+              <p className="text-gray-300 mb-3">
+                To interact with the Solana blockchain, your wallet needs a small amount of SOL to pay for transaction fees.
               </p>
+
+              <div className="flex items-center gap-2 mt-3">
+                <div className="bg-blue-900/40 px-3 py-2 rounded-lg flex-grow">
+                  <p className="text-gray-300">
+                    You need <span className="font-bold text-yellow-400">{minRequiredSOL} SOL</span> to complete this quest.
+                    {currentSolBalance !== null && !isLoading && (
+                      <span> Currently, you have <span className={currentSolBalance >= minRequiredSOL ? "text-green-400" : "text-red-400"}>{currentSolBalance.toFixed(4)} SOL</span>.</span>
+                    )}
+                  </p>
+                </div>
+              </div>
             </div>
 
             <div className="border border-amber-600/30 rounded-lg overflow-hidden">
@@ -191,19 +275,26 @@ export const FaucetQuest: React.FC<FaucetQuestProps> = ({
             <div className="flex justify-center">
               <button
                 onClick={handleVerifyBalance}
-                disabled={isLoading}
+                disabled={isLoading || isRefreshing}
                 className="px-6 py-3 bg-purple-600 hover:bg-purple-700 text-white font-medium rounded-md transition-colors shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                {isLoading ? 'Verifying...' : 'Verify My SOL Balance'}
+                {isLoading || isRefreshing ? 'Verifying...' : 'Verify My SOL Balance'}
               </button>
             </div>
 
-            {questAttempted && !isLoading && currentSolBalance !== null && !isQuestMarkedComplete && (
+            {questAttempted && !isLoading && !isRefreshing && currentSolBalance !== null && !isQuestMarkedComplete && (
               <div className="bg-red-900/30 border border-red-700 rounded-lg p-4 text-red-300">
                 <p>
                   <span className="font-bold">Verification Failed.</span> You currently have {currentSolBalance?.toFixed(4) || '0'} SOL.
                   Please ensure you have at least {minRequiredSOL} SOL and try again.
                 </p>
+              </div>
+            )}
+            
+            {rpcError && (
+              <div className="bg-amber-900/30 border border-amber-600 rounded-lg p-4 text-amber-300 text-sm">
+                <p className="font-bold">Network Issue</p>
+                <p>We're having trouble connecting to the Solana network. This may be temporary. Please try again in a moment.</p>
               </div>
             )}
           </div>

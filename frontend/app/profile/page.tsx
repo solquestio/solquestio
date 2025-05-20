@@ -11,6 +11,7 @@ import { useAuth } from '@/context/AuthContext';
 import NetworkSwitcher, { NetworkContext, useNetwork } from '@/components/NetworkSwitcher';
 import TelegramConnectCard from '@/components/social/TelegramConnectCard';
 import { XpIcon } from '@/components/icons/XpIcon';
+import Image from 'next/image';
 
 // Dynamically import the WalletMultiButton with no SSR
 const WalletMultiButtonDynamic = dynamic(
@@ -372,8 +373,16 @@ export default function ProfilePage() {
       
       console.log('Username updated:', data);
       
-      // Refresh profile data - we can update the local data directly without a full refresh
-      // Note: in a proper implementation we'd update the AuthContext's userProfile
+      // Update the local userProfile with the new username
+      if (userProfile) {
+        // Create a shallow copy of userProfile to trigger a re-render
+        const updatedProfile = { ...userProfile, username };
+        // Force a refresh of auth context by triggering a user refresh
+        // This is a workaround until we have a proper context update method
+        window.dispatchEvent(new CustomEvent('user-profile-updated', { detail: updatedProfile }));
+      }
+      
+      // Close the editing UI
       setIsEditingUsername(false);
       
     } catch (error: any) {
@@ -511,6 +520,55 @@ export default function ProfilePage() {
   // Add console log here to inspect userProfile before render
   console.log("ProfilePage - userProfile state:", userProfile);
 
+  // Add event listeners for XP and profile updates
+  useEffect(() => {
+    // Handler for quest completions
+    const handleQuestCompleted = (event: CustomEvent) => {
+      console.log('Quest completed event received:', event.detail);
+      // Force a refresh of profile data to update XP
+      fetchProfileData();
+    };
+
+    // Handler for profile updates (like username changes)
+    const handleProfileUpdated = (event: CustomEvent) => {
+      console.log('Profile updated event received:', event.detail);
+      // Force a refresh of profile data
+      fetchProfileData();
+    };
+
+    // Function to fetch fresh profile data
+    const fetchProfileData = async () => {
+      if (!authToken) return;
+      
+      try {
+        const response = await fetch(`${BACKEND_URL}/api/users/me`, {
+          method: 'GET',
+          headers: { 'Authorization': `Bearer ${authToken}` }
+        });
+        
+        if (response.ok) {
+          const data = await response.json();
+          console.log('Profile refreshed:', data);
+          // Update local state (this is a temporary solution until we have proper context updates)
+          // In a production app, you'd update the global auth context instead
+          window.location.reload(); // Temporary solution to refresh all data
+        }
+      } catch (error) {
+        console.error('Failed to refresh profile data:', error);
+      }
+    };
+
+    // Add event listeners
+    window.addEventListener('quest-completed', handleQuestCompleted as EventListener);
+    window.addEventListener('user-profile-updated', handleProfileUpdated as EventListener);
+    
+    // Clean up
+    return () => {
+      window.removeEventListener('quest-completed', handleQuestCompleted as EventListener);
+      window.removeEventListener('user-profile-updated', handleProfileUpdated as EventListener);
+    };
+  }, [authToken]);
+
   if (isLoadingAuth) {
     return (
       <div className="w-full max-w-md mx-auto mt-10 p-6 bg-dark-card rounded-xl shadow-lg border border-gray-700">
@@ -550,29 +608,140 @@ export default function ProfilePage() {
     <SkeletonTheme baseColor="#2d3748" highlightColor="#4a5568">
       <div className="max-w-3xl mx-auto py-10 flex flex-col gap-8">
         {/* Profile Header Card */}
-        <div className="bg-dark-card rounded-xl shadow-lg p-6 flex flex-col md:flex-row items-center gap-6 border border-white/10">
-          <div className="flex-shrink-0 w-24 h-24 rounded-full bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center text-4xl font-bold text-white shadow-lg">
-            {userProfile?.username ? userProfile.username.charAt(0).toUpperCase() : '?'}
-          </div>
-          <div className="flex-1 flex flex-col gap-2">
-            <div className="flex items-center gap-2">
-              <h2 className="text-2xl font-semibold text-gray-100 truncate">{userProfile?.username || 'Unnamed User'}</h2>
-              <button onClick={handleEditUsername} className="text-xs text-blue-400 hover:text-blue-300 transition-colors" title="Edit Username">
-                <PencilIcon className="h-4 w-4" />
-              </button>
+        <div className="bg-dark-card rounded-xl shadow-lg p-6 border border-white/10">
+          <div className="flex flex-col md:flex-row items-center gap-6">
+            <div className="flex-shrink-0 w-24 h-24 rounded-full bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center text-4xl font-bold text-white shadow-lg">
+              {userProfile?.username ? userProfile.username.charAt(0).toUpperCase() : '?'}
             </div>
-            {publicKey && (
-              <p className="text-xs text-gray-400 font-mono">{publicKey.toString()}</p>
-            )}
-            {userProfile?.ownsOgNft && (
-              <span className="inline-flex items-center text-xs font-semibold bg-purple-500/20 text-purple-300 px-2 py-0.5 rounded-full border border-purple-500/30">
-                <SparklesIcon className="h-3 w-3 mr-1"/> OG NFT Holder
-              </span>
-            )}
+            <div className="flex-1 flex flex-col gap-2">
+              <div className="flex items-center">
+                {isEditingUsername ? (
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="text"
+                      value={newUsername}
+                      onChange={(e) => setNewUsername(e.target.value)}
+                      className="bg-gray-700/50 text-white px-2 py-1 rounded border border-gray-600 focus:border-blue-500 focus:outline-none"
+                      placeholder="Enter username"
+                      maxLength={15}
+                    />
+                    <div className="flex items-center">
+                      <button 
+                        onClick={handleUpdateUsername} 
+                        className="text-green-400 hover:text-green-300 p-1 rounded-full hover:bg-green-900/20"
+                        disabled={isUpdatingUsername}
+                        title="Save username"
+                      >
+                        {isUpdatingUsername ? (
+                          <ArrowPathIcon className="h-4 w-4 animate-spin" />
+                        ) : (
+                          <CheckIcon className="h-4 w-4" />
+                        )}
+                      </button>
+                      <button 
+                        onClick={handleCancelEdit} 
+                        className="text-red-400 hover:text-red-300 p-1 rounded-full hover:bg-red-900/20"
+                        title="Cancel"
+                      >
+                        <XMarkIcon className="h-4 w-4" />
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-2">
+                    <h2 className="text-2xl font-semibold text-gray-100 truncate">{userProfile?.username || 'Unnamed User'}</h2>
+                    <button onClick={handleEditUsername} className="text-xs text-blue-400 hover:text-blue-300 transition-colors" title="Edit Username">
+                      <PencilIcon className="h-4 w-4" />
+                    </button>
+                    <div className="ml-2 flex items-center gap-1 text-xs text-gray-400 border border-gray-700 rounded-full px-2 py-0.5 bg-gray-800/50">
+                      <Image 
+                        src="/solana-logo.svg" 
+                        alt="Solana" 
+                        width={12} 
+                        height={12} 
+                      />
+                      <span>Solana</span>
+                    </div>
+                  </div>
+                )}
+                {usernameError && (
+                  <p className="text-red-500 text-xs mt-1">{usernameError}</p>
+                )}
+                {publicKey && (
+                  <p className="text-xs text-gray-400 font-mono">{publicKey.toString()}</p>
+                )}
+                {userProfile?.ownsOgNft && (
+                  <span className="inline-flex items-center text-xs font-semibold bg-purple-500/20 text-purple-300 px-2 py-0.5 rounded-full border border-purple-500/30">
+                    <SparklesIcon className="h-3 w-3 mr-1"/> OG NFT Holder
+                  </span>
+                )}
+              </div>
+            </div>
+            <div className="flex-shrink-0">
+              <WalletMultiButtonDynamic className="!bg-gradient-to-r from-sol-gradient-from to-sol-gradient-to hover:opacity-90 transition-opacity !rounded-md !h-10" />
+            </div>
           </div>
-          <div className="flex-shrink-0">
-            <WalletMultiButtonDynamic className="!bg-gradient-to-r from-sol-gradient-from to-sol-gradient-to hover:opacity-90 transition-opacity !rounded-md !h-10" />
+        </div>
+
+        {/* Daily Check-in Card */}
+        <div className="bg-dark-card rounded-xl shadow-lg p-6 border border-white/10">
+          <div className="flex flex-col md:flex-row items-center justify-between gap-4">
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 rounded-full bg-gradient-to-br from-blue-500 to-purple-500 flex items-center justify-center">
+                <CalendarDaysIcon className="h-6 w-6 text-white" />
+              </div>
+              <div>
+                <h3 className="text-xl font-semibold text-gray-100">Daily Check-in</h3>
+                <p className="text-sm text-gray-400">
+                  Current streak: <span className="text-blue-400 font-medium">{userProfile?.checkInStreak || 0} days</span>
+                  {checkInData.canCheckIn && (
+                    <span className="ml-2 text-yellow-400">+{checkInData.potentialXp} XP available</span>
+                  )}
+                </p>
+              </div>
+            </div>
+            <div>
+              {checkInData.canCheckIn ? (
+                <button
+                  onClick={handleCheckIn}
+                  disabled={isCheckingIn}
+                  className="px-4 py-2 bg-gradient-to-r from-blue-500 to-purple-500 text-white rounded-md font-medium hover:opacity-90 transition-opacity disabled:opacity-50 flex items-center gap-2"
+                >
+                  {isCheckingIn ? (
+                    <>
+                      <ArrowPathIcon className="h-4 w-4 animate-spin" />
+                      Checking in...
+                    </>
+                  ) : (
+                    <>
+                      <FireIcon className="h-4 w-4" />
+                      Check in now
+                    </>
+                  )}
+                </button>
+              ) : (
+                <div className="px-4 py-2 bg-green-800/20 text-green-400 border border-green-600/30 rounded-md font-medium flex items-center gap-2">
+                  <CheckIcon className="h-4 w-4" />
+                  Already checked in today
+                </div>
+              )}
+            </div>
           </div>
+          
+          {lastXpAwarded && (
+            <div className="mt-4 bg-yellow-900/30 border border-yellow-700/50 rounded-lg p-3 text-center">
+              <p className="text-yellow-400 font-medium">
+                <SparklesIcon className="h-4 w-4 inline mr-1" />
+                You earned +{lastXpAwarded} XP from your check-in!
+              </p>
+            </div>
+          )}
+          
+          {checkInError && (
+            <div className="mt-4 bg-red-900/30 border border-red-700/50 rounded-lg p-3 text-center">
+              <p className="text-red-400 text-sm">{checkInError}</p>
+            </div>
+          )}
         </div>
 
         {/* Stats Grid */}
@@ -637,57 +806,63 @@ export default function ProfilePage() {
             </svg>
             Social Connections
           </h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="rounded-xl bg-white/5 p-6 flex flex-col items-center gap-2 min-w-[220px] border border-white/10">
-              <div className="flex items-center gap-2 mb-2">
-                <span className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-gradient-to-br from-sol-gradient-from to-sol-gradient-to">
-                  <span className="text-white text-lg font-bold">SOL</span>
-                </span>
-                <span className="text-base font-semibold text-white">On-chain wallet</span>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+            {/* Simplified On-chain wallet card */}
+            <div className="bg-dark-card-secondary rounded-lg p-3 border border-white/10 flex items-center gap-3">
+              <div className="flex-shrink-0 w-8 h-8 rounded-full bg-gradient-to-br from-sol-gradient-from to-sol-gradient-to flex items-center justify-center">
+                <span className="text-white text-sm font-bold">SOL</span>
               </div>
-              {connected && publicKey ? (
-                <>
-                  <div className="flex items-center gap-2 text-green-400 text-sm font-medium">
-                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
-                    Connected
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-medium text-white">Wallet</p>
+                {connected && publicKey ? (
+                  <div className="flex items-center gap-1">
+                    <p className="text-xs text-green-400">Connected</p>
+                    <button
+                      onClick={disconnect}
+                      className="text-xs text-red-400 hover:underline ml-1"
+                    >
+                      Disconnect
+                    </button>
                   </div>
-                  <div className="text-xs font-mono text-gray-300 break-all">{publicKey.toBase58()}</div>
-                  <button
-                    onClick={disconnect}
-                    className="text-xs text-red-400 hover:underline mt-1"
-                  >
-                    Disconnect
-                  </button>
-                </>
-              ) : (
-                <WalletMultiButtonDynamic className="!bg-gradient-to-r from-sol-gradient-from to-sol-gradient-to hover:opacity-90 transition-opacity !rounded-md !h-10 !w-full !text-sm !font-semibold" />
-              )}
-              <p className="text-xs text-gray-400 mt-2 text-center">Connect your wallet to check your on-chain activity.</p>
+                ) : (
+                  <p className="text-xs text-yellow-400">Not connected</p>
+                )}
+              </div>
             </div>
-            <button className="flex items-center gap-3 p-4 bg-dark-card-secondary rounded-lg border border-white/10 hover:border-blue-500/30 transition-colors">
-              <svg className="w-6 h-6 text-blue-400" fill="currentColor" viewBox="0 0 24 24">
-                <path d="M12 2C6.477 2 2 6.477 2 12c0 4.42 2.865 8.166 6.839 9.489.5.092.682-.217.682-.482 0-.237-.008-.866-.013-1.7-2.782.604-3.369-1.34-3.369-1.34-.454-1.156-1.11-1.464-1.11-1.464-.908-.62.069-.608.069-.608 1.003.07 1.531 1.03 1.531 1.03.892 1.529 2.341 1.087 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.11-4.555-4.943 0-1.091.39-1.984 1.029-2.683-.103-.253-.446-1.27.098-2.647 0 0 .84-.269 2.75 1.025A9.578 9.578 0 0112 6.836c.85.004 1.705.114 2.504.336 1.909-1.294 2.747-1.025 2.747-1.025.546 1.377.203 2.394.1 2.647.64.699 1.028 1.592 1.028 2.683 0 3.842-2.339 4.687-4.566 4.935.359.309.678.919.678 1.852 0 1.336-.012 2.415-.012 2.743 0 .267.18.578.688.48C19.138 20.161 22 16.416 22 12c0-5.523-4.477-10-10-10z"/>
-              </svg>
-              <div className="flex-1 text-left">
-                <p className="text-sm font-medium text-gray-100">Connect GitHub</p>
-                <p className="text-xs text-gray-400">Link your GitHub account</p>
+            
+            {/* GitHub connection */}
+            <div className="bg-dark-card-secondary rounded-lg p-3 border border-white/10 flex items-center gap-3">
+              <div className="flex-shrink-0 w-8 h-8 rounded-full bg-gray-700 flex items-center justify-center">
+                <svg className="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M12 2C6.477 2 2 6.477 2 12c0 4.42 2.865 8.166 6.839 9.489.5.092.682-.217.682-.482 0-.237-.008-.866-.013-1.7-2.782.604-3.369-1.34-3.369-1.34-.454-1.156-1.11-1.464-1.11-1.464-.908-.62.069-.608.069-.608 1.003.07 1.531 1.03 1.531 1.03.892 1.529 2.341 1.087 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.11-4.555-4.943 0-1.091.39-1.984 1.029-2.683-.103-.253-.446-1.27.098-2.647 0 0 .84-.269 2.75 1.025A9.578 9.578 0 0112 6.836c.85.004 1.705.114 2.504.336 1.909-1.294 2.747-1.025 2.747-1.025.546 1.377.203 2.394.1 2.647.64.699 1.028 1.592 1.028 2.683 0 3.842-2.339 4.687-4.566 4.935.359.309.678.919.678 1.852 0 1.336-.012 2.415-.012 2.743 0 .267.18.578.688.48C19.138 20.161 22 16.416 22 12c0-5.523-4.477-10-10-10z"/>
+                </svg>
               </div>
-              <svg className="w-5 h-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-              </svg>
-            </button>
-            <button className="flex items-center gap-3 p-4 bg-dark-card-secondary rounded-lg border border-white/10 hover:border-blue-500/30 transition-colors">
-              <svg className="w-6 h-6 text-blue-400" fill="currentColor" viewBox="0 0 24 24">
-                <path d="M23.953 4.57a10 10 0 01-2.825.775 4.958 4.958 0 002.163-2.723c-.951.555-2.005.959-3.127 1.184a4.92 4.92 0 00-8.384 4.482C7.69 8.095 4.067 6.13 1.64 3.162a4.822 4.822 0 00-.666 2.475c0 1.71.87 3.213 2.188 4.096a4.904 4.904 0 01-2.228-.616v.06a4.923 4.923 0 003.946 4.827 4.996 4.996 0 01-2.212.085 4.936 4.936 0 004.604 3.417 9.867 9.867 0 01-6.102 2.105c-.39 0-.779-.023-1.17-.067a13.995 13.995 0 007.557 2.209c9.053 0 13.998-7.496 13.998-13.985 0-.21 0-.42-.015-.63A9.935 9.935 0 0024 4.59z"/>
-              </svg>
-              <div className="flex-1 text-left">
-                <p className="text-sm font-medium text-gray-100">Connect Twitter</p>
-                <p className="text-xs text-gray-400">Link your Twitter account</p>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-medium text-white">GitHub</p>
+                {userProfile?.social?.github ? (
+                  <p className="text-xs text-green-400">Connected</p>
+                ) : (
+                  <button className="text-xs text-blue-400 hover:underline">Connect</button>
+                )}
               </div>
-              <svg className="w-5 h-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-              </svg>
-            </button>
+            </div>
+            
+            {/* Twitter connection */}
+            <div className="bg-dark-card-secondary rounded-lg p-3 border border-white/10 flex items-center gap-3">
+              <div className="flex-shrink-0 w-8 h-8 rounded-full bg-gray-700 flex items-center justify-center">
+                <svg className="w-5 h-5 text-blue-400" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M23.953 4.57a10 10 0 01-2.825.775 4.958 4.958 0 002.163-2.723c-.951.555-2.005.959-3.127 1.184a4.92 4.92 0 00-8.384 4.482C7.69 8.095 4.067 6.13 1.64 3.162a4.822 4.822 0 00-.666 2.475c0 1.71.87 3.213 2.188 4.096a4.904 4.904 0 01-2.228-.616v.06a4.923 4.923 0 003.946 4.827 4.996 4.996 0 01-2.212.085 4.936 4.936 0 004.604 3.417 9.867 9.867 0 01-6.102 2.105c-.39 0-.779-.023-1.17-.067a13.995 13.995 0 007.557 2.209c9.053 0 13.998-7.496 13.998-13.985 0-.21 0-.42-.015-.63A9.935 9.935 0 0024 4.59z"/>
+                </svg>
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-medium text-white">Twitter</p>
+                {userProfile?.social?.twitter ? (
+                  <p className="text-xs text-green-400">Connected</p>
+                ) : (
+                  <button className="text-xs text-blue-400 hover:underline">Connect</button>
+                )}
+              </div>
+            </div>
           </div>
         </div>
 
