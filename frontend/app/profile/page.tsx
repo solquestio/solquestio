@@ -109,7 +109,7 @@ const mockXpHistory = [
 
 export default function ProfilePage() { 
   // Use the AuthContext and NetworkContext
-  const { authToken, userProfile, isAuthenticated, isLoading: isLoadingAuth, error: authError, login } = useAuth();
+  const { authToken, userProfile, isAuthenticated, isLoading: isLoadingAuth, error: authError, login, setUserProfile } = useAuth();
   const { network } = useNetwork();
   
   // Hooks
@@ -131,6 +131,7 @@ export default function ProfilePage() {
   const [newUsername, setNewUsername] = useState('');
   const [usernameError, setUsernameError] = useState<string | null>(null);
   const [isUpdatingUsername, setIsUpdatingUsername] = useState(false);
+  const [usernameSuccessMessage, setUsernameSuccessMessage] = useState<string | null>(null);
 
   // Daily Check-in State
   const [checkInData, setCheckInData] = useState({ canCheckIn: false, potentialXp: 0, currentStreak: 0 });
@@ -348,9 +349,28 @@ export default function ProfilePage() {
     setUsernameError(null);
     setIsUpdatingUsername(true);
     
-    // Empty username is not allowed
+    // Validate username
     if (!username) {
       setUsernameError('Username cannot be empty');
+      setIsUpdatingUsername(false);
+      return;
+    }
+
+    if (username.length < 3) {
+      setUsernameError('Username must be at least 3 characters');
+      setIsUpdatingUsername(false);
+      return;
+    }
+
+    if (username.length > 15) {
+      setUsernameError('Username cannot exceed 15 characters');
+      setIsUpdatingUsername(false);
+      return;
+    }
+
+    // No need to update if username hasn't changed
+    if (username === userProfile.username) {
+      setIsEditingUsername(false);
       setIsUpdatingUsername(false);
       return;
     }
@@ -377,9 +397,15 @@ export default function ProfilePage() {
       if (userProfile) {
         // Create a shallow copy of userProfile to trigger a re-render
         const updatedProfile = { ...userProfile, username };
-        // Force a refresh of auth context by triggering a user refresh
-        // This is a workaround until we have a proper context update method
-        window.dispatchEvent(new CustomEvent('user-profile-updated', { detail: updatedProfile }));
+        setUserProfile(updatedProfile); // Update local state immediately
+        
+        // Force a refresh of auth context by triggering a user refresh event
+        const event = new CustomEvent('user-profile-updated', { detail: updatedProfile });
+        window.dispatchEvent(event);
+        
+        // Show success message
+        setUsernameSuccessMessage('Username updated successfully!');
+        setTimeout(() => setUsernameSuccessMessage(null), 3000); // Clear message after 3 seconds
       }
       
       // Close the editing UI
@@ -666,6 +692,9 @@ export default function ProfilePage() {
                 )}
                 {usernameError && (
                   <p className="text-red-500 text-xs mt-1">{usernameError}</p>
+                )}
+                {usernameSuccessMessage && (
+                  <p className="text-green-500 text-xs mt-1">{usernameSuccessMessage}</p>
                 )}
                 {publicKey && (
                   <p className="text-xs text-gray-400 font-mono">{publicKey.toString()}</p>

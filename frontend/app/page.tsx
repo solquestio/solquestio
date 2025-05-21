@@ -539,7 +539,7 @@ export default function HomePage() {
           </h2>
           
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {STATIC_LEARNING_PATHS.map(path => renderLearningPath(path))}
+            {productionPaths.map(path => renderLearningPath(path))}
           </div>
         </div>
       </section>

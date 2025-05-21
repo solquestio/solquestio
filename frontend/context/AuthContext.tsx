@@ -40,6 +40,7 @@ interface AuthContextType {
   error: string | null;
   login: () => Promise<void>;
   logout: () => void;
+  setUserProfile: (profile: UserProfile | null) => void;
 }
 
 // --- Constants ---
@@ -202,6 +203,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     error,
     login,
     logout,
+    setUserProfile,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
