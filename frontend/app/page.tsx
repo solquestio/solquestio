@@ -130,20 +130,24 @@ const STATIC_LEARNING_PATHS: LearningPath[] = [
     title: 'Solana Explorer Path',
     shortTitle: 'Solana Explorer',
     description: "Dive deep into Solana's core concepts, learn to navigate the ecosystem, and complete foundational quests, starting with community engagement.",
-    questCount: 7,
+    questCount: 3,
     difficulty: 'Beginner',
     pathSlug: 'solana-foundations',
-    totalXp: 1650,
+    totalXp: 500,
     isLocked: false,
     graphicType: 'image',
     imageUrl: '/solana-logo.svg',
     logoUrl: '/solana-logo.svg',
-    bonusPoints: 1200,
+    bonusPoints: 100,
     userCount: '25K',
     isPathCompleted: false,
     currentProgress: 0,
-    rewardTags: [{ text: '+0.1 SOL (Bonus)', variant: 'ethereum' }, { text: '+500 XP', variant: 'points' }],
-    statusTextOverride: 'New Path!',
+    rewardTags: [
+      { text: '+0.1 SOL (Bonus)', variant: 'ethereum' }, 
+      { text: '+500 XP', variant: 'points' },
+      { text: 'OG NFT Reward', variant: 'generic' }
+    ],
+    statusTextOverride: 'Production Ready',
     pathKey: 'solanaExplorer',
     isDemo: false
   },
@@ -211,19 +215,20 @@ const getRankClasses = (rank: number): string => {
 const renderLearningPath = (path: LearningPath) => {
   const isDemo = path.isDemo;
   const isNew = path.id === 'solana-foundations'; // Highlighting the Solana Explorer path
+  const isProduction = !path.isDemo;
 
   return (
-    <div key={path.id} className="bg-dark-card/80 rounded-2xl overflow-hidden border border-white/5 hover:border-purple-500/30 transition-all duration-300 shadow-xl hover:shadow-purple-500/10">
+    <div key={path.id} className={`bg-dark-card/80 rounded-2xl overflow-hidden border ${isProduction ? 'border-purple-500/30 hover:border-purple-500/70' : 'border-white/5 hover:border-purple-500/30'} transition-all duration-300 shadow-xl hover:shadow-purple-500/20`}>
       <div className="relative">
         {path.logoUrl && (
           <div className="absolute top-4 left-4 z-10">
-            <div className="w-16 h-16 rounded-full bg-white/10 backdrop-blur-md p-1.5 flex items-center justify-center shadow-lg border border-white/20">
+            <div className={`w-16 h-16 rounded-full ${isProduction ? 'bg-white/20 backdrop-blur-md shadow-lg shadow-purple-500/20' : 'bg-white/10 backdrop-blur-md'} p-1.5 flex items-center justify-center border ${isProduction ? 'border-purple-500/30' : 'border-white/20'}`}>
               <Image 
                 src={path.logoUrl} 
                 alt={path.title} 
                 width={48} 
                 height={48}
-                className="object-contain"
+                className={`object-contain ${isProduction ? 'drop-shadow-glow' : ''}`}
               />
             </div>
           </div>
@@ -236,16 +241,23 @@ const renderLearningPath = (path: LearningPath) => {
           </div>
         )}
         
-        {/* New Badge */}
-        {isNew && (
-          <div className="absolute top-4 right-4 z-10 px-2.5 py-1 text-xs font-bold bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-md shadow-lg">
-            NEW
+        {/* Production Badge */}
+        {isProduction && (
+          <div className="absolute top-4 right-4 z-10 px-2.5 py-1 text-xs font-bold bg-gradient-to-r from-green-500 to-blue-500 text-white rounded-md shadow-lg">
+            PRODUCTION
           </div>
         )}
 
-        <div className="h-48 bg-gradient-to-br from-purple-900/60 to-blue-900/60 flex items-center justify-center p-6 relative overflow-hidden">
-          <div className="absolute inset-0 bg-gradient-to-br from-purple-500/10 to-blue-500/10 z-0"></div>
-          <span className="text-2xl font-bold text-white/90 z-10 text-center drop-shadow-md">{path.shortTitle}</span>
+        <div className={`h-48 ${isProduction ? 'bg-gradient-to-br from-purple-700/80 to-blue-700/80' : 'bg-gradient-to-br from-purple-900/60 to-blue-900/60'} flex items-center justify-center p-6 relative overflow-hidden`}>
+          <div className={`absolute inset-0 ${isProduction ? 'bg-[radial-gradient(circle_at_center,rgba(168,85,247,0.15),rgba(59,130,246,0.05))]' : 'bg-gradient-to-br from-purple-500/10 to-blue-500/10'} z-0`}></div>
+          
+          {isProduction && (
+            <div className="absolute inset-0 flex items-center justify-center">
+              <div className="w-32 h-32 rounded-full bg-purple-500/10 animate-pulse-slow"></div>
+            </div>
+          )}
+          
+          <span className={`text-2xl font-bold ${isProduction ? 'text-white' : 'text-white/90'} z-10 text-center drop-shadow-md`}>{path.shortTitle}</span>
         </div>
       </div>
       
@@ -276,14 +288,14 @@ const renderLearningPath = (path: LearningPath) => {
         <div className="flex justify-between items-center">
           <div className="flex gap-4">
             <div className="text-xs text-gray-400">
-              <span className="text-white font-semibold">{path.questCount}</span> Quests
+              <span className={`${isProduction ? 'text-yellow-300' : 'text-white'} font-semibold`}>{path.questCount}</span> Quests
             </div>
             <div className="text-xs text-gray-400">
-              <span className="text-white font-semibold">{path.userCount}</span> Users
+              <span className={`${isProduction ? 'text-yellow-300' : 'text-white'} font-semibold`}>{path.userCount}</span> Users
             </div>
           </div>
           <Link href={`/paths/${path.pathSlug}`}>
-            <button className="px-4 py-2 bg-gradient-to-r from-blue-500 to-purple-600 text-white text-sm rounded-md font-medium flex items-center gap-1 hover:opacity-90 transition-opacity">
+            <button className={`px-4 py-2 ${isProduction ? 'bg-gradient-to-r from-purple-600 to-blue-600 shadow-md shadow-purple-700/20' : 'bg-gradient-to-r from-blue-500 to-purple-600'} text-white text-sm rounded-md font-medium flex items-center gap-1 hover:opacity-90 transition-opacity`}>
               Start Learning <ArrowRightIcon className="w-3 h-3 ml-1" />
             </button>
           </Link>
