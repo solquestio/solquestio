@@ -25,6 +25,14 @@ export const WalletConnectQuest: React.FC<WalletConnectQuestProps> = ({ onQuestC
     if (connected) {
       setVerified(true);
       onQuestComplete();
+      
+      // Dispatch custom event to trigger profile update for XP
+      window.dispatchEvent(new CustomEvent('quest-completed', { 
+        detail: { 
+          questId: 'connect-wallet', 
+          xpAmount: xpReward 
+        } 
+      }));
     }
   };
 

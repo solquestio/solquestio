@@ -61,24 +61,10 @@ export const NFTVerificationQuest: React.FC<NFTVerificationQuestProps> = ({
       // For now, we'll simulate the API call
       await new Promise(resolve => setTimeout(resolve, 1500));
       
-      // Simulate verification success (70% chance)
-      const isSuccess = Math.random() > 0.3;
-      
-      if (isSuccess) {
-        setHasNFT(true);
-        setIsVerified(true);
-        onQuestComplete();
-        
-        // Dispatch custom event to trigger profile update for XP
-        window.dispatchEvent(new CustomEvent('quest-completed', { 
-          detail: { 
-            questId: 'verify-og-nft', 
-            xpAmount: xpReward 
-          } 
-        }));
-      } else {
-        setVerificationError("No SolQuest OG NFT found in this wallet. Please mint one first.");
-      }
+      // For demo purposes - always fail verification since NFTs don't exist yet
+      setHasNFT(false);
+      setIsVerified(false);
+      setVerificationError("No SolQuest OG NFT found in this wallet. The SolQuest OG NFT collection has not been created yet. Please try again later when the NFT collection is available.");
     } catch (error) {
       console.error("NFT verification error:", error);
       setVerificationError("Failed to verify NFT ownership. Please try again.");
