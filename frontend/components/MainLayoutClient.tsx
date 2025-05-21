@@ -9,6 +9,7 @@ import { useWallet } from '@solana/wallet-adapter-react';
 import { useWalletModal } from '@solana/wallet-adapter-react-ui';
 import { useAuth } from '@/context/AuthContext';
 import NetworkSwitcher, { NetworkProvider, useNetwork } from '@/components/NetworkSwitcher';
+import NetworkBadge from '@/components/NetworkBadge';
 
 interface MainLayoutClientProps {
     children: React.ReactNode;
@@ -63,7 +64,7 @@ function MainLayoutClientInner({ children }: MainLayoutClientProps) {
                     OG NFT
                     <span className="ml-1 px-1.5 py-0.5 text-xs bg-purple-600 text-white rounded-full">NEW</span>
                   </Link>
-                  <NetworkSwitcher />
+                  <NetworkBadge />
                   <HeaderWalletButton />
                   {isAuthenticated && (
                     <button 
