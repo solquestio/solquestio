@@ -8,12 +8,14 @@ interface NFTVerificationQuestProps {
   onQuestComplete: () => void;
   xpReward?: number;
   title?: string;
+  questId?: string;
 }
 
 export const NFTVerificationQuest: React.FC<NFTVerificationQuestProps> = ({ 
   onQuestComplete, 
   xpReward = 300, 
-  title = 'Mint and Verify SolQuest OG NFT' 
+  title = 'Mint and Verify SolQuest OG NFT',
+  questId = 'verify-og-nft'
 }) => {
   const { publicKey, connected } = useWallet();
   const [hasNFT, setHasNFT] = useState(false);
@@ -61,10 +63,27 @@ export const NFTVerificationQuest: React.FC<NFTVerificationQuestProps> = ({
       // For now, we'll simulate the API call
       await new Promise(resolve => setTimeout(resolve, 1500));
       
-      // For demo purposes - always fail verification since NFTs don't exist yet
+      // For demo purposes, let's succeed if they have followed Twitter
+      if (twitterFollowed) {
+        setHasNFT(true);
+        setIsVerified(true);
+        onQuestComplete();
+        
+        // Dispatch custom event to trigger profile update for XP
+        window.dispatchEvent(new CustomEvent('quest-completed', { 
+          detail: { 
+            questId: questId, 
+            xpAmount: xpReward 
+          } 
+        }));
+        
+        return;
+      }
+      
+      // Otherwise, show an appropriate message
       setHasNFT(false);
       setIsVerified(false);
-      setVerificationError("No SolQuest OG NFT found in this wallet. The SolQuest OG NFT collection has not been created yet. Please try again later when the NFT collection is available.");
+      setVerificationError("The SolQuest OG NFT collection has not been created yet. Please follow @SolQuestio on Twitter to receive points for this quest.");
     } catch (error) {
       console.error("NFT verification error:", error);
       setVerificationError("Failed to verify NFT ownership. Please try again.");

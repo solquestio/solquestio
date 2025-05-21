@@ -549,15 +549,50 @@ export default function ProfilePage() {
   // Add event listeners for XP and profile updates
   useEffect(() => {
     // Handler for quest completions
-    const handleQuestCompleted = (event: CustomEvent) => {
-      console.log('Quest completed event received:', event.detail);
-      // Force a refresh of profile data to update XP
-      fetchProfileData();
+    const handleQuestCompleted = async (event: Event) => {
+      const customEvent = event as CustomEvent;
+      console.log('Quest completed event received:', customEvent.detail);
+      
+      if (!authToken || !userProfile) return;
+      
+      const { questId, xpAmount } = customEvent.detail;
+      
+      try {
+        const response = await fetch(`${BACKEND_URL}/api/quests?path=complete`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${authToken}`
+          },
+          body: JSON.stringify({ questId, xpAmount })
+        });
+        
+        const data = await response.json();
+        
+        if (!response.ok) {
+          throw new Error(data.message || 'Failed to save quest completion');
+        }
+        
+        console.log('Quest completion saved:', data);
+        
+        // Update local state immediately
+        if (data.user) {
+          setUserProfile(data.user);
+        } else {
+          // Force a refresh of profile data if user is not returned
+          fetchProfileData();
+        }
+      } catch (error) {
+        console.error('Failed to save quest completion:', error);
+        // Try to refresh the profile data anyway
+        fetchProfileData();
+      }
     };
 
     // Handler for profile updates (like username changes)
-    const handleProfileUpdated = (event: CustomEvent) => {
-      console.log('Profile updated event received:', event.detail);
+    const handleProfileUpdated = (event: Event) => {
+      const customEvent = event as CustomEvent;
+      console.log('Profile updated event received:', customEvent.detail);
       // Force a refresh of profile data
       fetchProfileData();
     };
@@ -575,9 +610,8 @@ export default function ProfilePage() {
         if (response.ok) {
           const data = await response.json();
           console.log('Profile refreshed:', data);
-          // Update local state (this is a temporary solution until we have proper context updates)
-          // In a production app, you'd update the global auth context instead
-          window.location.reload(); // Temporary solution to refresh all data
+          // Update local state
+          setUserProfile(data);
         }
       } catch (error) {
         console.error('Failed to refresh profile data:', error);
@@ -585,15 +619,15 @@ export default function ProfilePage() {
     };
 
     // Add event listeners
-    window.addEventListener('quest-completed', handleQuestCompleted as EventListener);
-    window.addEventListener('user-profile-updated', handleProfileUpdated as EventListener);
+    window.addEventListener('quest-completed', handleQuestCompleted);
+    window.addEventListener('user-profile-updated', handleProfileUpdated);
     
     // Clean up
     return () => {
-      window.removeEventListener('quest-completed', handleQuestCompleted as EventListener);
-      window.removeEventListener('user-profile-updated', handleProfileUpdated as EventListener);
+      window.removeEventListener('quest-completed', handleQuestCompleted);
+      window.removeEventListener('user-profile-updated', handleProfileUpdated);
     };
-  }, [authToken]);
+  }, [authToken, userProfile, setUserProfile]);
 
   if (isLoadingAuth) {
     return (

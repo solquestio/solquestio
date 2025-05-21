@@ -12,9 +12,15 @@ interface WalletConnectQuestProps {
   onQuestComplete: () => void;
   xpReward?: number;
   title?: string;
+  questId?: string;
 }
 
-export const WalletConnectQuest: React.FC<WalletConnectQuestProps> = ({ onQuestComplete, xpReward = 50, title = 'Connect Your Wallet' }) => {
+export const WalletConnectQuest: React.FC<WalletConnectQuestProps> = ({ 
+  onQuestComplete, 
+  xpReward = 50, 
+  title = 'Connect Your Wallet',
+  questId = 'connect-wallet'
+}) => {
   const { connected } = useWallet();
   const [verified, setVerified] = useState(false);
 
@@ -29,7 +35,7 @@ export const WalletConnectQuest: React.FC<WalletConnectQuestProps> = ({ onQuestC
       // Dispatch custom event to trigger profile update for XP
       window.dispatchEvent(new CustomEvent('quest-completed', { 
         detail: { 
-          questId: 'connect-wallet', 
+          questId: questId, 
           xpAmount: xpReward 
         } 
       }));
