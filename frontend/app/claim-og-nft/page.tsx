@@ -46,6 +46,13 @@ export default function OGNFTClaim() {
     }
   }, [connected, publicKey]);
   
+  // Add this new useEffect to store mint status in localStorage when successful
+  useEffect(() => {
+    if (success && publicKey) {
+      localStorage.setItem(`solquest_nft_claimed_${publicKey.toString()}`, 'true');
+    }
+  }, [success, publicKey]);
+  
   useEffect(() => {
     // Enable mint button when either social verifications are complete or promo code is verified
     if ((twitterVerified && discordVerified) || codeVerified) {
@@ -57,11 +64,9 @@ export default function OGNFTClaim() {
   
   const fetchMintStats = async () => {
     try {
-      // This would be a real API call in production
-      // Mock data for demo
-      const randomMinted = Math.floor(Math.random() * 3500) + 1500; // Between 1500-5000
-      setMintedCount(randomMinted);
-      setRemainingForUsers(5000 - (randomMinted - 0)); // Assuming all minted so far are from user allocation
+      // Instead of random numbers, use fixed values for consistency
+      setMintedCount(3542); // Fixed value
+      setRemainingForUsers(1458); // Fixed value to equal 5000 total for user allocation
     } catch (error) {
       console.error("Error fetching mint stats:", error);
     }
@@ -72,12 +77,13 @@ export default function OGNFTClaim() {
     
     try {
       setLoading(true);
-      // Check if wallet has already claimed an NFT
-      // For demo, this is a mock implementation
-      const hasNFT = false; // In production, this would be a real API check
+      // Check if wallet has already claimed an NFT using localStorage
+      const hasNFT = localStorage.getItem(`solquest_nft_claimed_${publicKey.toString()}`) === 'true';
       
       if (hasNFT) {
         setAlreadyClaimed(true);
+      } else {
+        setAlreadyClaimed(false); // Explicitly set to false to ensure proper state
       }
       
       // Pre-fill any completed verifications
@@ -184,9 +190,21 @@ export default function OGNFTClaim() {
           // Wait to simulate transaction time
           await new Promise(resolve => setTimeout(resolve, 2000));
           
-          // Simulate successful transaction
-          setSuccess(true);
-          setAlreadyClaimed(true);
+          // In a real implementation, you would:
+          // 1. Get recent blockhash
+          // 2. Send the transaction
+          // 3. Confirm transaction success
+          
+          // For demo purposes, confirm with the user that they understand this is a simulation
+          if (confirm("In a real implementation, you would now be asked to approve a transaction of 0.005 SOL in your wallet. For this demo, would you like to simulate a successful payment?")) {
+            // Simulate successful transaction
+            setSuccess(true);
+            setAlreadyClaimed(true);
+          } else {
+            setError("Transaction cancelled by user");
+            setLoading(false);
+            return;
+          }
         } catch (txError: any) {
           console.error("Transaction error:", txError);
           setError(`Transaction failed: ${txError.message || 'Unknown error'}`);
@@ -194,11 +212,17 @@ export default function OGNFTClaim() {
           return;
         }
       } else {
-        // Free mint with promo code
-        // Simulate API call and success
-        await new Promise(resolve => setTimeout(resolve, 1500));
-        setSuccess(true);
-        setAlreadyClaimed(true);
+        // Free mint with promo code - confirm with user
+        if (confirm("You're about to mint your NFT for free using your promo code. Continue?")) {
+          // Simulate API call and success
+          await new Promise(resolve => setTimeout(resolve, 1500));
+          setSuccess(true);
+          setAlreadyClaimed(true);
+        } else {
+          setError("Free mint cancelled by user");
+          setLoading(false);
+          return;
+        }
       }
       
       setLoading(false);
@@ -282,7 +306,15 @@ export default function OGNFTClaim() {
                   <p className="text-sm text-blue-200">
                     {isFree 
                       ? "You're eligible for a FREE mint with your promo code!" 
-                      : "Complete social tasks for verification or use a promo code to mint."}
+                      : "Complete social verification below and pay 0.005 SOL to mint your OG NFT."}
+                  </p>
+                </div>
+
+                {/* Add a clear status message */}
+                <div className="p-4 bg-amber-900/20 border border-amber-700/30 rounded-lg mb-6">
+                  <h3 className="text-amber-300 font-medium mb-1">NFT Claiming Status:</h3>
+                  <p className="text-sm text-amber-100">
+                    You have not yet claimed your SolQuest OG NFT. Follow the steps below to mint one.
                   </p>
                 </div>
                 
@@ -417,11 +449,11 @@ export default function OGNFTClaim() {
                         <ArrowPathIcon className="w-5 h-5 mr-2 animate-spin" />
                         Processing...
                       </span>
-                    ) : isFree ? 'Mint OG NFT (FREE)' : 'Mint OG NFT (0.005 SOL)'}
+                    ) : isFree ? 'Mint OG NFT (FREE with promo code)' : 'Pay 0.005 SOL to Mint OG NFT'}
                   </button>
                   
                   <p className="text-xs text-gray-400 mt-4">
-                    By clicking "Mint", you acknowledge that you are claiming the OG NFT and that only one NFT is allowed per wallet.
+                    By clicking "{isFree ? 'Mint' : 'Pay'}", you acknowledge that you are claiming the OG NFT and that only one NFT is allowed per wallet.
                   </p>
                 </div>
               </div>
