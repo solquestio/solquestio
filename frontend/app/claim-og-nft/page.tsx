@@ -8,6 +8,16 @@ import dynamic from 'next/dynamic';
 import { LAMPORTS_PER_SOL, Transaction, PublicKey, SystemProgram } from '@solana/web3.js';
 import { LockClosedIcon, ArrowPathIcon, InformationCircleIcon } from '@heroicons/react/24/outline';
 
+// Define interface for NFT data
+interface NFTData {
+  tokenId: number;
+  mintDate: string;
+  metadataUrl: string;
+}
+
+// Mock API endpoint for backend
+const API_ENDPOINT = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:5000';
+
 // Dynamically import the OGNftCard component
 const OGNftCardDynamic = dynamic(
   () => import('@/components/nft/OGNftCard'),
@@ -35,9 +45,10 @@ export default function OGNFTClaim() {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
   const [mintPrice] = useState(0.005 * LAMPORTS_PER_SOL); // 0.005 SOL in lamports
-  const [mintedCount, setMintedCount] = useState(0);
-  const [remainingForUsers, setRemainingForUsers] = useState(5000);
+  const [mintedCount, setMintedCount] = useState(3542); // Fixed value for demo
+  const [remainingForUsers, setRemainingForUsers] = useState(1458); // Fixed value for demo
   const [isFree, setIsFree] = useState(false);
+  const [nftData, setNftData] = useState<NFTData | null>(null);
   
   useEffect(() => {
     if (connected && publicKey) {
@@ -45,13 +56,6 @@ export default function OGNFTClaim() {
       fetchMintStats();
     }
   }, [connected, publicKey]);
-  
-  // Add this new useEffect to store mint status in localStorage when successful
-  useEffect(() => {
-    if (success && publicKey) {
-      localStorage.setItem(`solquest_nft_claimed_${publicKey.toString()}`, 'true');
-    }
-  }, [success, publicKey]);
   
   useEffect(() => {
     // Enable mint button when either social verifications are complete or promo code is verified
@@ -62,34 +66,76 @@ export default function OGNFTClaim() {
     }
   }, [twitterVerified, discordVerified, codeVerified]);
   
+  // This function would fetch actual data from your backend API 
+  // which would query your NFT contract and database
   const fetchMintStats = async () => {
     try {
-      // Instead of random numbers, use fixed values for consistency
-      setMintedCount(3542); // Fixed value
-      setRemainingForUsers(1458); // Fixed value to equal 5000 total for user allocation
+      setLoading(true);
+      
+      // In a real implementation, this would be an API call like:
+      // const response = await fetch(`${API_ENDPOINT}/api/nft/stats`);
+      // const data = await response.json();
+      // setMintedCount(data.mintedCount);
+      // setRemainingForUsers(data.remainingForUsers);
+      
+      // For demo purposes, we use fixed values
+      // But in production, these would come from your NFT contract
+      
+      setLoading(false);
     } catch (error) {
       console.error("Error fetching mint stats:", error);
+      setLoading(false);
     }
   };
   
+  // This function would check if the wallet owns the NFT by querying the blockchain
   const checkEligibility = async () => {
     if (!publicKey) return;
     
     try {
       setLoading(true);
-      // Check if wallet has already claimed an NFT using localStorage
+      
+      // In a real implementation, this would check:
+      // 1. The blockchain directly to see if this wallet owns an NFT from your collection
+      // 2. Your database to check if this wallet has already minted
+      
+      // Example of how this would work in production:
+      // const response = await fetch(`${API_ENDPOINT}/api/nft/check-ownership?wallet=${publicKey.toString()}`);
+      // const data = await response.json();
+      // 
+      // if (data.ownsNft) {
+      //   setNftData(data.nftData);  // Would include token ID, metadata URL, etc.
+      //   setAlreadyClaimed(true);
+      // } else {
+      //   setAlreadyClaimed(false);
+      // }
+      
+      // For demo only - using localStorage to simulate the backend
       const hasNFT = localStorage.getItem(`solquest_nft_claimed_${publicKey.toString()}`) === 'true';
       
       if (hasNFT) {
+        // Simulating NFT data we would get from a real API
+        setNftData({
+          tokenId: Math.floor(Math.random() * 10000),
+          mintDate: new Date().toISOString(),
+          metadataUrl: 'https://solquest.io/api/nft/metadata/123'
+        });
         setAlreadyClaimed(true);
       } else {
-        setAlreadyClaimed(false); // Explicitly set to false to ensure proper state
+        setAlreadyClaimed(false);
       }
       
-      // Pre-fill any completed verifications
-      // For demo purposes, we're simulating some already verified accounts
+      // Pre-fill any completed verifications - this would also come from the backend
+      // in a production environment, checking if the user has completed social verifications
       const walletStr = publicKey.toString();
-      // If wallet address ends with specific patterns, auto-verify (demo only)
+      
+      // In production, this would be:
+      // const socialVerificationsResponse = await fetch(`${API_ENDPOINT}/api/verifications?wallet=${publicKey.toString()}`);
+      // const socialData = await socialVerificationsResponse.json();
+      // setTwitterVerified(socialData.twitter);
+      // setDiscordVerified(socialData.discord);
+      
+      // For demo only - simple verification
       if (walletStr.endsWith('a') || walletStr.endsWith('b')) setTwitterVerified(true);
       if (walletStr.endsWith('c') || walletStr.endsWith('d')) setDiscordVerified(true);
       
@@ -103,11 +149,16 @@ export default function OGNFTClaim() {
   const verifyTwitter = async () => {
     try {
       setLoading(true);
-      // Open Twitter auth popup and handle verification flow
-      window.open(`/api/nft/twitter-auth?wallet=${publicKey?.toString()}`, 'twitter-verify', 'width=600,height=600');
       
-      // This would normally use a callback or polling to confirm verification
-      // For now we'll simulate success after 2 seconds
+      // In production, this would redirect to Twitter OAuth flow:
+      // window.location.href = `${API_ENDPOINT}/api/auth/twitter?wallet=${publicKey?.toString()}`;
+      
+      // Or open a popup for OAuth:
+      // window.open(`${API_ENDPOINT}/api/auth/twitter?wallet=${publicKey?.toString()}`, 'twitter-verify', 'width=600,height=600');
+      
+      // Then backend would handle the OAuth callback and store verification in database
+      
+      // For demo, we'll simulate success
       setTimeout(() => {
         setTwitterVerified(true);
         setLoading(false);
@@ -121,11 +172,16 @@ export default function OGNFTClaim() {
   const verifyDiscord = async () => {
     try {
       setLoading(true);
-      // Open Discord auth popup and handle verification flow
-      window.open(`/api/nft/discord-auth?wallet=${publicKey?.toString()}`, 'discord-verify', 'width=600,height=600');
       
-      // This would normally use a callback or polling to confirm verification
-      // For now we'll simulate success after 2 seconds
+      // In production, this would redirect to Discord OAuth flow:
+      // window.location.href = `${API_ENDPOINT}/api/auth/discord?wallet=${publicKey?.toString()}`;
+      
+      // Or open a popup for OAuth:
+      // window.open(`${API_ENDPOINT}/api/auth/discord?wallet=${publicKey?.toString()}`, 'discord-verify', 'width=600,height=600');
+      
+      // Then backend would handle the OAuth callback and store verification in database
+      
+      // For demo, we'll simulate success
       setTimeout(() => {
         setDiscordVerified(true);
         setLoading(false);
@@ -140,7 +196,21 @@ export default function OGNFTClaim() {
     try {
       setLoading(true);
       
-      // In production, this would check the promo code against a database
+      // In production, this would verify the promo code against your database:
+      // const response = await fetch(`${API_ENDPOINT}/api/promo/verify`, {
+      //   method: 'POST',
+      //   headers: { 'Content-Type': 'application/json' },
+      //   body: JSON.stringify({ code: promoCode, wallet: publicKey?.toString() })
+      // });
+      // const data = await response.json();
+      // if (data.valid) {
+      //   setCodeVerified(true);
+      //   setIsFree(true);
+      //   setError('');
+      // } else {
+      //   setError(data.message || 'Invalid promo code');
+      // }
+      
       // For demo purposes, we'll accept any code containing "SOLQUEST"
       const isValidCode = promoCode.includes("SOLQUEST");
       
@@ -166,13 +236,39 @@ export default function OGNFTClaim() {
       setLoading(true);
       setError('');
       
-      // In a real implementation, this would interact with your Solana NFT contract
-      // For demo, we'll simulate the transaction
+      // In a real implementation, this would:
+      // 1. Call your backend to create a transaction
+      // 2. Sign and send that transaction using the wallet
+      // 3. Track the transaction on-chain
+      // 4. Update your database once the mint is confirmed
       
       if (!isFree) {
         try {
-          // Create a Solana transaction for the payment
-          // This would be replaced with actual NFT minting logic in production
+          // In production, this would be:
+          // 1. Call backend to start mint process and get transaction data
+          // const mintResponse = await fetch(`${API_ENDPOINT}/api/nft/mint-transaction`, {
+          //   method: 'POST',
+          //   headers: { 'Content-Type': 'application/json' },
+          //   body: JSON.stringify({ wallet: publicKey.toString() })
+          // });
+          // const mintData = await mintResponse.json();
+          // 
+          // 2. Create and sign the transaction
+          // const transaction = Transaction.from(Buffer.from(mintData.serializedTransaction, 'base64'));
+          // const signedTransaction = await sendTransaction(transaction, connection);
+          //
+          // 3. Notify backend of transaction signature
+          // await fetch(`${API_ENDPOINT}/api/nft/confirm-mint`, {
+          //   method: 'POST',
+          //   headers: { 'Content-Type': 'application/json' },
+          //   body: JSON.stringify({ 
+          //     wallet: publicKey.toString(),
+          //     signature: signedTransaction 
+          //   })
+          // });
+          
+          // For demo, we'll simulate a transaction
+          // Create a Solana transaction for the payment (demo only)
           const treasuryWallet = new PublicKey("11111111111111111111111111111111"); // Replace with real treasury wallet
           
           const transaction = new Transaction().add(
@@ -183,21 +279,20 @@ export default function OGNFTClaim() {
             })
           );
           
-          // Setting a recent blockhash is required for transaction validation
-          // In real app, you would fetch this from a connected Solana node
-          // For demo, we'll simulate a successful transaction
-          
-          // Wait to simulate transaction time
-          await new Promise(resolve => setTimeout(resolve, 2000));
-          
-          // In a real implementation, you would:
-          // 1. Get recent blockhash
-          // 2. Send the transaction
-          // 3. Confirm transaction success
-          
           // For demo purposes, confirm with the user that they understand this is a simulation
           if (confirm("In a real implementation, you would now be asked to approve a transaction of 0.005 SOL in your wallet. For this demo, would you like to simulate a successful payment?")) {
-            // Simulate successful transaction
+            // Simulate blockchain confirmation and backend update
+            await new Promise(resolve => setTimeout(resolve, 2000));
+            
+            // In production, this would be the NFT data returned from your backend
+            const mockNftData = {
+              tokenId: Math.floor(Math.random() * 10000),
+              mintDate: new Date().toISOString(),
+              metadataUrl: 'https://solquest.io/api/nft/metadata/123'
+            };
+            
+            setNftData(mockNftData);
+            localStorage.setItem(`solquest_nft_claimed_${publicKey.toString()}`, 'true');
             setSuccess(true);
             setAlreadyClaimed(true);
           } else {
@@ -214,8 +309,30 @@ export default function OGNFTClaim() {
       } else {
         // Free mint with promo code - confirm with user
         if (confirm("You're about to mint your NFT for free using your promo code. Continue?")) {
+          // In production, this would be:
+          // const freeMintResponse = await fetch(`${API_ENDPOINT}/api/nft/free-mint`, {
+          //   method: 'POST',
+          //   headers: { 'Content-Type': 'application/json' },
+          //   body: JSON.stringify({ 
+          //     wallet: publicKey.toString(),
+          //     promoCode: promoCode
+          //   })
+          // });
+          // const freeMintData = await freeMintResponse.json();
+          // setNftData(freeMintData.nftData);
+          
           // Simulate API call and success
           await new Promise(resolve => setTimeout(resolve, 1500));
+          
+          // In production, this would be the NFT data returned from your backend
+          const mockNftData = {
+            tokenId: Math.floor(Math.random() * 10000),
+            mintDate: new Date().toISOString(),
+            metadataUrl: 'https://solquest.io/api/nft/metadata/123'
+          };
+          
+          setNftData(mockNftData);
+          localStorage.setItem(`solquest_nft_claimed_${publicKey.toString()}`, 'true');
           setSuccess(true);
           setAlreadyClaimed(true);
         } else {
@@ -287,11 +404,50 @@ export default function OGNFTClaim() {
               <div className="text-center py-8 bg-green-900/20 rounded-lg">
                 <h3 className="text-xl font-bold mb-2">You've already claimed your OG NFT!</h3>
                 <p>Thank you for being an early supporter of Solquest.</p>
+                
+                {/* Display NFT data - would come from blockchain in production */}
+                {nftData && (
+                  <div className="mt-4 mb-2 bg-gray-800/50 p-4 rounded-lg text-left">
+                    <h4 className="font-medium text-green-400 mb-2">Your NFT:</h4>
+                    <div className="text-sm space-y-1">
+                      <p><span className="text-gray-400">Token ID:</span> {nftData.tokenId}</p>
+                      <p><span className="text-gray-400">Mint Date:</span> {new Date(nftData.mintDate).toLocaleString()}</p>
+                      <p><span className="text-gray-400">Blockchain:</span> Solana</p>
+                    </div>
+                    <p className="text-xs text-gray-500 mt-2">
+                      In production, this verification would be performed by querying the Solana blockchain 
+                      and your NFT smart contract to verify ownership.
+                    </p>
+                  </div>
+                )}
+                
+                <button 
+                  onClick={() => router.push('/profile')}
+                  className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-6 rounded-lg transition mt-2"
+                >
+                  View in Profile
+                </button>
               </div>
             ) : success ? (
               <div className="text-center py-8 bg-green-900/20 rounded-lg">
                 <h3 className="text-xl font-bold mb-2">Congratulations!</h3>
                 <p className="mb-4">Your Solquest OG NFT has been successfully minted to your wallet.</p>
+                
+                {/* Display NFT data - would come from blockchain in production */}
+                {nftData && (
+                  <div className="mb-4 bg-gray-800/50 p-4 rounded-lg text-left">
+                    <h4 className="font-medium text-green-400 mb-2">NFT Details:</h4>
+                    <div className="text-sm space-y-1">
+                      <p><span className="text-gray-400">Token ID:</span> {nftData.tokenId}</p>
+                      <p><span className="text-gray-400">Mint Date:</span> {new Date(nftData.mintDate).toLocaleString()}</p>
+                      <p><span className="text-gray-400">Blockchain:</span> Solana</p>
+                    </div>
+                    <p className="text-xs text-gray-500 mt-2">
+                      In production, this data would be fetched directly from the blockchain and your backend database.
+                    </p>
+                  </div>
+                )}
+                
                 <button 
                   onClick={() => router.push('/profile')}
                   className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-6 rounded-lg transition"
