@@ -3,9 +3,11 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { createContext, useContext } from 'react';
 import { WalletAdapterNetwork } from '@solana/wallet-adapter-base';
-
-// Define the network types
-export type NetworkType = 'testnet' | 'mainnet';
+import { 
+  NetworkType, 
+  DEFAULT_NETWORK, 
+  NETWORK_STORAGE_KEY 
+} from '@/utils/networkConfig';
 
 // Create a context for network state
 type NetworkContextType = {
@@ -15,7 +17,7 @@ type NetworkContextType = {
 };
 
 export const NetworkContext = createContext<NetworkContextType>({
-  network: 'testnet',
+  network: DEFAULT_NETWORK,
   setNetwork: () => {},
   tryFallbackEndpoint: () => '',
 });
@@ -25,8 +27,8 @@ export const useNetwork = () => useContext(NetworkContext);
 
 // Network Provider component
 export const NetworkProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  // Initialize from localStorage if available, otherwise default to testnet
-  const [network, setNetwork] = useState<NetworkType>('testnet');
+  // Initialize from localStorage if available, otherwise default to mainnet
+  const [network, setNetwork] = useState<NetworkType>(DEFAULT_NETWORK);
   
   // Define fallback endpoint function
   const tryFallbackEndpoint = useCallback((currentEndpoint: string, networkKey: string) => {
@@ -38,15 +40,15 @@ export const NetworkProvider: React.FC<{ children: React.ReactNode }> = ({ child
   
   useEffect(() => {
     // Load network preference from localStorage on mount
-    const savedNetwork = localStorage.getItem('solquestio-network');
-    if (savedNetwork === 'mainnet' || savedNetwork === 'testnet') {
-      setNetwork(savedNetwork);
+    const savedNetwork = localStorage.getItem(NETWORK_STORAGE_KEY);
+    if (savedNetwork === 'mainnet' || savedNetwork === 'devnet') {
+      setNetwork(savedNetwork as NetworkType);
     }
   }, []);
   
   // Save network preference to localStorage when it changes
   useEffect(() => {
-    localStorage.setItem('solquestio-network', network);
+    localStorage.setItem(NETWORK_STORAGE_KEY, network);
   }, [network]);
   
   return (
@@ -61,7 +63,7 @@ const NetworkSwitcher = () => {
   const { network, setNetwork } = useNetwork();
   
   const toggleNetwork = () => {
-    setNetwork(network === 'testnet' ? 'mainnet' : 'testnet');
+    setNetwork(network === 'devnet' ? 'mainnet' : 'devnet');
   };
   
   return (
@@ -87,7 +89,7 @@ const NetworkSwitcher = () => {
             animate-pulse
           `}></span>
           <span className="font-medium text-sm">
-            {network === 'mainnet' ? 'Mainnet' : 'Testnet'}
+            {network === 'mainnet' ? 'Mainnet' : 'Devnet'}
           </span>
         </div>
       </button>

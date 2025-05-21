@@ -5,6 +5,12 @@ import { ConnectionProvider, WalletProvider as SolanaWalletProvider } from '@sol
 import { WalletAdapterNetwork } from '@solana/wallet-adapter-base';
 import { WalletModalProvider } from '@solana/wallet-adapter-react-ui';
 import { clusterApiUrl } from '@solana/web3.js';
+import { 
+  RPC_ENDPOINTS, 
+  FALLBACK_RPC_ENDPOINTS,
+  DEFAULT_NETWORK,
+  mapNetworkType
+} from '@/utils/networkConfig';
 // You can import specific wallet adapters here if you want to pre-load them
 // e.g., import { PhantomWalletAdapter, SolflareWalletAdapter } from '@solana/wallet-adapter-wallets';
 
@@ -15,24 +21,9 @@ interface WalletProviderClientProps {
   children: ReactNode;
 }
 
-// Define better RPC endpoints with higher rate limits
-const BETTER_RPC_ENDPOINTS: Record<string, string> = {
-  'devnet': 'https://api.devnet.solana.com',
-  'mainnet-beta': process.env.NEXT_PUBLIC_HELIUS_RPC_URL || 'https://api.mainnet-beta.solana.com', // Use Helius if available
-};
-
-// Fallback RPC endpoints if the primary ones fail
-const FALLBACK_RPC_ENDPOINTS: Record<string, string[]> = {
-  'devnet': [
-    'https://api.devnet.solana.com',
-    'https://solana-devnet.g.alchemy.com/v2/demo'
-  ],
-  'mainnet-beta': [
-    process.env.NEXT_PUBLIC_HELIUS_RPC_URL || 'https://api.mainnet-beta.solana.com',
-    'https://ssc-dao.genesysgo.net',
-    'https://solana-mainnet.g.alchemy.com/v2/demo'
-  ],
-};
+// Use a global variable to track if wallet was already connected
+// This helps prevent reconnection prompts when switching networks
+let walletWasConnected = false;
 
 // Create a context for network switching
 export const NetworkContext = React.createContext<{
@@ -42,21 +33,17 @@ export const NetworkContext = React.createContext<{
   toggleNetwork: () => void;
   tryFallbackEndpoint: (currentEndpoint: string, networkKey: string) => string;
 }>({
-  network: WalletAdapterNetwork.Devnet,
+  network: WalletAdapterNetwork.Mainnet,
   setNetwork: () => {},
-  isMainnet: false,
+  isMainnet: true,
   toggleNetwork: () => {},
   tryFallbackEndpoint: () => '',
 });
 
-// Use a global variable to track if wallet was already connected
-// This helps prevent reconnection prompts when switching networks
-let walletWasConnected = false;
-
 // This component ensures WalletProvider and its children are rendered client-side.
 export const WalletProviderClient: FC<WalletProviderClientProps> = ({ children }) => {
   // Create state for network
-  const [network, setNetwork] = useState<WalletAdapterNetwork>(WalletAdapterNetwork.Devnet);
+  const [network, setNetwork] = useState<WalletAdapterNetwork>(WalletAdapterNetwork.Mainnet);
   
   // State to track custom fallback endpoint
   const [customFallbackEndpoint, setCustomFallbackEndpoint] = useState<string | null>(null);
@@ -64,8 +51,8 @@ export const WalletProviderClient: FC<WalletProviderClientProps> = ({ children }
   // Load network from localStorage on initial mount
   useEffect(() => {
     const savedNetwork = localStorage.getItem('solana-network');
-    if (savedNetwork === 'mainnet-beta') {
-      setNetwork(WalletAdapterNetwork.Mainnet);
+    if (savedNetwork === 'devnet') {
+      setNetwork(WalletAdapterNetwork.Devnet);
     }
     
     // Check if we have a saved fallback endpoint
@@ -154,9 +141,9 @@ export const WalletProviderClient: FC<WalletProviderClientProps> = ({ children }
     }
     
     // Try to get the better endpoint, fallback to default if not available
-    if (BETTER_RPC_ENDPOINTS[networkKey]) {
-      console.log(`Using enhanced RPC endpoint for ${networkKey}: ${BETTER_RPC_ENDPOINTS[networkKey]}`);
-      return BETTER_RPC_ENDPOINTS[networkKey];
+    if (RPC_ENDPOINTS[networkKey]) {
+      console.log(`Using enhanced RPC endpoint for ${networkKey}: ${RPC_ENDPOINTS[networkKey]}`);
+      return RPC_ENDPOINTS[networkKey];
     }
     
     // Default fallback
