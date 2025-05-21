@@ -78,17 +78,9 @@ export const FaucetQuest: React.FC<FaucetQuestProps> = ({
         setCurrentSolBalance(balanceSOL);
         setRpcError(false);
         
-        // Automatically complete the quest if they already have enough SOL
+        // No longer auto-complete the quest - user must manually verify
         if (balanceSOL >= minRequiredSOL) {
-          setIsQuestMarkedComplete(true);
-          onQuestComplete();
-          // Dispatch custom event to trigger profile update for XP
-          window.dispatchEvent(new CustomEvent('quest-completed', { 
-            detail: { 
-              questId: 'fund-wallet', 
-              xpAmount: xpReward 
-            } 
-          }));
+          setQuestAttempted(true);
         }
       } else {
         console.error('Failed to fetch balance - All RPC endpoints failed');
@@ -118,8 +110,11 @@ export const FaucetQuest: React.FC<FaucetQuestProps> = ({
     setQuestAttempted(true);
     await checkBalance();
     
-    // If balance is enough after verification, dispatch the XP update event
+    // Only mark as complete after user manually verifies
     if (currentSolBalance !== null && currentSolBalance >= minRequiredSOL) {
+      setIsQuestMarkedComplete(true);
+      onQuestComplete();
+      
       // Dispatch custom event to trigger profile update for XP
       window.dispatchEvent(new CustomEvent('quest-completed', { 
         detail: { 
@@ -128,7 +123,7 @@ export const FaucetQuest: React.FC<FaucetQuestProps> = ({
         } 
       }));
     }
-  }, [connected, publicKey, minRequiredSOL, currentSolBalance, xpReward]);
+  }, [connected, publicKey, minRequiredSOL, currentSolBalance, xpReward, onQuestComplete, checkBalance]);
 
   const toggleSuggestions = () => {
     setShowSuggestions(!showSuggestions);
@@ -220,6 +215,20 @@ export const FaucetQuest: React.FC<FaucetQuestProps> = ({
                   </p>
                 </div>
               </div>
+              
+              {currentSolBalance !== null && currentSolBalance >= minRequiredSOL && !isQuestMarkedComplete && (
+                <div className="mt-4 bg-amber-900/20 border border-amber-600/30 rounded-lg p-3">
+                  <div className="flex items-center justify-between">
+                    <p className="text-amber-300">You have enough SOL! Click verify to complete this quest:</p>
+                    <button
+                      onClick={handleVerifyBalance}
+                      className="bg-green-600 hover:bg-green-700 text-white px-4 py-1.5 rounded-lg text-sm font-medium transition"
+                    >
+                      Verify
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
 
             <div className="border border-amber-600/30 rounded-lg overflow-hidden">

@@ -6,7 +6,7 @@ import { QuestPageLayout, QuestListItem } from '@/components/layout/QuestPageLay
 import { loadQuestCompletions, updateQuestCompletion, calculateEarnedXP } from '@/lib/questStorage';
 import { FaucetQuest } from '@/components/quests/FaucetQuest';
 import { WalletConnectQuest } from '@/components/quests/WalletConnectQuest';
-import { TransactionExplorerQuest } from '@/components/quests/TransactionExplorerQuest';
+import { NFTVerificationQuest } from '@/components/quests/NFTVerificationQuest';
 
 // Define the structure for individual quests within this path
 interface SolanaExplorerQuest extends QuestListItem {
@@ -64,13 +64,13 @@ const SolanaExplorerPathPage = () => {
       isComplete: !!completedQuests['fund-wallet']
     },
     {
-      id: 'explore-transaction',
-      title: '3. Explore a Transaction',
-      description: 'Learn how to read and understand Solana transactions using the explorer.',
-      component: TransactionExplorerQuest,
-      xp: 200,
-      props: { title: 'Explore a Transaction' },
-      isComplete: !!completedQuests['explore-transaction']
+      id: 'verify-og-nft',
+      title: '3. Mint and Verify OG NFT',
+      description: 'Claim your exclusive SolQuest OG NFT and verify ownership.',
+      component: NFTVerificationQuest,
+      xp: 300,
+      props: { title: 'Mint and Verify SolQuest OG NFT' },
+      isComplete: !!completedQuests['verify-og-nft']
     }
   ];
 
