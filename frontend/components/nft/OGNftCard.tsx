@@ -13,7 +13,12 @@ const OGNftCard: React.FC = () => {
             
             {/* Supply Badge */}
             <div style={{ position: 'absolute', top: 18, right: 18, zIndex: 2 }}>
-                <span style={{ background: 'linear-gradient(90deg, #FF6B00 60%, #FF9A00 100%)', color: '#fff', fontWeight: 700, fontSize: 15, borderRadius: 8, padding: '6px 16px', boxShadow: '0 2px 8px rgba(255,107,0,0.12)' }}>5,555 Supply</span>
+                <span style={{ background: 'linear-gradient(90deg, #FF6B00 60%, #FF9A00 100%)', color: '#fff', fontWeight: 700, fontSize: 15, borderRadius: 8, padding: '6px 16px', boxShadow: '0 2px 8px rgba(255,107,0,0.12)' }}>10,000 Supply</span>
+            </div>
+
+            {/* Price Badge */}
+            <div style={{ position: 'absolute', top: 60, right: 18, zIndex: 2 }}>
+                <span style={{ background: 'linear-gradient(90deg, #14F195 60%, #00B2FF 100%)', color: '#121212', fontWeight: 700, fontSize: 15, borderRadius: 8, padding: '6px 16px', boxShadow: '0 2px 8px rgba(20,241,149,0.12)' }}>0.005 SOL</span>
             </div>
             
             <div style={{ width: '100%', display: 'flex', justifyContent: 'center', alignItems: 'center', flex: 1, height: 240, marginTop: 12 }}>
@@ -40,7 +45,7 @@ const OGNftCard: React.FC = () => {
             </div>
             <div style={{ width: '100%', display: 'flex', justifyContent: 'center', position: 'absolute', bottom: 20, left: 0 }}>
                 <Link href="/claim-og-nft" className={styles.mintButton} style={{ fontSize: 18, padding: '14px 48px', borderRadius: 10 }}>
-                    Mint OG NFT - Limited Supply!
+                    Mint OG NFT - Only 0.005 SOL!
                 </Link>
             </div>
         </div>

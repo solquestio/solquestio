@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useWallet } from '@solana/wallet-adapter-react';
-import { ArrowTopRightOnSquareIcon, ArrowPathIcon } from '@heroicons/react/24/solid';
+import { ArrowTopRightOnSquareIcon, ArrowPathIcon, LockClosedIcon } from '@heroicons/react/24/solid';
 import Link from 'next/link';
 import Image from 'next/image';
 
@@ -20,9 +20,35 @@ export const NFTVerificationQuest: React.FC<NFTVerificationQuestProps> = ({
   const [isVerifying, setIsVerifying] = useState(false);
   const [verificationError, setVerificationError] = useState<string | null>(null);
   const [isVerified, setIsVerified] = useState(false);
-  const [remainingSupply, setRemainingSupply] = useState(5555);
+  const [totalSupply] = useState(10000);
+  const [mintedCount, setMintedCount] = useState(0);
+  const [remainingForUsers, setRemainingForUsers] = useState(5000);
+  const [mintPrice] = useState(0.005);
+  const [hasPromoCode, setHasPromoCode] = useState(false);
+  const [promoCode, setPromoCode] = useState('');
+  const [showPromoCodeInput, setShowPromoCodeInput] = useState(false);
 
-  // Mock verification for demo
+  // Mock fetch NFT data - in a real implementation this would call an API
+  useEffect(() => {
+    // Simulate API call to get mint status
+    const fetchMintStatus = async () => {
+      try {
+        // In production, replace with actual API call
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        
+        // Simulated data - in production this would be real data from your NFT contract
+        const randomMinted = Math.floor(Math.random() * 3500) + 1500; // Between 1500-5000
+        setMintedCount(randomMinted);
+        setRemainingForUsers(5000 - (randomMinted - 0)); // Assuming all minted so far are from user allocation
+      } catch (error) {
+        console.error("Error fetching mint status:", error);
+      }
+    };
+    
+    fetchMintStatus();
+  }, []);
+
+  // Mock verification for demo - will need to be replaced with actual NFT verification
   const verifyNFTOwnership = async () => {
     if (!connected || !publicKey) return;
 
@@ -30,7 +56,7 @@ export const NFTVerificationQuest: React.FC<NFTVerificationQuestProps> = ({
     setVerificationError(null);
 
     try {
-      // This would actually call your backend to verify NFT ownership
+      // This would actually call your backend to verify NFT ownership using Metaplex or another method
       // For now, we'll simulate the API call
       await new Promise(resolve => setTimeout(resolve, 1500));
       
@@ -60,11 +86,20 @@ export const NFTVerificationQuest: React.FC<NFTVerificationQuestProps> = ({
     }
   };
 
-  // Simulate checking remaining supply
-  useEffect(() => {
-    const randomRemaining = Math.floor(Math.random() * 3000) + 2000; // Between 2000-5000
-    setRemainingSupply(randomRemaining);
-  }, []);
+  const handlePromoCodeToggle = () => {
+    setShowPromoCodeInput(!showPromoCodeInput);
+  };
+
+  const applyPromoCode = () => {
+    // In production, this would validate against a real API
+    // For demo, we'll accept any code with "SOLQUEST" in it
+    if (promoCode.includes("SOLQUEST")) {
+      setHasPromoCode(true);
+      setVerificationError(null);
+    } else {
+      setVerificationError("Invalid promo code. Please try again.");
+    }
+  };
 
   if (!connected || !publicKey) {
     return (
@@ -96,7 +131,7 @@ export const NFTVerificationQuest: React.FC<NFTVerificationQuestProps> = ({
           <div className="bg-blue-900/20 border border-blue-800/50 rounded-lg p-4">
             <p className="text-gray-300 mb-3">
               In this quest, you'll mint one of our exclusive SolQuest OG NFTs and verify ownership.
-              Only 5,555 of these NFTs will ever exist, giving you special benefits in the SolQuest ecosystem.
+              This limited edition collection has only 10,000 NFTs, with special benefits in the SolQuest ecosystem.
             </p>
             
             <div className="flex items-center gap-2 mt-3">
@@ -107,7 +142,7 @@ export const NFTVerificationQuest: React.FC<NFTVerificationQuestProps> = ({
                     <li>+10% XP boost on all quests</li>
                     <li>Access to exclusive quests and events</li>
                     <li>Early access to new features</li>
-                    <li>Limited edition collectible (only 5,555 available)</li>
+                    <li>Limited edition collectible (only 10,000 available)</li>
                   </ul>
                 </p>
               </div>
@@ -132,9 +167,67 @@ export const NFTVerificationQuest: React.FC<NFTVerificationQuestProps> = ({
               <h3 className="text-xl font-bold text-white mb-2">SolQuest OG NFT</h3>
               <p className="text-gray-300 mb-3">Mint your exclusive OG NFT to receive permanent benefits.</p>
               
-              <div className="bg-purple-900/30 border border-purple-500/30 rounded-lg px-3 py-2 mb-3 flex justify-between">
-                <span className="text-gray-300">Remaining</span>
-                <span className="text-white font-bold">{remainingSupply}/5555</span>
+              <div className="bg-purple-900/30 border border-purple-500/30 rounded-lg px-4 py-3 mb-3">
+                <div className="flex justify-between mb-1">
+                  <span className="text-gray-300">Total supply</span>
+                  <span className="text-white font-bold">{totalSupply.toLocaleString()}</span>
+                </div>
+                <div className="flex justify-between mb-1">
+                  <span className="text-gray-300">Minted so far</span>
+                  <span className="text-white font-bold">{mintedCount.toLocaleString()}</span>
+                </div>
+                <div className="flex justify-between mb-1">
+                  <span className="text-gray-300">Available for users</span>
+                  <span className="text-white font-bold">{remainingForUsers.toLocaleString()}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-gray-300">Reserved for giveaways</span>
+                  <span className="text-white font-bold">5,000</span>
+                </div>
+              </div>
+              
+              <div className="bg-blue-900/30 border border-blue-500/30 rounded-lg p-3 mb-4">
+                <div className="flex justify-between items-center">
+                  <span className="text-gray-300">Price</span>
+                  <div>
+                    {hasPromoCode ? (
+                      <div className="flex items-center gap-2">
+                        <span className="line-through text-gray-500">{mintPrice} SOL</span>
+                        <span className="text-green-400 font-bold">FREE</span>
+                      </div>
+                    ) : (
+                      <span className="text-white font-bold">{mintPrice} SOL</span>
+                    )}
+                  </div>
+                </div>
+                
+                {/* Promo code section */}
+                <div className="mt-2">
+                  <button 
+                    onClick={handlePromoCodeToggle}
+                    className="text-blue-400 hover:text-blue-300 text-xs flex items-center"
+                  >
+                    {showPromoCodeInput ? 'Hide promo code' : 'Have a promo code?'}
+                  </button>
+                  
+                  {showPromoCodeInput && (
+                    <div className="mt-2 flex items-center gap-2">
+                      <input 
+                        type="text" 
+                        value={promoCode}
+                        onChange={(e) => setPromoCode(e.target.value)}
+                        placeholder="Enter promo code"
+                        className="bg-gray-900 border border-gray-700 text-white text-xs rounded-md px-2 py-1 flex-grow"
+                      />
+                      <button 
+                        onClick={applyPromoCode}
+                        className="bg-blue-600 hover:bg-blue-700 text-white text-xs py-1 px-2 rounded-md"
+                      >
+                        Apply
+                      </button>
+                    </div>
+                  )}
+                </div>
               </div>
               
               <div className="flex flex-col sm:flex-row gap-3">
@@ -144,7 +237,7 @@ export const NFTVerificationQuest: React.FC<NFTVerificationQuestProps> = ({
                   className="bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white font-medium py-3 px-6 rounded-lg flex items-center justify-center gap-1"
                 >
                   <ArrowTopRightOnSquareIcon className="w-4 h-4" />
-                  Mint NFT
+                  Mint NFT {hasPromoCode && <span className="ml-1 text-xs bg-green-500 text-white px-1 rounded">FREE</span>}
                 </Link>
                 
                 <button
@@ -175,10 +268,26 @@ export const NFTVerificationQuest: React.FC<NFTVerificationQuestProps> = ({
             <h3 className="font-medium text-white mb-2">How to complete this quest:</h3>
             <ol className="list-decimal list-inside space-y-2 text-gray-300">
               <li>Click the "Mint NFT" button to go to the minting page</li>
-              <li>Follow the instructions to mint your SolQuest OG NFT</li>
+              <li>Connect your wallet and pay {hasPromoCode ? 'nothing (free with promo code)' : `${mintPrice} SOL`}</li>
+              <li>Confirm the transaction in your wallet</li>
               <li>Return to this page and click "Verify Ownership"</li>
               <li>Once verified, you'll receive {xpReward} XP</li>
             </ol>
+          </div>
+
+          <div className="bg-slate-900/50 border border-slate-700/50 rounded-lg p-4">
+            <h3 className="font-medium text-white mb-2 flex items-center">
+              <LockClosedIcon className="w-4 h-4 mr-1.5 text-slate-400" />
+              NFT Collection Details:
+            </h3>
+            <div className="space-y-2 text-gray-300 text-sm">
+              <p>• Collection Name: SolQuest OG NFTs</p>
+              <p>• Network: Solana</p>
+              <p>• Total Supply: 10,000</p>
+              <p>• Allocation: 5,000 for community mints, 5,000 for giveaways</p>
+              <p>• Mint Price: {mintPrice} SOL (Free with promo codes for special communities)</p>
+              <p>• Utility: Platform benefits, XP boosts, exclusive quests</p>
+            </div>
           </div>
         </div>
       )}
