@@ -1,52 +1,60 @@
-import React from 'react';
+import Image from 'next/image';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import styles from './OGNftCard.module.css';
 
-const OGNftCard: React.FC = () => {
-    return (
-        <div className={styles.nftCard} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'flex-start', width: 480, height: 320, background: 'rgba(20,20,40,0.7)', borderRadius: 24, padding: 0, position: 'relative', boxShadow: '0 8px 40px 0 rgba(151,71,255,0.18)' }}>
-            {/* Badges Row */}
-            <div style={{ position: 'absolute', top: 18, left: 18, display: 'flex', gap: 12, zIndex: 2 }}>
-                <span style={{ background: 'linear-gradient(90deg, #00FFB3 60%, #4a9be2 100%)', color: '#121212', fontWeight: 700, fontSize: 15, borderRadius: 8, padding: '6px 16px', boxShadow: '0 2px 8px rgba(0,255,179,0.12)' }}>+10% SOL</span>
-                <span style={{ background: 'linear-gradient(90deg, #9747FF 60%, #ffb347 100%)', color: '#fff', fontWeight: 700, fontSize: 15, borderRadius: 8, padding: '6px 16px', boxShadow: '0 2px 8px rgba(151,71,255,0.12)' }}>+10% XP</span>
-            </div>
-            
-            {/* Supply Badge */}
-            <div style={{ position: 'absolute', top: 18, right: 18, zIndex: 2 }}>
-                <span style={{ background: 'linear-gradient(90deg, #FF6B00 60%, #FF9A00 100%)', color: '#fff', fontWeight: 700, fontSize: 15, borderRadius: 8, padding: '6px 16px', boxShadow: '0 2px 8px rgba(255,107,0,0.12)' }}>10,000 Supply</span>
-            </div>
+// In production, replace with actual collection symbols and URLs
+const MAGIC_EDEN_COLLECTION_URL = "https://magiceden.io/collections/solquestio-og-nft";
 
-            {/* Price Badge */}
-            <div style={{ position: 'absolute', top: 60, right: 18, zIndex: 2 }}>
-                <span style={{ background: 'linear-gradient(90deg, #14F195 60%, #00B2FF 100%)', color: '#121212', fontWeight: 700, fontSize: 15, borderRadius: 8, padding: '6px 16px', boxShadow: '0 2px 8px rgba(20,241,149,0.12)' }}>0.005 SOL</span>
-            </div>
+const OGNftCard = () => {
+    const [isLoaded, setIsLoaded] = useState(false);
+
+    // Image onLoad handler
+    const handleImageLoad = () => {
+        setIsLoaded(true);
+    };
+
+    return (
+        <div className="w-full aspect-square relative overflow-hidden rounded-xl">
+            {/* Backdrop loading shimmer - visible until image loads */}
+            <div className={`absolute inset-0 bg-gradient-to-r from-indigo-900/30 to-purple-900/30 animate-pulse ${isLoaded ? 'opacity-0' : 'opacity-100'} transition-opacity duration-300`}></div>
             
-            <div style={{ width: '100%', display: 'flex', justifyContent: 'center', alignItems: 'center', flex: 1, height: 240, marginTop: 12 }}>
-                <video
-                    src="/OGNFT.mp4"
-                    width="96%"
-                    height="96%"
-                    autoPlay
-                    loop
-                    muted
-                    playsInline
-                    style={{
-                        borderRadius: '18px',
-                        boxShadow: '0 0 40px 10px rgba(151,71,255,0.25)',
-                        background: '#000',
-                        width: '96%',
-                        height: '96%',
-                        objectFit: 'cover',
-                        maxHeight: 240,
-                        maxWidth: 440,
-                        display: 'block',
-                    }}
+            {/* NFT Image */}
+            <div className="relative w-full h-full">
+                <Image
+                    src="/images/nft/og-nft-preview.jpg"
+                    alt="SolQuestio OG NFT"
+                    layout="fill"
+                    objectFit="cover"
+                    className="rounded-xl transition-all duration-500 hover:scale-105"
+                    onLoad={handleImageLoad}
+                    priority
                 />
-            </div>
-            <div style={{ width: '100%', display: 'flex', justifyContent: 'center', position: 'absolute', bottom: 20, left: 0 }}>
-                <Link href="/claim-og-nft" className={styles.mintButton} style={{ fontSize: 18, padding: '14px 48px', borderRadius: 10 }}>
-                    Mint OG NFT - Only 0.005 SOL!
-                </Link>
+                
+                {/* NFT details overlay */}
+                <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 via-black/50 to-transparent p-4">
+                    <div className="flex flex-col">
+                        <h3 className="text-lg font-bold text-white">SolQuestio OG</h3>
+                        <div className="flex items-center mt-1">
+                            <span className="text-sm text-gray-300 mr-2">Collection of 10,000</span>
+                            <img src="/images/solana-logo.svg" alt="Solana" className="h-4 w-4" />
+                        </div>
+                    </div>
+                </div>
+                
+                {/* Magic Eden badge */}
+                <div className="absolute top-0 right-0 m-2">
+                    <Link href={MAGIC_EDEN_COLLECTION_URL} passHref>
+                        <a target="_blank" rel="noopener noreferrer" className="block">
+                            <div className="bg-purple-600 rounded-full px-2 py-1 text-xs font-medium text-white flex items-center shadow-lg hover:bg-purple-700 transition-colors">
+                                <span className="mr-1">View on</span>
+                                <svg className="h-3 w-3" viewBox="0 0 25 25" fill="white" xmlns="http://www.w3.org/2000/svg">
+                                    <path d="M12.5 0L0 21.875H25L12.5 0ZM12.5 10.9375L8.59375 17.5H16.4062L12.5 10.9375Z"/>
+                                </svg>
+                            </div>
+                        </a>
+                    </Link>
+                </div>
             </div>
         </div>
     );
