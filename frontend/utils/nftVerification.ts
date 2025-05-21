@@ -149,4 +149,49 @@ export function simulateNFTOwnership(walletAddress: string): void {
  */
 export function clearNFTOwnership(walletAddress: string): void {
   localStorage.removeItem(`has_solquestio_nft_${walletAddress}`);
+}
+
+/**
+ * Checks if a user is eligible to mint the NFT based on requirements
+ * For now, the requirement is having followed our Twitter account
+ * 
+ * @param userId The id of the user
+ * @returns Promise with eligibility status and requirements
+ */
+export async function checkMintEligibility(userId: string): Promise<{
+  eligible: boolean;
+  requirements: {
+    twitterFollowed: boolean;
+  };
+  message: string;
+}> {
+  try {
+    // Call the backend API to check eligibility
+    const response = await fetch('/api/nft?action=check-eligibility', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ userId }),
+    });
+    
+    const data = await response.json();
+    
+    if (!response.ok) {
+      throw new Error(data.error || 'Failed to check eligibility');
+    }
+    
+    return data;
+  } catch (error) {
+    console.error("Error checking mint eligibility:", error);
+    
+    // Return default values if there's an error
+    return {
+      eligible: false,
+      requirements: {
+        twitterFollowed: false,
+      },
+      message: 'Failed to check eligibility. Please try again later.'
+    };
+  }
 } 

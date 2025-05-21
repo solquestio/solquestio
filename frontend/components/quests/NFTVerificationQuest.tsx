@@ -23,10 +23,11 @@ export const NFTVerificationQuest: React.FC<NFTVerificationQuestProps> = ({
   const [totalSupply] = useState(10000);
   const [mintedCount, setMintedCount] = useState(0);
   const [remainingForUsers, setRemainingForUsers] = useState(5000);
-  const [mintPrice] = useState(0.005);
+  const [mintPrice] = useState(0);
   const [hasPromoCode, setHasPromoCode] = useState(false);
   const [promoCode, setPromoCode] = useState('');
   const [showPromoCodeInput, setShowPromoCodeInput] = useState(false);
+  const [twitterFollowed, setTwitterFollowed] = useState(false);
 
   // Mock fetch NFT data - in a real implementation this would call an API
   useEffect(() => {
@@ -190,43 +191,22 @@ export const NFTVerificationQuest: React.FC<NFTVerificationQuestProps> = ({
                 <div className="flex justify-between items-center">
                   <span className="text-gray-300">Price</span>
                   <div>
-                    {hasPromoCode ? (
-                      <div className="flex items-center gap-2">
-                        <span className="line-through text-gray-500">{mintPrice} SOL</span>
-                        <span className="text-green-400 font-bold">FREE</span>
-                      </div>
-                    ) : (
-                      <span className="text-white font-bold">{mintPrice} SOL</span>
-                    )}
+                    <span className="text-green-400 font-bold">FREE</span>
                   </div>
                 </div>
                 
-                {/* Promo code section */}
-                <div className="mt-2">
-                  <button 
-                    onClick={handlePromoCodeToggle}
-                    className="text-blue-400 hover:text-blue-300 text-xs flex items-center"
+                <div className="flex justify-between items-center mt-2">
+                  <span className="text-gray-300">Requirements</span>
+                  <a 
+                    href="https://x.com/SolQuestio" 
+                    target="_blank"
+                    rel="noopener noreferrer" 
+                    className="flex items-center text-blue-400 hover:text-blue-300 text-sm"
+                    onClick={() => setTwitterFollowed(true)}
                   >
-                    {showPromoCodeInput ? 'Hide promo code' : 'Have a promo code?'}
-                  </button>
-                  
-                  {showPromoCodeInput && (
-                    <div className="mt-2 flex items-center gap-2">
-                      <input 
-                        type="text" 
-                        value={promoCode}
-                        onChange={(e) => setPromoCode(e.target.value)}
-                        placeholder="Enter promo code"
-                        className="bg-gray-900 border border-gray-700 text-white text-xs rounded-md px-2 py-1 flex-grow"
-                      />
-                      <button 
-                        onClick={applyPromoCode}
-                        className="bg-blue-600 hover:bg-blue-700 text-white text-xs py-1 px-2 rounded-md"
-                      >
-                        Apply
-                      </button>
-                    </div>
-                  )}
+                    Follow on X (Twitter)
+                    <ArrowTopRightOnSquareIcon className="w-3 h-3 ml-1" />
+                  </a>
                 </div>
               </div>
               
@@ -237,7 +217,7 @@ export const NFTVerificationQuest: React.FC<NFTVerificationQuestProps> = ({
                   className="bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white font-medium py-3 px-6 rounded-lg flex items-center justify-center gap-1"
                 >
                   <ArrowTopRightOnSquareIcon className="w-4 h-4" />
-                  Mint NFT {hasPromoCode && <span className="ml-1 text-xs bg-green-500 text-white px-1 rounded">FREE</span>}
+                  Mint NFT
                 </Link>
                 
                 <button
@@ -267,8 +247,9 @@ export const NFTVerificationQuest: React.FC<NFTVerificationQuestProps> = ({
           <div className="bg-amber-900/20 border border-amber-700/30 rounded-lg p-4">
             <h3 className="font-medium text-white mb-2">How to complete this quest:</h3>
             <ol className="list-decimal list-inside space-y-2 text-gray-300">
+              <li>Follow <a href="https://x.com/SolQuestio" target="_blank" rel="noopener noreferrer" className="text-blue-400 hover:text-blue-300">@SolQuestio on X (Twitter)</a></li>
               <li>Click the "Mint NFT" button to go to the minting page</li>
-              <li>Connect your wallet and pay {hasPromoCode ? 'nothing (free with promo code)' : `${mintPrice} SOL`}</li>
+              <li>Connect your wallet to mint for FREE</li>
               <li>Confirm the transaction in your wallet</li>
               <li>Return to this page and click "Verify Ownership"</li>
               <li>Once verified, you'll receive {xpReward} XP</li>
@@ -285,7 +266,8 @@ export const NFTVerificationQuest: React.FC<NFTVerificationQuestProps> = ({
               <p>• Network: Solana</p>
               <p>• Total Supply: 10,000</p>
               <p>• Allocation: 5,000 for community mints, 5,000 for giveaways</p>
-              <p>• Mint Price: {mintPrice} SOL (Free with promo codes for special communities)</p>
+              <p>• Mint Price: FREE</p>
+              <p>• Requirements: Follow <a href="https://x.com/SolQuestio" target="_blank" rel="noopener noreferrer" className="text-blue-400 hover:underline">@SolQuestio on X</a></p>
               <p>• Utility: Platform benefits, XP boosts, exclusive quests</p>
             </div>
           </div>
