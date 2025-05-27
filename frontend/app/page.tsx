@@ -405,9 +405,9 @@ export default function HomePage() {
   }
 
   return (
-    <div className="w-full max-w-6xl mx-auto px-4 md:px-8 py-8">
+    <div className="w-full max-w-6xl mx-auto px-4 md:px-8 py-4">
       {/* Wallet and Auth Section */}
-      <div className="flex justify-end mb-6">
+      <div className="flex justify-end mb-3">
         {isLoadingAuth ? (
           <div className="flex items-center">
             <ArrowPathIcon className="animate-spin h-5 w-5 mr-2 text-white" />
@@ -440,11 +440,11 @@ export default function HomePage() {
       </div>
       
       {authError && (
-        <p className="mt-4 text-red-400 text-sm">{authError}</p>
+        <p className="mt-2 text-red-400 text-sm">{authError}</p>
       )}
 
       {/* Top Section: OG NFT and Leaderboard */}
-      <div className="grid md:grid-cols-3 gap-3 mb-6">
+      <div className="grid md:grid-cols-3 gap-3 mb-4">
         {/* OG NFT Card (2/3 width on md screens) */}
         <div className="md:col-span-2 bg-gray-800/20 rounded-sm overflow-visible shadow-lg pb-4">
           <OGNftCardDynamic />
@@ -546,9 +546,9 @@ export default function HomePage() {
 
       {/* Learning Paths Section */}
       {/* Production Paths Section */}
-      <section className="py-12 px-4">
+      <section className="py-6 px-4">
         <div className="container mx-auto">
-          <h2 className="text-2xl font-bold text-white mb-8 flex items-center gap-2">
+          <h2 className="text-2xl font-bold text-white mb-6 flex items-center gap-2">
             <SparklesIcon className="h-6 w-6 text-green-400" />
             Production Ready Learning Paths
           </h2>
