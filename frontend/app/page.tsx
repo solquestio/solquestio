@@ -221,16 +221,16 @@ const renderLearningPath = (path: LearningPath) => {
   const isProduction = !path.isDemo;
 
   return (
-    <div key={path.id} className={`bg-dark-card/80 rounded-lg overflow-hidden border ${isProduction ? 'border-purple-500/30 hover:border-purple-500/70' : 'border-white/5 hover:border-purple-500/30'} transition-all duration-300 shadow-lg hover:shadow-purple-500/20`}>
+    <div key={path.id} className={`bg-dark-card/80 rounded-xl overflow-hidden border ${isProduction ? 'border-purple-500/30 hover:border-purple-500/70' : 'border-white/5 hover:border-purple-500/30'} transition-all duration-300 shadow-xl hover:shadow-purple-500/20`}>
       <div className="relative">
         {path.logoUrl && (
-          <div className="absolute top-1.5 left-1.5 z-10">
-            <div className={`w-6 h-6 rounded-full ${isProduction ? 'bg-white/20 backdrop-blur-md shadow-lg shadow-purple-500/20' : 'bg-white/10 backdrop-blur-md'} p-0.5 flex items-center justify-center border ${isProduction ? 'border-purple-500/30' : 'border-white/20'}`}>
+          <div className="absolute top-3 left-3 z-10">
+            <div className={`w-12 h-12 rounded-full ${isProduction ? 'bg-white/20 backdrop-blur-md shadow-lg shadow-purple-500/20' : 'bg-white/10 backdrop-blur-md'} p-1 flex items-center justify-center border ${isProduction ? 'border-purple-500/30' : 'border-white/20'}`}>
               <Image 
                 src={path.logoUrl} 
                 alt={path.title} 
-                width={16} 
-                height={16}
+                width={32} 
+                height={32}
                 className={`object-contain ${isProduction ? 'drop-shadow-glow' : ''}`}
               />
             </div>
@@ -239,47 +239,47 @@ const renderLearningPath = (path: LearningPath) => {
         
         {/* Demo Badge */}
         {isDemo && (
-          <div className="absolute top-1.5 right-1.5 z-10 px-1.5 py-0.5 text-xs font-bold bg-amber-500 text-black rounded shadow-lg">
+          <div className="absolute top-3 right-3 z-10 px-3 py-1 text-sm font-bold bg-amber-500 text-black rounded shadow-lg">
             DEMO
           </div>
         )}
         
         {/* Production Badge */}
         {isProduction && (
-          <div className="absolute top-1.5 right-1.5 z-10 px-1.5 py-0.5 text-xs font-bold bg-gradient-to-r from-green-500 to-blue-500 text-white rounded shadow-lg">
+          <div className="absolute top-3 right-3 z-10 px-3 py-1 text-sm font-bold bg-gradient-to-r from-green-500 to-blue-500 text-white rounded shadow-lg">
             PRODUCTION
           </div>
         )}
 
-        <div className={`h-16 ${isProduction ? 'bg-gradient-to-br from-purple-700/80 to-blue-700/80' : 'bg-gradient-to-br from-purple-900/60 to-blue-900/60'} flex items-center justify-center p-2 relative overflow-hidden`}>
+        <div className={`h-32 ${isProduction ? 'bg-gradient-to-br from-purple-700/80 to-blue-700/80' : 'bg-gradient-to-br from-purple-900/60 to-blue-900/60'} flex items-center justify-center p-4 relative overflow-hidden`}>
           <div className={`absolute inset-0 ${isProduction ? 'bg-[radial-gradient(circle_at_center,rgba(168,85,247,0.15),rgba(59,130,246,0.05))]' : 'bg-gradient-to-br from-purple-500/10 to-blue-500/10'} z-0`}></div>
           
           {isProduction && (
             <div className="absolute inset-0 flex items-center justify-center">
-              <div className="w-12 h-12 rounded-full bg-purple-500/10 animate-pulse-slow"></div>
+              <div className="w-24 h-24 rounded-full bg-purple-500/10 animate-pulse-slow"></div>
             </div>
           )}
           
-          <span className={`text-sm font-bold ${isProduction ? 'text-white' : 'text-white/90'} z-10 text-center drop-shadow-md`}>{path.shortTitle}</span>
+          <span className={`text-lg font-bold ${isProduction ? 'text-white' : 'text-white/90'} z-10 text-center drop-shadow-md`}>{path.shortTitle}</span>
         </div>
       </div>
       
-      <div className="p-2">
-        <h2 className="text-sm font-bold text-white mb-1">{path.title}</h2>
-        <p className="text-gray-400 text-xs mb-2 h-6 line-clamp-2">{path.description}</p>
+      <div className="p-4">
+        <h2 className="text-lg font-bold text-white mb-2">{path.title}</h2>
+        <p className="text-gray-400 text-sm mb-3 h-10 line-clamp-2">{path.description}</p>
         
-        <div className="flex flex-wrap gap-1 mb-2">
-          {path.rewardTags?.slice(0, 2).map((tag, index) => (
+        <div className="flex flex-wrap gap-2 mb-3">
+          {path.rewardTags?.slice(0, 3).map((tag, index) => (
             <span
               key={index}
-              className={`text-xs px-1 py-0.5 rounded-full font-medium flex items-center gap-1
+              className={`text-sm px-2 py-1 rounded-full font-medium flex items-center gap-1
                 ${tag.variant === 'ethereum' ? 'bg-blue-500/20 text-blue-300 border border-blue-500/30' :
                 tag.variant === 'points' ? 'bg-yellow-500/20 text-yellow-300 border border-yellow-500/30' :
                 'bg-purple-500/20 text-purple-300 border border-purple-500/30'}`
               }
             >
               {tag.icon && (
-                <svg className="w-2 h-2" viewBox="0 0 24 24" fill="currentColor">
+                <svg className="w-3 h-3" viewBox="0 0 24 24" fill="currentColor">
                   <path d={tag.icon} />
                 </svg>
               )}
@@ -289,17 +289,17 @@ const renderLearningPath = (path: LearningPath) => {
         </div>
         
         <div className="flex justify-between items-center">
-          <div className="flex gap-2">
-            <div className="text-xs text-gray-400">
+          <div className="flex gap-4">
+            <div className="text-sm text-gray-400">
               <span className={`${isProduction ? 'text-yellow-300' : 'text-white'} font-semibold`}>{path.questCount}</span> Quests
             </div>
-            <div className="text-xs text-gray-400">
+            <div className="text-sm text-gray-400">
               <span className={`${isProduction ? 'text-yellow-300' : 'text-white'} font-semibold`}>{path.userCount}</span> Users
             </div>
           </div>
           <Link href={`/paths/${path.pathSlug}`}>
-            <button className={`px-2 py-1 ${isProduction ? 'bg-gradient-to-r from-purple-600 to-blue-600 shadow-md shadow-purple-700/20' : 'bg-gradient-to-r from-blue-500 to-purple-600'} text-white text-xs rounded font-medium flex items-center gap-1 hover:opacity-90 transition-opacity`}>
-              Start <ArrowRightIcon className="w-2.5 h-2.5 ml-0.5" />
+            <button className={`px-4 py-2 ${isProduction ? 'bg-gradient-to-r from-purple-600 to-blue-600 shadow-md shadow-purple-700/20' : 'bg-gradient-to-r from-blue-500 to-purple-600'} text-white text-sm rounded font-medium flex items-center gap-1 hover:opacity-90 transition-opacity`}>
+              Start Learning <ArrowRightIcon className="w-4 h-4 ml-1" />
             </button>
           </Link>
         </div>
@@ -446,15 +446,15 @@ export default function HomePage() {
       {/* Top Section: OG NFT and Leaderboard */}
       <div className="grid md:grid-cols-3 gap-3 mb-6">
         {/* OG NFT Card (2/3 width on md screens) */}
-        <div className="md:col-span-2 bg-gray-800/20 rounded-lg overflow-visible shadow-lg pb-4">
+        <div className="md:col-span-2 bg-gray-800/20 rounded-sm overflow-visible shadow-lg pb-4">
           <OGNftCardDynamic />
         </div>
         
         {/* Leaderboard (1/3 width on md screens) */}
-        <div className="md:col-span-1 bg-gray-800/20 border border-gray-700/50 p-2 rounded-lg shadow-lg">
+        <div className="md:col-span-1 bg-gray-800/20 border border-gray-700/50 p-2 rounded-sm shadow-lg">
           <div className="flex items-center justify-between mb-1">
-            <h2 className="text-sm font-semibold text-gray-100 flex items-center gap-1">
-              <TrophyIcon className="w-3 h-3 text-yellow-400" />
+            <h2 className="text-base font-semibold text-gray-100 flex items-center gap-1">
+              <TrophyIcon className="w-4 h-4 text-yellow-400" />
               Leaderboard
             </h2>
             <button 
@@ -463,30 +463,30 @@ export default function HomePage() {
               className="p-0.5 text-gray-400 hover:text-white transition-colors disabled:opacity-50"
               title="Refresh Leaderboard"
             >
-              <ArrowPathIcon className={`w-2.5 h-2.5 ${isRefreshing ? 'animate-spin' : ''}`} />
+              <ArrowPathIcon className={`w-3 h-3 ${isRefreshing ? 'animate-spin' : ''}`} />
             </button>
           </div>
           
           {isLoadingLeaderboard ? (
             <div className="space-y-1 animate-pulse">
               {[...Array(3)].map((_, i) => (
-                <div key={i} className="flex items-center justify-between p-1 bg-gray-700/30 rounded">
-                  <div className="flex items-center space-x-1">
-                    <div className="w-3 h-3 bg-gray-600 rounded"></div>
-                    <div className="w-4 h-4 bg-gray-600 rounded-full"></div>
-                    <div className="h-2 w-12 bg-gray-600 rounded"></div>
+                <div key={i} className="flex items-center justify-between p-1.5 bg-gray-700/30 rounded">
+                  <div className="flex items-center space-x-1.5">
+                    <div className="w-4 h-4 bg-gray-600 rounded"></div>
+                    <div className="w-5 h-5 bg-gray-600 rounded-full"></div>
+                    <div className="h-3 w-16 bg-gray-600 rounded"></div>
                   </div>
-                  <div className="flex items-center space-x-1">
-                    <div className="h-2 w-6 bg-gray-600 rounded"></div>
-                    <div className="h-2 w-8 bg-gray-600 rounded"></div>
+                  <div className="flex items-center space-x-1.5">
+                    <div className="h-3 w-8 bg-gray-600 rounded"></div>
+                    <div className="h-3 w-10 bg-gray-600 rounded"></div>
                   </div>
                 </div>
               ))}
             </div>
           ) : leaderboardError ? (
-            <p className="text-red-400 text-xs text-center py-1">Error: {leaderboardError}</p>
+            <p className="text-red-400 text-sm text-center py-1">Error: {leaderboardError}</p>
           ) : topPlayers.length > 0 ? (
-            <div className="space-y-0.5">
+            <div className="space-y-1">
               {topPlayers.map((player, index) => {
                 const rank = player.rank ?? index + 1;
                 const rankClasses = getRankClasses(rank);
@@ -499,37 +499,37 @@ export default function HomePage() {
                 return (
                   <div 
                     key={player._id} 
-                    className={`flex items-center justify-between p-1 ${gradientBg} hover:bg-gray-700/40 transition-colors duration-150 rounded`}
+                    className={`flex items-center justify-between p-1.5 ${gradientBg} hover:bg-gray-700/40 transition-colors duration-150 rounded`}
                   >
-                    <div className="flex items-center space-x-1 flex-grow min-w-0">
-                      <span className={`flex-shrink-0 w-3 h-3 flex items-center justify-center text-xs font-bold rounded ${rankClasses}`}>
+                    <div className="flex items-center space-x-1.5 flex-grow min-w-0">
+                      <span className={`flex-shrink-0 w-4 h-4 flex items-center justify-center text-xs font-bold rounded ${rankClasses}`}>
                         {rank}
                       </span>
-                      <div className="flex-shrink-0 w-4 h-4 rounded-full bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center text-white font-semibold text-xs">
+                      <div className="flex-shrink-0 w-5 h-5 rounded-full bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center text-white font-semibold text-xs">
                         {player.username ? player.username.charAt(0).toUpperCase() : truncatedAddress.charAt(0).toUpperCase()}
                       </div>
                       <div className="min-w-0">
-                        <p className="text-xs font-medium text-gray-100 truncate">
+                        <p className="text-sm font-medium text-gray-100 truncate">
                           {player.username || truncatedAddress}
                         </p>
                         {player.username && (
-                          <p className="text-[9px] text-gray-400 font-mono truncate">
+                          <p className="text-xs text-gray-400 font-mono truncate">
                             {truncatedAddress}
                           </p>
                         )}
                       </div>
                     </div>
                     
-                    <div className="flex items-center space-x-1 flex-shrink-0">
+                    <div className="flex items-center space-x-1.5 flex-shrink-0">
                       {/* Boost Badges */}
                       {(player.xpBoost && player.xpBoost > 1) && (
-                        <span className="flex items-center text-[9px] font-semibold bg-black/50 text-purple-300 px-0.5 py-0.5 rounded border border-purple-500/50" title={`XP Boost x${player.xpBoost.toFixed(1)}`}>
-                          <SparklesIcon className="h-2 w-2 mr-0.5"/> x{player.xpBoost.toFixed(1)}
+                        <span className="flex items-center text-xs font-semibold bg-black/50 text-purple-300 px-1 py-0.5 rounded border border-purple-500/50" title={`XP Boost x${player.xpBoost.toFixed(1)}`}>
+                          <SparklesIcon className="h-2.5 w-2.5 mr-0.5"/> x{player.xpBoost.toFixed(1)}
                         </span>
                       )}
                       {/* Score (XP) */}
-                      <div className="bg-gradient-to-r from-purple-600/70 to-blue-600/70 text-white px-1 py-0.5 rounded text-center min-w-[30px]">
-                        <span className="text-[9px] font-bold">
+                      <div className="bg-gradient-to-r from-purple-600/70 to-blue-600/70 text-white px-1.5 py-0.5 rounded text-center min-w-[35px]">
+                        <span className="text-xs font-bold">
                           {player.xp} XP
                         </span>
                       </div>
@@ -539,7 +539,7 @@ export default function HomePage() {
               })}
             </div>
           ) : (
-            <p className="text-gray-500 text-xs italic text-center py-2">Be the first on the leaderboard!</p>
+            <p className="text-gray-500 text-sm italic text-center py-2">Be the first on the leaderboard!</p>
           )}
         </div>
       </div>
@@ -553,7 +553,7 @@ export default function HomePage() {
             Production Ready Learning Paths
           </h2>
           
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {productionPaths.map(path => renderLearningPath(path))}
           </div>
         </div>
@@ -584,7 +584,7 @@ export default function HomePage() {
             <p>Failed to load learning paths: {pathError}</p>
           </div>
         ) : demoPaths.length > 0 ? (
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {demoPaths.map((path) => renderLearningPath(path))}
           </div>
         ) : (

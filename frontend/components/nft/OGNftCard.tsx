@@ -15,7 +15,7 @@ const OGNftCard = () => {
     };
 
     return (
-        <div className="w-full aspect-video relative overflow-hidden rounded-lg">
+        <div className="w-full aspect-video relative overflow-hidden rounded-sm">
             {/* Backdrop loading shimmer - visible until image loads */}
             <div className={`absolute inset-0 bg-gradient-to-r from-indigo-900/30 to-purple-900/30 animate-pulse ${isLoaded ? 'opacity-0' : 'opacity-100'} transition-opacity duration-300`}></div>
             
@@ -26,7 +26,7 @@ const OGNftCard = () => {
                     alt="SolQuestio OG NFT"
                     fill
                     style={{ objectFit: 'cover' }}
-                    className="rounded-lg transition-all duration-500 hover:scale-105"
+                    className="rounded-sm transition-all duration-500 hover:scale-105"
                     onLoad={handleImageLoad}
                     priority
                 />
@@ -45,7 +45,7 @@ const OGNftCard = () => {
                         {/* Mint Button */}
                         <div className="mt-1">
                             <Link href="/claim-og-nft" className="inline-block">
-                                <button className="bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white font-bold py-1 px-3 rounded transition-all duration-200 transform hover:scale-105 shadow-lg text-xs">
+                                <button className="bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white font-bold py-1 px-3 rounded-sm transition-all duration-200 transform hover:scale-105 shadow-lg text-xs">
                                     Mint FREE NFT
                                 </button>
                             </Link>
@@ -56,7 +56,7 @@ const OGNftCard = () => {
                 {/* Magic Eden badge */}
                 <div className="absolute top-0 right-0 m-1">
                     <Link href={MAGIC_EDEN_COLLECTION_URL} target="_blank" rel="noopener noreferrer" className="block">
-                        <div className="bg-purple-600 rounded-full px-1.5 py-0.5 text-xs font-medium text-white flex items-center shadow-lg hover:bg-purple-700 transition-colors">
+                        <div className="bg-purple-600 rounded-sm px-1.5 py-0.5 text-xs font-medium text-white flex items-center shadow-lg hover:bg-purple-700 transition-colors">
                             <span className="mr-0.5">View on</span>
                             <svg className="h-2.5 w-2.5" viewBox="0 0 25 25" fill="white" xmlns="http://www.w3.org/2000/svg">
                                 <path d="M12.5 0L0 21.875H25L12.5 0ZM12.5 10.9375L8.59375 17.5H16.4062L12.5 10.9375Z"/>
