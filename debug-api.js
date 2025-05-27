@@ -12,7 +12,7 @@ const ENDPOINTS = [
   '/api/utils?path=health',  // Health check
   '/api/debug',           // Debug info
   '/api/quests/paths',    // Learning paths
-  '/api/users?path=leaderboard&limit=3'  // Leaderboard
+  'ew'  // Leaderboard
 ];
 
 // Add colors for console output

@@ -59,72 +59,7 @@ const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:500
 
 // Define static learning paths
 const STATIC_LEARNING_PATHS: LearningPath[] = [
-  {
-    id: 'bitcoin-solana-path',
-    title: 'Bitcoin on Solana with Zeus Network',
-    shortTitle: 'Bitcoin on Solana',
-    description: "Become Satoshi Nakamoto on Solana through Zeus Network! Learn to build dApps using zBTC, the Solana native Bitcoin.",
-    questCount: 7,
-    difficulty: 'Intermediate',
-    pathSlug: 'bitcoin-solana',
-    totalXp: 2450,
-    isLocked: false,
-    graphicType: 'image',
-    imageUrl: '/zeusnetwork.ico',
-    logoUrl: '/zeusnetwork.ico',
-    bonusPoints: 2000,
-    userCount: '2K+',
-    isPathCompleted: false,
-    currentProgress: 0,
-    rewardTags: [{ text: '+2450 zBTC XP', variant: 'points' }, { text: '0.05 zBTC Prize Pool', variant: 'ethereum' }],
-    statusTextOverride: 'Become Satoshi on Solana!',
-    pathKey: 'bitcoinSolana',
-    isDemo: true
-  },
-  {
-    id: 'layerzero-path',
-    title: 'LayerZero V2 Omnichain Path',
-    shortTitle: 'LayerZero V2',
-    description: 'Master omnichain development! Learn to send messages, tokens, and build innovative cross-chain solutions on Solana using LayerZero V2.',
-    questCount: 7,
-    difficulty: 'Advanced',
-    pathSlug: 'layerzero',
-    totalXp: 2500,
-    isLocked: false,
-    graphicType: 'image',
-    imageUrl: '/layerzero.jpg',
-    logoUrl: '/layerzero.ico',
-    bonusPoints: 1500,
-    userCount: '5K',
-    isPathCompleted: false,
-    currentProgress: 0,
-    rewardTags: [{ text: '+2500 LZ XP', variant: 'points' }, { text: 'Omnichain Dev', variant: 'generic' }],
-    statusTextOverride: 'Become an Omnichain Pro!',
-    pathKey: 'layerZero',
-    isDemo: true
-  },
-  {
-    id: 'substreams-path',
-    title: 'The Graph Substreams on Solana',
-    shortTitle: 'Substreams',
-    description: 'Learn to index blockchain data with The Graph Substreams. Build powerful and efficient data pipelines for Solana dApps.',
-    questCount: 9,
-    difficulty: 'Intermediate',
-    pathSlug: 'substreams',
-    totalXp: 2150,
-    isLocked: false,
-    graphicType: 'image',
-    imageUrl: '/substreams.svg',
-    logoUrl: '/the-graph-grt-logo.svg',
-    bonusPoints: 1800,
-    userCount: '2K',
-    isPathCompleted: false,
-    currentProgress: 0,
-    rewardTags: [{ text: '+2150 XP', variant: 'points' }, { text: 'Hackathon Ready', variant: 'generic' }],
-    statusTextOverride: 'Prepare for Hackathon!',
-    pathKey: 'substreams',
-    isDemo: true
-  },
+  // MAIN PRODUCTION PATH - Featured first
   {
     id: 'solana-foundations',
     title: 'Solana Explorer Path',
@@ -150,6 +85,52 @@ const STATIC_LEARNING_PATHS: LearningPath[] = [
     statusTextOverride: 'Production Ready',
     pathKey: 'solanaExplorer',
     isDemo: false
+  },
+  
+  // DEMO/PREVIEW PATHS
+  {
+    id: 'substreams-path',
+    title: 'The Graph Substreams on Solana',
+    shortTitle: 'Substreams',
+    description: 'Learn to index blockchain data with The Graph Substreams. Build powerful and efficient data pipelines for Solana dApps.',
+    questCount: 9,
+    difficulty: 'Intermediate',
+    pathSlug: 'substreams',
+    totalXp: 2150,
+    isLocked: false,
+    graphicType: 'image',
+    imageUrl: '/substreams.svg',
+    logoUrl: '/the-graph-grt-logo.svg',
+    bonusPoints: 1800,
+    userCount: '2K',
+    isPathCompleted: false,
+    currentProgress: 0,
+    rewardTags: [{ text: '+2150 XP', variant: 'points' }, { text: 'Hackathon Ready', variant: 'generic' }],
+    statusTextOverride: 'Prepare for Hackathon!',
+    pathKey: 'substreams',
+    isDemo: true
+  },
+  {
+    id: 'layerzero-path',
+    title: 'LayerZero V2 Omnichain Path',
+    shortTitle: 'LayerZero V2',
+    description: 'Master omnichain development! Learn to send messages, tokens, and build innovative cross-chain solutions on Solana using LayerZero V2.',
+    questCount: 7,
+    difficulty: 'Advanced',
+    pathSlug: 'layerzero',
+    totalXp: 2500,
+    isLocked: false,
+    graphicType: 'image',
+    imageUrl: '/layerzero.jpg',
+    logoUrl: '/layerzero.ico',
+    bonusPoints: 1500,
+    userCount: '5K',
+    isPathCompleted: false,
+    currentProgress: 0,
+    rewardTags: [{ text: '+2500 LZ XP', variant: 'points' }, { text: 'Omnichain Dev', variant: 'generic' }],
+    statusTextOverride: 'Become an Omnichain Pro!',
+    pathKey: 'layerZero',
+    isDemo: true
   },
   {
     id: 'zk-compression-path',
@@ -194,6 +175,28 @@ const STATIC_LEARNING_PATHS: LearningPath[] = [
     statusTextOverride: 'Become a Multichain Pro!',
     pathKey: 'wormhole',
     isDemo: true
+  },
+  {
+    id: 'bitcoin-solana-path',
+    title: 'Bitcoin on Solana with Zeus Network',
+    shortTitle: 'Bitcoin on Solana',
+    description: "Become Satoshi Nakamoto on Solana through Zeus Network! Learn to build dApps using zBTC, the Solana native Bitcoin.",
+    questCount: 7,
+    difficulty: 'Intermediate',
+    pathSlug: 'bitcoin-solana',
+    totalXp: 2450,
+    isLocked: false,
+    graphicType: 'image',
+    imageUrl: '/zeusnetwork.ico',
+    logoUrl: '/zeusnetwork.ico',
+    bonusPoints: 2000,
+    userCount: '2K+',
+    isPathCompleted: false,
+    currentProgress: 0,
+    rewardTags: [{ text: '+2450 zBTC XP', variant: 'points' }, { text: '0.05 zBTC Prize Pool', variant: 'ethereum' }],
+    statusTextOverride: 'Become Satoshi on Solana!',
+    pathKey: 'bitcoinSolana',
+    isDemo: true
   }
 ];
 
@@ -221,13 +224,13 @@ const renderLearningPath = (path: LearningPath) => {
     <div key={path.id} className={`bg-dark-card/80 rounded-2xl overflow-hidden border ${isProduction ? 'border-purple-500/30 hover:border-purple-500/70' : 'border-white/5 hover:border-purple-500/30'} transition-all duration-300 shadow-xl hover:shadow-purple-500/20`}>
       <div className="relative">
         {path.logoUrl && (
-          <div className="absolute top-4 left-4 z-10">
-            <div className={`w-16 h-16 rounded-full ${isProduction ? 'bg-white/20 backdrop-blur-md shadow-lg shadow-purple-500/20' : 'bg-white/10 backdrop-blur-md'} p-1.5 flex items-center justify-center border ${isProduction ? 'border-purple-500/30' : 'border-white/20'}`}>
+          <div className="absolute top-3 left-3 z-10">
+            <div className={`w-12 h-12 rounded-full ${isProduction ? 'bg-white/20 backdrop-blur-md shadow-lg shadow-purple-500/20' : 'bg-white/10 backdrop-blur-md'} p-1 flex items-center justify-center border ${isProduction ? 'border-purple-500/30' : 'border-white/20'}`}>
               <Image 
                 src={path.logoUrl} 
                 alt={path.title} 
-                width={48} 
-                height={48}
+                width={32} 
+                height={32}
                 className={`object-contain ${isProduction ? 'drop-shadow-glow' : ''}`}
               />
             </div>
@@ -236,47 +239,47 @@ const renderLearningPath = (path: LearningPath) => {
         
         {/* Demo Badge */}
         {isDemo && (
-          <div className="absolute top-4 right-4 z-10 px-2.5 py-1 text-xs font-bold bg-amber-500 text-black rounded-md shadow-lg">
+          <div className="absolute top-3 right-3 z-10 px-2 py-0.5 text-xs font-bold bg-amber-500 text-black rounded shadow-lg">
             DEMO
           </div>
         )}
         
         {/* Production Badge */}
         {isProduction && (
-          <div className="absolute top-4 right-4 z-10 px-2.5 py-1 text-xs font-bold bg-gradient-to-r from-green-500 to-blue-500 text-white rounded-md shadow-lg">
+          <div className="absolute top-3 right-3 z-10 px-2 py-0.5 text-xs font-bold bg-gradient-to-r from-green-500 to-blue-500 text-white rounded shadow-lg">
             PRODUCTION
           </div>
         )}
 
-        <div className={`h-48 ${isProduction ? 'bg-gradient-to-br from-purple-700/80 to-blue-700/80' : 'bg-gradient-to-br from-purple-900/60 to-blue-900/60'} flex items-center justify-center p-6 relative overflow-hidden`}>
+        <div className={`h-32 ${isProduction ? 'bg-gradient-to-br from-purple-700/80 to-blue-700/80' : 'bg-gradient-to-br from-purple-900/60 to-blue-900/60'} flex items-center justify-center p-4 relative overflow-hidden`}>
           <div className={`absolute inset-0 ${isProduction ? 'bg-[radial-gradient(circle_at_center,rgba(168,85,247,0.15),rgba(59,130,246,0.05))]' : 'bg-gradient-to-br from-purple-500/10 to-blue-500/10'} z-0`}></div>
           
           {isProduction && (
             <div className="absolute inset-0 flex items-center justify-center">
-              <div className="w-32 h-32 rounded-full bg-purple-500/10 animate-pulse-slow"></div>
+              <div className="w-24 h-24 rounded-full bg-purple-500/10 animate-pulse-slow"></div>
             </div>
           )}
           
-          <span className={`text-2xl font-bold ${isProduction ? 'text-white' : 'text-white/90'} z-10 text-center drop-shadow-md`}>{path.shortTitle}</span>
+          <span className={`text-lg font-bold ${isProduction ? 'text-white' : 'text-white/90'} z-10 text-center drop-shadow-md`}>{path.shortTitle}</span>
         </div>
       </div>
       
-      <div className="p-6">
-        <h2 className="text-xl font-bold text-white mb-2">{path.title}</h2>
-        <p className="text-gray-400 text-sm mb-4 h-12 line-clamp-2">{path.description}</p>
+      <div className="p-4">
+        <h2 className="text-lg font-bold text-white mb-2">{path.title}</h2>
+        <p className="text-gray-400 text-xs mb-3 h-8 line-clamp-2">{path.description}</p>
         
-        <div className="flex flex-wrap gap-2 mb-4">
+        <div className="flex flex-wrap gap-1 mb-3">
           {path.rewardTags?.map((tag, index) => (
             <span
               key={index}
-              className={`text-xs px-2 py-1 rounded-full font-medium flex items-center gap-1
+              className={`text-xs px-1.5 py-0.5 rounded-full font-medium flex items-center gap-1
                 ${tag.variant === 'ethereum' ? 'bg-blue-500/20 text-blue-300 border border-blue-500/30' :
                 tag.variant === 'points' ? 'bg-yellow-500/20 text-yellow-300 border border-yellow-500/30' :
                 'bg-purple-500/20 text-purple-300 border border-purple-500/30'}`
               }
             >
               {tag.icon && (
-                <svg className="w-3 h-3" viewBox="0 0 24 24" fill="currentColor">
+                <svg className="w-2.5 h-2.5" viewBox="0 0 24 24" fill="currentColor">
                   <path d={tag.icon} />
                 </svg>
               )}
@@ -295,7 +298,7 @@ const renderLearningPath = (path: LearningPath) => {
             </div>
           </div>
           <Link href={`/paths/${path.pathSlug}`}>
-            <button className={`px-4 py-2 ${isProduction ? 'bg-gradient-to-r from-purple-600 to-blue-600 shadow-md shadow-purple-700/20' : 'bg-gradient-to-r from-blue-500 to-purple-600'} text-white text-sm rounded-md font-medium flex items-center gap-1 hover:opacity-90 transition-opacity`}>
+            <button className={`px-3 py-1.5 ${isProduction ? 'bg-gradient-to-r from-purple-600 to-blue-600 shadow-md shadow-purple-700/20' : 'bg-gradient-to-r from-blue-500 to-purple-600'} text-white text-xs rounded font-medium flex items-center gap-1 hover:opacity-90 transition-opacity`}>
               Start Learning <ArrowRightIcon className="w-3 h-3 ml-1" />
             </button>
           </Link>
@@ -546,8 +549,8 @@ export default function HomePage() {
       <section className="py-12 px-4">
         <div className="container mx-auto">
           <h2 className="text-2xl font-bold text-white mb-8 flex items-center gap-2">
-            <SparklesIcon className="h-6 w-6 text-purple-400" />
-            Our fully ready and production learning paths
+            <SparklesIcon className="h-6 w-6 text-green-400" />
+            Production Ready Learning Paths
           </h2>
           
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
@@ -559,10 +562,10 @@ export default function HomePage() {
       {/* Demo Paths Section */}
       <section className="mb-8">
         <div className="mb-6 flex items-center">
-          <h2 className="text-3xl font-bold mb-0 text-white mr-3">Demo Paths</h2>
+          <h2 className="text-3xl font-bold mb-0 text-white mr-3">Preview Learning Paths</h2>
           <span className="px-2 py-1 bg-amber-700/50 text-amber-400 text-xs font-medium uppercase rounded-md tracking-wide">Demo</span>
         </div>
-        <p className="text-gray-400 mb-6">Explore our upcoming learning paths in development</p>
+        <p className="text-gray-400 mb-6">Explore our upcoming learning paths featuring advanced Solana ecosystem projects</p>
         
         {isLoadingPaths ? (
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
