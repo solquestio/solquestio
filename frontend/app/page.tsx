@@ -444,49 +444,49 @@ export default function HomePage() {
       )}
 
       {/* Top Section: OG NFT and Leaderboard */}
-      <div className="grid md:grid-cols-5 gap-6 mb-8">
-        {/* OG NFT Card (2/5 width on md screens) */}
-        <div className="md:col-span-3 bg-gray-800/20 rounded-xl overflow-visible shadow-xl pb-12">
+      <div className="grid md:grid-cols-3 gap-3 mb-6">
+        {/* OG NFT Card (2/3 width on md screens) */}
+        <div className="md:col-span-2 bg-gray-800/20 rounded-lg overflow-visible shadow-lg pb-4">
           <OGNftCardDynamic />
         </div>
         
-        {/* Leaderboard (2/5 width on md screens, reduced from 3/5) */}
-        <div className="md:col-span-2 bg-gray-800/20 border border-gray-700/50 p-3 rounded-xl shadow-xl max-w-sm">
-          <div className="flex items-center justify-between mb-2">
-            <h2 className="text-base font-semibold text-gray-100 flex items-center gap-1.5">
-              <TrophyIcon className="w-4 h-4 text-yellow-400" />
+        {/* Leaderboard (1/3 width on md screens) */}
+        <div className="md:col-span-1 bg-gray-800/20 border border-gray-700/50 p-2 rounded-lg shadow-lg">
+          <div className="flex items-center justify-between mb-1">
+            <h2 className="text-sm font-semibold text-gray-100 flex items-center gap-1">
+              <TrophyIcon className="w-3 h-3 text-yellow-400" />
               Leaderboard
             </h2>
             <button 
               onClick={refreshLeaderboard}
               disabled={isRefreshing}
-              className="p-1 text-gray-400 hover:text-white transition-colors disabled:opacity-50"
+              className="p-0.5 text-gray-400 hover:text-white transition-colors disabled:opacity-50"
               title="Refresh Leaderboard"
             >
-              <ArrowPathIcon className={`w-3.5 h-3.5 ${isRefreshing ? 'animate-spin' : ''}`} />
+              <ArrowPathIcon className={`w-2.5 h-2.5 ${isRefreshing ? 'animate-spin' : ''}`} />
             </button>
           </div>
           
           {isLoadingLeaderboard ? (
-            <div className="space-y-1.5 animate-pulse">
+            <div className="space-y-1 animate-pulse">
               {[...Array(3)].map((_, i) => (
-                <div key={i} className="flex items-center justify-between p-2 bg-gray-700/30 rounded-md">
-                  <div className="flex items-center space-x-1.5">
-                    <div className="w-4 h-4 bg-gray-600 rounded-md"></div>
-                    <div className="w-6 h-6 bg-gray-600 rounded-full"></div>
-                    <div className="h-3 w-16 bg-gray-600 rounded"></div>
+                <div key={i} className="flex items-center justify-between p-1 bg-gray-700/30 rounded">
+                  <div className="flex items-center space-x-1">
+                    <div className="w-3 h-3 bg-gray-600 rounded"></div>
+                    <div className="w-4 h-4 bg-gray-600 rounded-full"></div>
+                    <div className="h-2 w-12 bg-gray-600 rounded"></div>
                   </div>
-                  <div className="flex items-center space-x-1.5">
-                    <div className="h-3 w-8 bg-gray-600 rounded"></div>
-                    <div className="h-3 w-12 bg-gray-600 rounded-md"></div>
+                  <div className="flex items-center space-x-1">
+                    <div className="h-2 w-6 bg-gray-600 rounded"></div>
+                    <div className="h-2 w-8 bg-gray-600 rounded"></div>
                   </div>
                 </div>
               ))}
             </div>
           ) : leaderboardError ? (
-            <p className="text-red-400 text-xs text-center py-2">Error: {leaderboardError}</p>
+            <p className="text-red-400 text-xs text-center py-1">Error: {leaderboardError}</p>
           ) : topPlayers.length > 0 ? (
-            <div className="space-y-1">
+            <div className="space-y-0.5">
               {topPlayers.map((player, index) => {
                 const rank = player.rank ?? index + 1;
                 const rankClasses = getRankClasses(rank);
@@ -499,13 +499,13 @@ export default function HomePage() {
                 return (
                   <div 
                     key={player._id} 
-                    className={`flex items-center justify-between p-2 ${gradientBg} hover:bg-gray-700/40 transition-colors duration-150 rounded-lg`}
+                    className={`flex items-center justify-between p-1 ${gradientBg} hover:bg-gray-700/40 transition-colors duration-150 rounded`}
                   >
-                    <div className="flex items-center space-x-1.5 flex-grow min-w-0">
-                      <span className={`flex-shrink-0 w-4 h-4 flex items-center justify-center text-xs font-bold rounded-md ${rankClasses}`}>
+                    <div className="flex items-center space-x-1 flex-grow min-w-0">
+                      <span className={`flex-shrink-0 w-3 h-3 flex items-center justify-center text-xs font-bold rounded ${rankClasses}`}>
                         {rank}
                       </span>
-                      <div className="flex-shrink-0 w-6 h-6 rounded-full bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center text-white font-semibold text-xs">
+                      <div className="flex-shrink-0 w-4 h-4 rounded-full bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center text-white font-semibold text-xs">
                         {player.username ? player.username.charAt(0).toUpperCase() : truncatedAddress.charAt(0).toUpperCase()}
                       </div>
                       <div className="min-w-0">
@@ -513,23 +513,23 @@ export default function HomePage() {
                           {player.username || truncatedAddress}
                         </p>
                         {player.username && (
-                          <p className="text-[10px] text-gray-400 font-mono truncate">
+                          <p className="text-[9px] text-gray-400 font-mono truncate">
                             {truncatedAddress}
                           </p>
                         )}
                       </div>
                     </div>
                     
-                    <div className="flex items-center space-x-1.5 flex-shrink-0">
+                    <div className="flex items-center space-x-1 flex-shrink-0">
                       {/* Boost Badges */}
                       {(player.xpBoost && player.xpBoost > 1) && (
-                        <span className="flex items-center text-[10px] font-semibold bg-black/50 text-purple-300 px-1 py-0.5 rounded border border-purple-500/50" title={`XP Boost x${player.xpBoost.toFixed(1)}`}>
-                          <SparklesIcon className="h-2.5 w-2.5 mr-0.5"/> x{player.xpBoost.toFixed(1)}
+                        <span className="flex items-center text-[9px] font-semibold bg-black/50 text-purple-300 px-0.5 py-0.5 rounded border border-purple-500/50" title={`XP Boost x${player.xpBoost.toFixed(1)}`}>
+                          <SparklesIcon className="h-2 w-2 mr-0.5"/> x{player.xpBoost.toFixed(1)}
                         </span>
                       )}
                       {/* Score (XP) */}
-                      <div className="bg-gradient-to-r from-purple-600/70 to-blue-600/70 text-white px-1.5 py-0.5 rounded text-center min-w-[40px]">
-                        <span className="text-[10px] font-bold">
+                      <div className="bg-gradient-to-r from-purple-600/70 to-blue-600/70 text-white px-1 py-0.5 rounded text-center min-w-[30px]">
+                        <span className="text-[9px] font-bold">
                           {player.xp} XP
                         </span>
                       </div>
@@ -539,7 +539,7 @@ export default function HomePage() {
               })}
             </div>
           ) : (
-            <p className="text-gray-500 text-xs italic text-center py-3">Be the first on the leaderboard!</p>
+            <p className="text-gray-500 text-xs italic text-center py-2">Be the first on the leaderboard!</p>
           )}
         </div>
       </div>
