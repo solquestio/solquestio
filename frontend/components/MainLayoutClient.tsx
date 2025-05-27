@@ -10,6 +10,7 @@ import { useWalletModal } from '@solana/wallet-adapter-react-ui';
 import { useAuth } from '@/context/AuthContext';
 import NetworkSwitcher, { NetworkProvider, useNetwork } from '@/components/NetworkSwitcher';
 import NetworkBadge from '@/components/NetworkBadge';
+import { ArrowRightIcon } from '@heroicons/react/24/solid';
 
 interface MainLayoutClientProps {
     children: React.ReactNode;
@@ -20,7 +21,7 @@ function MainLayoutClientInner({ children }: MainLayoutClientProps) {
     
     const { setVisible: setWalletModalVisible } = useWalletModal();
     const { connected } = useWallet();
-    const { isAuthenticated, isLoading, login, logout } = useAuth();
+    const { isAuthenticated, isLoading, login, logout, userProfile } = useAuth();
     const { network } = useNetwork();
 
     const handleRequestAuthentication = async () => {
@@ -65,6 +66,23 @@ function MainLayoutClientInner({ children }: MainLayoutClientProps) {
                     <span className="ml-1 px-1.5 py-0.5 text-xs bg-purple-600 text-white rounded-full">NEW</span>
                   </Link>
                   <NetworkBadge />
+                  
+                  {/* Welcome Message and Profile Button for Authenticated Users */}
+                  {isAuthenticated && userProfile && (
+                    <div className="flex items-center gap-3">
+                      <div className="bg-gray-800/50 px-3 py-2 rounded-lg border border-gray-700">
+                        <p className="text-xs text-gray-300">Welcome back,</p>
+                        <p className="text-sm font-semibold text-white">{userProfile?.username || 'Explorer'}</p>
+                      </div>
+                      <Link 
+                        href="/profile" 
+                        className="inline-flex items-center px-3 py-2 bg-gradient-to-r from-purple-600 to-blue-600 text-white text-sm rounded-md hover:opacity-90 transition-colors"
+                      >
+                        View Profile <ArrowRightIcon className="h-3 w-3 ml-1" />
+                      </Link>
+                    </div>
+                  )}
+                  
                   <HeaderWalletButton />
                   {isAuthenticated && (
                     <button 

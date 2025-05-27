@@ -406,39 +406,6 @@ export default function HomePage() {
 
   return (
     <div className="w-full max-w-6xl mx-auto px-4 md:px-8 py-4">
-      {/* Wallet and Auth Section */}
-      <div className="flex justify-end mb-3">
-        {isLoadingAuth ? (
-          <div className="flex items-center">
-            <ArrowPathIcon className="animate-spin h-5 w-5 mr-2 text-white" />
-            <span className="text-white">Loading...</span>
-          </div>
-        ) : !isAuthenticated ? (
-          <div className="flex flex-wrap items-center gap-4">
-            <WalletMultiButtonDynamic className="!bg-gradient-to-r from-sol-gradient-from to-sol-gradient-to !rounded-md" />
-            <button
-              onClick={login}
-              className="px-5 py-2.5 bg-white text-purple-800 font-medium rounded-md hover:bg-gray-100 transition-colors"
-            >
-              Sign In
-            </button>
-          </div>
-        ) : (
-          <div className="flex items-center gap-4">
-            <div className="bg-gray-800/50 p-3 rounded-lg border border-gray-700">
-              <p className="text-sm text-gray-300">Welcome back,</p>
-              <p className="font-semibold text-white">{userProfile?.username || 'Explorer'}</p>
-            </div>
-            <Link 
-              href="/profile" 
-              className="inline-flex items-center px-4 py-2 bg-gradient-to-r from-sol-gradient-from to-sol-gradient-to text-white rounded-md hover:opacity-90 transition-colors"
-            >
-              View Profile <ArrowRightIcon className="h-4 w-4 ml-1" />
-            </Link>
-          </div>
-        )}
-      </div>
-      
       {authError && (
         <p className="mt-2 text-red-400 text-sm">{authError}</p>
       )}
