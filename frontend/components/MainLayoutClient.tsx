@@ -91,14 +91,6 @@ function MainLayoutClientInner({ children }: MainLayoutClientProps) {
                   )}
                   
                   <HeaderWalletButton />
-                  {isAuthenticated && (
-                    <button 
-                      onClick={logout}
-                      className="text-xs text-red-400 hover:text-red-300"
-                    >
-                      Logout
-                    </button>
-                  )}
                 </div>
               </nav>
             </header>

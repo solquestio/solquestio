@@ -226,7 +226,9 @@ export function HeaderWalletButton() {
                         </div>
                     ) : (
                          <div className="flex items-center px-1 py-1 text-xs text-gray-400">
-                             <span>Connecting...</span>
+                             <span className="font-mono">
+                                 {publicKey?.toBase58().substring(0, 8)}...{publicKey?.toBase58().substring(publicKey.toBase58().length - 4)}
+                             </span>
                          </div>
                     )}
                  </div>
