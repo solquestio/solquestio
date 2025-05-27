@@ -221,16 +221,16 @@ const renderLearningPath = (path: LearningPath) => {
   const isProduction = !path.isDemo;
 
   return (
-    <div key={path.id} className={`bg-dark-card/80 rounded-2xl overflow-hidden border ${isProduction ? 'border-purple-500/30 hover:border-purple-500/70' : 'border-white/5 hover:border-purple-500/30'} transition-all duration-300 shadow-xl hover:shadow-purple-500/20`}>
+    <div key={path.id} className={`bg-dark-card/80 rounded-lg overflow-hidden border ${isProduction ? 'border-purple-500/30 hover:border-purple-500/70' : 'border-white/5 hover:border-purple-500/30'} transition-all duration-300 shadow-lg hover:shadow-purple-500/20`}>
       <div className="relative">
         {path.logoUrl && (
-          <div className="absolute top-3 left-3 z-10">
-            <div className={`w-12 h-12 rounded-full ${isProduction ? 'bg-white/20 backdrop-blur-md shadow-lg shadow-purple-500/20' : 'bg-white/10 backdrop-blur-md'} p-1 flex items-center justify-center border ${isProduction ? 'border-purple-500/30' : 'border-white/20'}`}>
+          <div className="absolute top-1.5 left-1.5 z-10">
+            <div className={`w-6 h-6 rounded-full ${isProduction ? 'bg-white/20 backdrop-blur-md shadow-lg shadow-purple-500/20' : 'bg-white/10 backdrop-blur-md'} p-0.5 flex items-center justify-center border ${isProduction ? 'border-purple-500/30' : 'border-white/20'}`}>
               <Image 
                 src={path.logoUrl} 
                 alt={path.title} 
-                width={32} 
-                height={32}
+                width={16} 
+                height={16}
                 className={`object-contain ${isProduction ? 'drop-shadow-glow' : ''}`}
               />
             </div>
@@ -239,47 +239,47 @@ const renderLearningPath = (path: LearningPath) => {
         
         {/* Demo Badge */}
         {isDemo && (
-          <div className="absolute top-3 right-3 z-10 px-2 py-0.5 text-xs font-bold bg-amber-500 text-black rounded shadow-lg">
+          <div className="absolute top-1.5 right-1.5 z-10 px-1.5 py-0.5 text-xs font-bold bg-amber-500 text-black rounded shadow-lg">
             DEMO
           </div>
         )}
         
         {/* Production Badge */}
         {isProduction && (
-          <div className="absolute top-3 right-3 z-10 px-2 py-0.5 text-xs font-bold bg-gradient-to-r from-green-500 to-blue-500 text-white rounded shadow-lg">
+          <div className="absolute top-1.5 right-1.5 z-10 px-1.5 py-0.5 text-xs font-bold bg-gradient-to-r from-green-500 to-blue-500 text-white rounded shadow-lg">
             PRODUCTION
           </div>
         )}
 
-        <div className={`h-32 ${isProduction ? 'bg-gradient-to-br from-purple-700/80 to-blue-700/80' : 'bg-gradient-to-br from-purple-900/60 to-blue-900/60'} flex items-center justify-center p-4 relative overflow-hidden`}>
+        <div className={`h-16 ${isProduction ? 'bg-gradient-to-br from-purple-700/80 to-blue-700/80' : 'bg-gradient-to-br from-purple-900/60 to-blue-900/60'} flex items-center justify-center p-2 relative overflow-hidden`}>
           <div className={`absolute inset-0 ${isProduction ? 'bg-[radial-gradient(circle_at_center,rgba(168,85,247,0.15),rgba(59,130,246,0.05))]' : 'bg-gradient-to-br from-purple-500/10 to-blue-500/10'} z-0`}></div>
           
           {isProduction && (
             <div className="absolute inset-0 flex items-center justify-center">
-              <div className="w-24 h-24 rounded-full bg-purple-500/10 animate-pulse-slow"></div>
+              <div className="w-12 h-12 rounded-full bg-purple-500/10 animate-pulse-slow"></div>
             </div>
           )}
           
-          <span className={`text-lg font-bold ${isProduction ? 'text-white' : 'text-white/90'} z-10 text-center drop-shadow-md`}>{path.shortTitle}</span>
+          <span className={`text-sm font-bold ${isProduction ? 'text-white' : 'text-white/90'} z-10 text-center drop-shadow-md`}>{path.shortTitle}</span>
         </div>
       </div>
       
-      <div className="p-4">
-        <h2 className="text-lg font-bold text-white mb-2">{path.title}</h2>
-        <p className="text-gray-400 text-xs mb-3 h-8 line-clamp-2">{path.description}</p>
+      <div className="p-2">
+        <h2 className="text-sm font-bold text-white mb-1">{path.title}</h2>
+        <p className="text-gray-400 text-xs mb-2 h-6 line-clamp-2">{path.description}</p>
         
-        <div className="flex flex-wrap gap-1 mb-3">
-          {path.rewardTags?.map((tag, index) => (
+        <div className="flex flex-wrap gap-1 mb-2">
+          {path.rewardTags?.slice(0, 2).map((tag, index) => (
             <span
               key={index}
-              className={`text-xs px-1.5 py-0.5 rounded-full font-medium flex items-center gap-1
+              className={`text-xs px-1 py-0.5 rounded-full font-medium flex items-center gap-1
                 ${tag.variant === 'ethereum' ? 'bg-blue-500/20 text-blue-300 border border-blue-500/30' :
                 tag.variant === 'points' ? 'bg-yellow-500/20 text-yellow-300 border border-yellow-500/30' :
                 'bg-purple-500/20 text-purple-300 border border-purple-500/30'}`
               }
             >
               {tag.icon && (
-                <svg className="w-2.5 h-2.5" viewBox="0 0 24 24" fill="currentColor">
+                <svg className="w-2 h-2" viewBox="0 0 24 24" fill="currentColor">
                   <path d={tag.icon} />
                 </svg>
               )}
@@ -289,7 +289,7 @@ const renderLearningPath = (path: LearningPath) => {
         </div>
         
         <div className="flex justify-between items-center">
-          <div className="flex gap-4">
+          <div className="flex gap-2">
             <div className="text-xs text-gray-400">
               <span className={`${isProduction ? 'text-yellow-300' : 'text-white'} font-semibold`}>{path.questCount}</span> Quests
             </div>
@@ -298,8 +298,8 @@ const renderLearningPath = (path: LearningPath) => {
             </div>
           </div>
           <Link href={`/paths/${path.pathSlug}`}>
-            <button className={`px-3 py-1.5 ${isProduction ? 'bg-gradient-to-r from-purple-600 to-blue-600 shadow-md shadow-purple-700/20' : 'bg-gradient-to-r from-blue-500 to-purple-600'} text-white text-xs rounded font-medium flex items-center gap-1 hover:opacity-90 transition-opacity`}>
-              Start Learning <ArrowRightIcon className="w-3 h-3 ml-1" />
+            <button className={`px-2 py-1 ${isProduction ? 'bg-gradient-to-r from-purple-600 to-blue-600 shadow-md shadow-purple-700/20' : 'bg-gradient-to-r from-blue-500 to-purple-600'} text-white text-xs rounded font-medium flex items-center gap-1 hover:opacity-90 transition-opacity`}>
+              Start <ArrowRightIcon className="w-2.5 h-2.5 ml-0.5" />
             </button>
           </Link>
         </div>
@@ -553,7 +553,7 @@ export default function HomePage() {
             Production Ready Learning Paths
           </h2>
           
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
             {productionPaths.map(path => renderLearningPath(path))}
           </div>
         </div>
@@ -584,88 +584,8 @@ export default function HomePage() {
             <p>Failed to load learning paths: {pathError}</p>
           </div>
         ) : demoPaths.length > 0 ? (
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {demoPaths.map((path) => (
-              <div key={path.id} className="bg-slate-800/70 rounded-xl p-4 flex flex-col justify-between hover:border-amber-500 border border-transparent transition-all duration-200 shadow-lg hover:shadow-amber-500/30 relative">
-                <div className="absolute top-2 right-2 px-2 py-0.5 bg-amber-700/60 text-amber-300 text-xs font-medium uppercase rounded tracking-wide">
-                  Demo
-                </div>
-                <div> {/* Top content area */} 
-                  <div className="flex items-start mb-3">
-                    <div className="w-10 h-10 rounded-lg mr-3 overflow-hidden relative border border-slate-700">
-                      <Image
-                        src={path.logoUrl || path.imageUrl || '/images/paths/default.png'}
-                        alt={`${path.shortTitle || path.title} logo`}
-                        width={40}
-                        height={40}
-                        className="object-cover"
-                      />
-                    </div>
-                    <div className="flex-grow">
-                      <h3 className="text-gray-100 font-semibold text-base leading-tight">{path.shortTitle || path.title}</h3>
-                    </div>
-                    <Link href={`/paths/${path.pathSlug}`} className="ml-2 flex-shrink-0">
-                      <ExternalLinkIcon className="w-5 h-5 text-gray-500 hover:text-amber-400 transition-colors" />
-                    </Link>
-                  </div>
-
-                  {path.rewardTags && path.rewardTags.length > 0 && (
-                    <div className="flex flex-wrap gap-2 mb-3">
-                      {path.rewardTags.map((tag, index) => (
-                        <span 
-                          key={index} 
-                          className={`text-xs px-2 py-0.5 rounded-full font-medium 
-                            ${tag.variant === 'ethereum' ? 'bg-green-500/20 text-green-300' : 
-                              tag.variant === 'points' ? 'bg-purple-500/20 text-purple-300' : 
-                              'bg-slate-600/50 text-slate-300'}
-                          `}
-                        >
-                          {tag.text}
-                        </span>
-                      ))}
-                    </div>
-                  )}
-
-                  <div className="flex justify-between items-center text-xs text-gray-400 mb-1">
-                    <span>{path.questCount} Quests</span>
-                    {path.bonusPoints && <span>{path.bonusPoints.toLocaleString()} Bonus PTS</span>}
-                    {path.userCount && <span>{path.userCount} Users</span>}
-                  </div>
-
-                  {/* Progress/Status Section */}
-                  <div className="text-xs mt-2 mb-3 h-8"> {/* Fixed height for this section */} 
-                    {path.isPathCompleted ? (
-                      <div className="flex items-center text-green-400">
-                        <CheckCircleSolidIcon className="w-4 h-4 mr-1.5 flex-shrink-0" />
-                        <span>All quests completed</span>
-                      </div>
-                    ) : path.currentProgress !== undefined && path.questCount > 0 ? (
-                      <div>
-                        <div className="w-full bg-slate-700 rounded-full h-1.5 mb-1">
-                          <div 
-                            className="bg-amber-500 h-1.5 rounded-full transition-all duration-500 ease-out"
-                            style={{ width: `${(path.currentProgress / path.questCount) * 100}%` }}
-                          ></div>
-                        </div>
-                        <span className="text-slate-400">
-                          {path.statusTextOverride ? path.statusTextOverride : `${path.currentProgress}/${path.questCount} quests completed`}
-                        </span>
-                      </div>
-                    ) : path.statusTextOverride ? (
-                       <span className="text-slate-400 italic">{path.statusTextOverride}</span>
-                    ) : null}
-                  </div>
-                </div>
-
-                {/* Action Button - Pushed to bottom */} 
-                <Link 
-                  href={`/paths/${path.pathSlug}`}
-                  className="mt-auto block w-full text-center bg-amber-600 hover:bg-amber-700 text-white font-semibold py-2.5 px-4 rounded-lg text-sm transition-colors duration-150 shadow-md hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-opacity-50"
-                >
-                  {path.isPathCompleted ? 'View Path' : (path.currentProgress && path.currentProgress > 0 ? 'Continue Path' : 'Start Learning')}
-                </Link>
-              </div>
-            ))}
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+            {demoPaths.map((path) => renderLearningPath(path))}
           </div>
         ) : (
           <div className="text-center py-10">
