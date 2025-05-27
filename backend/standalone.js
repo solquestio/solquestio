@@ -96,6 +96,48 @@ app.get('/api/quests/paths', (req, res) => {
   res.status(200).json({ paths: pathsMetadata });
 });
 
+// Users/Leaderboard endpoint
+app.get('/api/users', (req, res) => {
+  const { path, limit } = req.query;
+  
+  if (path === 'leaderboard') {
+    // Mock leaderboard data
+    const mockLeaderboard = [
+      {
+        _id: '1',
+        walletAddress: '8nL...qKSM',
+        username: '8nL...qKSM',
+        xp: 2850,
+        rank: 1,
+        xpBoost: 1.1
+      },
+      {
+        _id: '2',
+        walletAddress: '2wB...PRCX',
+        username: '2wB...PRCX',
+        xp: 1950,
+        rank: 2,
+        xpBoost: 1.0
+      },
+      {
+        _id: '3',
+        walletAddress: '5mK...7dFG',
+        username: '5mK...7dFG',
+        xp: 1420,
+        rank: 3,
+        xpBoost: 1.2
+      }
+    ];
+    
+    const limitNum = parseInt(limit) || 10;
+    const limitedResults = mockLeaderboard.slice(0, limitNum);
+    
+    res.json(limitedResults);
+  } else {
+    res.json([]);
+  }
+});
+
 // Health check endpoint
 app.get('/api/health', (req, res) => {
   res.json({

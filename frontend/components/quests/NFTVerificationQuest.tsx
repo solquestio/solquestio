@@ -160,11 +160,11 @@ export const NFTVerificationQuest: React.FC<NFTVerificationQuestProps> = ({
               <div style={{ position: 'absolute', width: '100%', height: '100%', background: 'linear-gradient(45deg, rgba(76, 29, 149, 0.5), rgba(124, 58, 237, 0.5))' }}></div>
               <div className="absolute inset-0 flex items-center justify-center">
                 <Image 
-                  src="/OGNFT.mp4" 
+                  src="/images/nft/og-nft-preview.svg" 
                   alt="SolQuest OG NFT" 
                   width={192} 
                   height={192}
-                  className="object-cover"
+                  className="object-cover rounded-lg"
                 />
               </div>
             </div>
