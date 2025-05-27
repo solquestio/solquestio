@@ -4,7 +4,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import dynamic from 'next/dynamic';
 import { useWallet, useConnection } from '@solana/wallet-adapter-react';
 import { LAMPORTS_PER_SOL } from '@solana/web3.js';
-import { UserCircleIcon, SparklesIcon, ArrowRightOnRectangleIcon } from '@heroicons/react/24/solid'; // Added disconnect icon
+import { UserCircleIcon, SparklesIcon, ArrowRightOnRectangleIcon, ArrowPathIcon } from '@heroicons/react/24/solid'; // Added disconnect icon and refresh icon
 import Image from 'next/image'; // Import Next Image for wallet icon
 
 // Dynamically import the WalletMultiButton for the disconnected state
@@ -81,12 +81,15 @@ export function HeaderWalletButton() {
             return;
         }
         try {
+            console.log('[HeaderWallet] Fetching SOL balance for:', publicKey.toString());
             const balanceLamports = await connection.getBalance(publicKey);
-            setSolBalance(balanceLamports / LAMPORTS_PER_SOL);
+            const balanceSOL = balanceLamports / LAMPORTS_PER_SOL;
+            console.log('[HeaderWallet] Balance fetched:', balanceSOL, 'SOL');
+            setSolBalance(balanceSOL);
         } catch (err) {
             console.error('Header: Error fetching SOL balance:', err);
             setSolBalance(null);
-             setError("Couldn't load balance.");
+            setError("Couldn't load balance.");
         }
     }, [connected, publicKey, connection]);
 
@@ -122,6 +125,37 @@ export function HeaderWalletButton() {
         }
     }, [connected, authToken, publicKey, fetchUserProfile, fetchSolBalance]); // Rerun if connection, auth, or pubkey changes
 
+    // Auto-refresh balance every 30 seconds when connected
+    useEffect(() => {
+        if (!connected || !publicKey || !connection) return;
+
+        const refreshInterval = setInterval(() => {
+            console.log('[HeaderWallet] Auto-refreshing balance...');
+            fetchSolBalance();
+        }, 30000); // Refresh every 30 seconds
+
+        return () => clearInterval(refreshInterval);
+    }, [connected, publicKey, connection, fetchSolBalance]);
+
+    // Listen for account changes to refresh balance immediately
+    useEffect(() => {
+        if (!connected || !publicKey || !connection) return;
+
+        const subscriptionId = connection.onAccountChange(
+            publicKey,
+            (accountInfo) => {
+                console.log('[HeaderWallet] Account changed, refreshing balance...');
+                fetchSolBalance();
+            },
+            'confirmed'
+        );
+
+        return () => {
+            if (subscriptionId) {
+                connection.removeAccountChangeListener(subscriptionId);
+            }
+        };
+    }, [connected, publicKey, connection, fetchSolBalance]);
 
     if (!connected) {
         // Show the standard connect button if wallet is not connected
@@ -178,6 +212,16 @@ export function HeaderWalletButton() {
                                 <span className="text-xs font-semibold text-solana-green">
                                     {solBalance !== null ? solBalance.toFixed(2) : '-'} SOL
                                 </span>
+                                <button
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        fetchSolBalance();
+                                    }}
+                                    className="ml-1 p-0.5 hover:bg-gray-600 rounded transition-colors"
+                                    title="Refresh balance"
+                                >
+                                    <ArrowPathIcon className="w-2.5 h-2.5 text-gray-400 hover:text-white" />
+                                </button>
                             </div>
                         </div>
                     ) : (
