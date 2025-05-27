@@ -74,7 +74,7 @@ const STATIC_LEARNING_PATHS: LearningPath[] = [
     imageUrl: '/solana-logo.svg',
     logoUrl: '/solana-logo.svg',
     bonusPoints: 100,
-    userCount: '25K',
+    userCount: '127',
     isPathCompleted: false,
     currentProgress: 0,
     rewardTags: [
@@ -444,7 +444,7 @@ export default function HomePage() {
       )}
 
       {/* Top Section: OG NFT and Leaderboard */}
-      <div className="grid md:grid-cols-3 gap-3 mb-4">
+      <div className="grid md:grid-cols-3 gap-3 mb-2">
         {/* OG NFT Card (2/3 width on md screens) */}
         <div className="md:col-span-2 bg-gray-800/20 rounded-sm overflow-visible shadow-lg pb-4">
           <OGNftCardDynamic />
