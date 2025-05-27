@@ -9,7 +9,6 @@ import { useWallet } from '@solana/wallet-adapter-react';
 import { useWalletModal } from '@solana/wallet-adapter-react-ui';
 import { useAuth } from '@/context/AuthContext';
 import NetworkSwitcher, { NetworkProvider, useNetwork } from '@/components/NetworkSwitcher';
-import NetworkBadge from '@/components/NetworkBadge';
 import { ArrowRightIcon } from '@heroicons/react/24/solid';
 
 interface MainLayoutClientProps {
@@ -63,9 +62,7 @@ function MainLayoutClientInner({ children }: MainLayoutClientProps) {
                 {/* Navigation and user elements */}
                 <div className="flex flex-wrap items-center justify-center lg:justify-end gap-3 lg:gap-4 w-full lg:w-auto">
                   <Link href="/" className="text-gray-300 hover:text-white transition-colors text-sm">Home</Link>
-                  {isAuthenticated ? (
-                    <Link href="/profile" className="text-gray-300 hover:text-white transition-colors text-sm">Profile</Link>
-                  ) : (
+                  {!isAuthenticated && (
                     <button onClick={openLoginModal} className="text-gray-300 hover:text-white transition-colors text-sm">Login</button>
                   )}
                   <Link href="/leaderboard" className="text-gray-300 hover:text-white transition-colors text-sm">Leaderboard</Link>
@@ -76,7 +73,6 @@ function MainLayoutClientInner({ children }: MainLayoutClientProps) {
                     OG NFT
                     <span className="ml-1 px-1 py-0.5 text-xs bg-purple-600 text-white rounded-full">NEW</span>
                   </Link>
-                  <NetworkBadge />
                   
                   {/* Welcome Message and Profile Button for Authenticated Users */}
                   {isAuthenticated && userProfile && (

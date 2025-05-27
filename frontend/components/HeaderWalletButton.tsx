@@ -182,7 +182,7 @@ export function HeaderWalletButton() {
                         </div>
                     ) : (
                          <div className="flex items-center px-1 py-1 text-xs text-gray-400">
-                             <span>Verify...</span>
+                             <span>Connecting...</span>
                          </div>
                     )}
                  </div>
