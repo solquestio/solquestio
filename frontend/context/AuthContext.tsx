@@ -194,6 +194,31 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   // Derived state
   const isAuthenticated = !!authToken && !!userProfile;
 
+  // Auto-authenticate when wallet connects
+  useEffect(() => {
+    const autoAuthenticate = async () => {
+      // Only auto-authenticate if:
+      // 1. Wallet is connected
+      // 2. User is not already authenticated
+      // 3. Not currently loading
+      // 4. publicKey and signMessage are available
+      if (connected && !isAuthenticated && !isLoading && publicKey && signMessage) {
+        console.log('[AuthContext] Wallet connected, auto-authenticating...');
+        try {
+          await login();
+        } catch (error) {
+          console.error('[AuthContext] Auto-authentication failed:', error);
+          // Don't show error to user for auto-auth failures, they can manually retry
+        }
+      }
+    };
+
+    // Small delay to ensure wallet adapter is fully ready
+    const timeoutId = setTimeout(autoAuthenticate, 500);
+    
+    return () => clearTimeout(timeoutId);
+  }, [connected, isAuthenticated, isLoading, publicKey, signMessage, login]);
+
   // Value provided by the context
   const value = {
     authToken,

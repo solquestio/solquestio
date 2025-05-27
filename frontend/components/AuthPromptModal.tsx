@@ -28,7 +28,7 @@ export const AuthPromptModal: React.FC<AuthPromptModalProps> = ({ isOpen, onClos
         
         <h2 className="text-2xl font-semibold text-white mb-4">Connect to SolQuest</h2>
         <p className="text-gray-300 mb-6 text-sm">
-          To track your progress, earn XP, and unlock the full learning experience, please connect your Solana wallet and sign in.
+          To track your progress, earn XP, and unlock the full learning experience, please connect your Solana wallet. You'll be automatically signed in once connected.
         </p>
         
         <div className="space-y-3">
@@ -37,7 +37,7 @@ export const AuthPromptModal: React.FC<AuthPromptModalProps> = ({ isOpen, onClos
             disabled={loading}
             className="w-full bg-gradient-to-r from-solana-purple to-solana-green text-white font-semibold py-3 px-6 rounded-lg hover:opacity-90 transition-opacity duration-200 disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-solana-purple focus:ring-offset-2 focus:ring-offset-dark-card"
           >
-            {loading ? 'Processing...' : 'Connect Wallet & Sign In'}
+            {loading ? 'Connecting...' : 'Connect Wallet'}
           </button>
           <button
             onClick={onClose}

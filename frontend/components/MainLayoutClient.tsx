@@ -38,14 +38,9 @@ function MainLayoutClientInner({ children }: MainLayoutClientProps) {
             return;
         }
         
-        try {
-            // Use the login function from AuthContext
-            await login();
-            // The modal will be closed by the useEffect above when isAuthenticated becomes true
-        } catch (error) {
-            console.error('Authentication failed:', error);
-            // Modal stays open on error so user can try again
-        }
+        // Authentication will happen automatically when wallet is connected
+        // No need to manually call login() anymore
+        setIsAuthModalOpen(false);
     };
 
     const openLoginModal = () => {
@@ -54,40 +49,47 @@ function MainLayoutClientInner({ children }: MainLayoutClientProps) {
 
     return (
         <div className="relative z-10 flex flex-col min-h-screen">
-            <header className="py-4 px-6 bg-dark-card/50 backdrop-blur-sm border-b border-white/10 sticky top-0 z-20">
-              <nav className="flex justify-between items-center max-w-6xl mx-auto">
-                <Link href="/" className="flex items-center">
-                  <Logo iconHeight={40}/>
-                </Link>
-                <div className="flex items-center space-x-6">
-                  <Link href="/" className="text-gray-300 hover:text-white transition-colors">Home</Link>
+            <header className="py-3 px-6 bg-dark-card/50 backdrop-blur-sm border-b border-white/10 sticky top-0 z-20">
+              <nav className="flex flex-col lg:flex-row justify-between items-center max-w-6xl mx-auto gap-3">
+                {/* Top row: Logo and main navigation */}
+                <div className="flex items-center justify-between w-full lg:w-auto">
+                  <Link href="/" className="flex items-center">
+                    <Logo iconHeight={35}/>
+                  </Link>
+                  
+                  {/* Mobile menu button could go here if needed */}
+                </div>
+                
+                {/* Navigation and user elements */}
+                <div className="flex flex-wrap items-center justify-center lg:justify-end gap-3 lg:gap-4 w-full lg:w-auto">
+                  <Link href="/" className="text-gray-300 hover:text-white transition-colors text-sm">Home</Link>
                   {isAuthenticated ? (
-                    <Link href="/profile" className="text-gray-300 hover:text-white transition-colors">Profile</Link>
+                    <Link href="/profile" className="text-gray-300 hover:text-white transition-colors text-sm">Profile</Link>
                   ) : (
-                    <button onClick={openLoginModal} className="text-gray-300 hover:text-white transition-colors">Login</button>
+                    <button onClick={openLoginModal} className="text-gray-300 hover:text-white transition-colors text-sm">Login</button>
                   )}
-                  <Link href="/leaderboard" className="text-gray-300 hover:text-white transition-colors">Leaderboard</Link>
+                  <Link href="/leaderboard" className="text-gray-300 hover:text-white transition-colors text-sm">Leaderboard</Link>
                   <Link 
                     href="/claim-og-nft" 
-                    className="text-purple-300 hover:text-purple-200 transition-colors font-medium"
+                    className="text-purple-300 hover:text-purple-200 transition-colors font-medium text-sm"
                   >
                     OG NFT
-                    <span className="ml-1 px-1.5 py-0.5 text-xs bg-purple-600 text-white rounded-full">NEW</span>
+                    <span className="ml-1 px-1 py-0.5 text-xs bg-purple-600 text-white rounded-full">NEW</span>
                   </Link>
                   <NetworkBadge />
                   
                   {/* Welcome Message and Profile Button for Authenticated Users */}
                   {isAuthenticated && userProfile && (
-                    <div className="flex items-center gap-3">
-                      <div className="bg-gray-800/50 px-3 py-2 rounded-lg border border-gray-700">
-                        <p className="text-xs text-gray-300">Welcome back,</p>
-                        <p className="text-sm font-semibold text-white">{userProfile?.username || 'Explorer'}</p>
+                    <div className="flex items-center gap-2">
+                      <div className="bg-gray-800/50 px-2 py-1 rounded border border-gray-700">
+                        <p className="text-xs text-gray-300">Welcome,</p>
+                        <p className="text-xs font-semibold text-white">{userProfile?.username || 'Explorer'}</p>
                       </div>
                       <Link 
                         href="/profile" 
-                        className="inline-flex items-center px-3 py-2 bg-gradient-to-r from-purple-600 to-blue-600 text-white text-sm rounded-md hover:opacity-90 transition-colors"
+                        className="inline-flex items-center px-2 py-1 bg-gradient-to-r from-purple-600 to-blue-600 text-white text-xs rounded hover:opacity-90 transition-colors"
                       >
-                        View Profile <ArrowRightIcon className="h-3 w-3 ml-1" />
+                        Profile <ArrowRightIcon className="h-2.5 w-2.5 ml-1" />
                       </Link>
                     </div>
                   )}
@@ -96,7 +98,7 @@ function MainLayoutClientInner({ children }: MainLayoutClientProps) {
                   {isAuthenticated && (
                     <button 
                       onClick={logout}
-                      className="text-sm text-red-400 hover:text-red-300"
+                      className="text-xs text-red-400 hover:text-red-300"
                     >
                       Logout
                     </button>
