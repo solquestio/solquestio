@@ -1,4 +1,3 @@
-import Image from 'next/image';
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import styles from './OGNftCard.module.css';
@@ -9,27 +8,30 @@ const MAGIC_EDEN_COLLECTION_URL = "https://magiceden.io/collections/solquestio-o
 const OGNftCard = () => {
     const [isLoaded, setIsLoaded] = useState(false);
 
-    // Image onLoad handler
-    const handleImageLoad = () => {
+    // Video onLoad handler
+    const handleVideoLoad = () => {
         setIsLoaded(true);
     };
 
     return (
         <div className="w-full aspect-video relative overflow-hidden rounded-sm">
-            {/* Backdrop loading shimmer - visible until image loads */}
+            {/* Backdrop loading shimmer - visible until video loads */}
             <div className={`absolute inset-0 bg-gradient-to-r from-indigo-900/30 to-purple-900/30 animate-pulse ${isLoaded ? 'opacity-0' : 'opacity-100'} transition-opacity duration-300`}></div>
             
-            {/* NFT Image */}
+            {/* NFT Video */}
             <div className="relative w-full h-full">
-                <Image
-                    src="/images/nft/og-nft-preview.svg"
-                    alt="SolQuestio OG NFT"
-                    fill
+                <video
+                    src="/OGNFT.mp4"
+                    autoPlay
+                    loop
+                    muted
+                    playsInline
+                    className="w-full h-full object-cover rounded-sm transition-all duration-500 hover:scale-105"
+                    onLoadedData={handleVideoLoad}
                     style={{ objectFit: 'cover' }}
-                    className="rounded-sm transition-all duration-500 hover:scale-105"
-                    onLoad={handleImageLoad}
-                    priority
-                />
+                >
+                    Your browser does not support the video tag.
+                </video>
                 
                 {/* NFT details overlay */}
                 <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 via-black/50 to-transparent p-2">
