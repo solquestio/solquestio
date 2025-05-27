@@ -74,7 +74,7 @@ const STATIC_LEARNING_PATHS: LearningPath[] = [
     imageUrl: '/solana-logo.svg',
     logoUrl: '/solana-logo.svg',
     bonusPoints: 100,
-    userCount: '127',
+    userCount: 'New',
     isPathCompleted: false,
     currentProgress: 0,
     rewardTags: [
