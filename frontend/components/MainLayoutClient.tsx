@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { Logo } from '@/components/Logo';
 import { HeaderWalletButton } from '@/components/HeaderWalletButton';
@@ -24,18 +24,27 @@ function MainLayoutClientInner({ children }: MainLayoutClientProps) {
     const { isAuthenticated, isLoading, login, logout, userProfile } = useAuth();
     const { network } = useNetwork();
 
+    // Close modal when user successfully authenticates
+    useEffect(() => {
+        if (isAuthenticated && isAuthModalOpen) {
+            console.log('User authenticated, closing modal');
+            setIsAuthModalOpen(false);
+        }
+    }, [isAuthenticated, isAuthModalOpen]);
+
     const handleRequestAuthentication = async () => {
         if (!connected) {
             setWalletModalVisible(true);
             return;
         }
         
-        // Use the login function from AuthContext
-        await login();
-        
-        // Close the modal if authentication was successful
-        if (isAuthenticated) {
-            setIsAuthModalOpen(false);
+        try {
+            // Use the login function from AuthContext
+            await login();
+            // The modal will be closed by the useEffect above when isAuthenticated becomes true
+        } catch (error) {
+            console.error('Authentication failed:', error);
+            // Modal stays open on error so user can try again
         }
     };
 
