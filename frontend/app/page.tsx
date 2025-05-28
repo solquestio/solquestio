@@ -80,7 +80,8 @@ const STATIC_LEARNING_PATHS: LearningPath[] = [
     rewardTags: [
       { text: '+0.1 SOL (Bonus)', variant: 'ethereum' }, 
       { text: '+500 XP', variant: 'points' },
-      { text: 'Completion NFT', variant: 'generic' }
+      { text: 'Completion NFT', variant: 'generic' },
+      { text: 'OG NFT', variant: 'generic' }
     ],
     statusTextOverride: 'Production Ready',
     pathKey: 'solanaExplorer',
