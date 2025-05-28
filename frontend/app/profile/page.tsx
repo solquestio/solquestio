@@ -36,9 +36,9 @@ const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:500
 // Quest IDs (match backend)
 const FUND_WALLET_QUEST_ID = 'fund-wallet';
 
-// Define reliable RPC endpoints for both networks
+// Define reliable RPC endpoints - MAINNET ONLY
 const HELIUS_RPC_URL = 'https://mainnet.helius-rpc.com/?api-key=0abb48db-ebdd-4297-aa63-5f4d79234d9e';
-const DEVNET_RPC_URL = 'https://api.devnet.solana.com'; // Reliable devnet endpoint
+const MAINNET_RPC_URL = 'https://api.mainnet-beta.solana.com';
 
 // Define the UserProfile interface
 interface UserProfile {
@@ -217,21 +217,16 @@ export default function ProfilePage() {
           setIsLoadingBalance(true);
           setRpcError(false);
           
-          // Determine which RPC endpoint to use - always use direct connections for reliability
+          // Determine which RPC endpoint to use - MAINNET ONLY
           let balanceConnection;
           let rpcEndpoint;
           
-          if (network === 'mainnet') {
-            console.log('Using direct Helius RPC connection for mainnet');
-            rpcEndpoint = HELIUS_RPC_URL;
-          } else {
-            console.log('Using direct devnet RPC connection');
-            rpcEndpoint = DEVNET_RPC_URL;
-          }
+          console.log('Using direct Helius RPC connection for mainnet');
+          rpcEndpoint = HELIUS_RPC_URL;
           
           // Create a fresh connection for each request to avoid stale connection issues
           balanceConnection = new Connection(rpcEndpoint, 'confirmed');
-          console.log(`Attempting to fetch balance from: ${rpcEndpoint} (${network})`);
+          console.log(`Attempting to fetch balance from: ${rpcEndpoint} (mainnet)`);
           
           // Try to get the balance with a small retry mechanism
           let attempts = 0;
@@ -250,7 +245,7 @@ export default function ProfilePage() {
                 attempts = 3;
                 setRpcError(true);
               } else {
-                console.warn(`Balance fetch attempt ${attempts + 1} failed on ${network}:`, retryError);
+                console.warn(`Balance fetch attempt ${attempts + 1} failed on mainnet:`, retryError);
                 attempts++;
                 // Small delay before retry
                 await new Promise(resolve => setTimeout(resolve, 1000));
@@ -259,7 +254,7 @@ export default function ProfilePage() {
           }
           
           if (success) {
-            console.log(`Successfully fetched balance: ${balanceResponse / LAMPORTS_PER_SOL} SOL on ${network} network`);
+            console.log(`Successfully fetched balance: ${balanceResponse / LAMPORTS_PER_SOL} SOL on mainnet network`);
             setBalance(balanceResponse / LAMPORTS_PER_SOL);
             setRpcError(false);
           } else {
@@ -268,7 +263,7 @@ export default function ProfilePage() {
             setRpcError(true);
           }
         } catch (error: any) {
-          console.error(`Error fetching balance on ${network}:`, error);
+          console.error(`Error fetching balance on mainnet:`, error);
           setRpcError(true);
         } finally {
           setIsLoadingBalance(false);
@@ -394,12 +389,12 @@ export default function ProfilePage() {
       console.log('Username updated:', data);
       
       // Update the local userProfile with the new username
-      if (userProfile) {
+      if (userProfile && data) {
         // Create a shallow copy of userProfile to trigger a re-render
-        const updatedProfile = { ...userProfile, username };
+        const updatedProfile = { ...userProfile, username: data.username };
         setUserProfile(updatedProfile); // Update local state immediately
         
-        // Force a refresh of auth context by triggering a user refresh event
+        // Also update the auth context
         const event = new CustomEvent('user-profile-updated', { detail: updatedProfile });
         window.dispatchEvent(event);
         
@@ -503,7 +498,7 @@ export default function ProfilePage() {
   // Add a new state for manually refreshing balance
   const [isManuallyRefreshing, setIsManuallyRefreshing] = useState(false);
 
-  // Function to manually refresh balance using direct connections for both networks
+  // Function to manually refresh balance using mainnet connection only
   const refreshBalanceManually = async () => {
     if (!publicKey || !connected) return;
     
@@ -511,12 +506,10 @@ export default function ProfilePage() {
     setRpcError(false);
     
     try {
-      // Select the appropriate endpoint based on network
-      const rpcEndpoint = network === 'mainnet' 
-        ? HELIUS_RPC_URL 
-        : DEVNET_RPC_URL;
+      // Always use mainnet endpoint
+      const rpcEndpoint = HELIUS_RPC_URL;
       
-      console.log(`Manual refresh: Using direct ${network} connection`);
+      console.log(`Manual refresh: Using direct mainnet connection`);
       const directConnection = new Connection(rpcEndpoint, 'confirmed');
       
       const balanceResponse = await directConnection.getBalance(publicKey);
