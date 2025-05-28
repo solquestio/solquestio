@@ -7,6 +7,7 @@ import { loadQuestCompletions, updateQuestCompletion, calculateEarnedXP } from '
 import { FaucetQuest } from '@/components/quests/FaucetQuest';
 import { WalletConnectQuest } from '@/components/quests/WalletConnectQuest';
 import { NFTVerificationQuest } from '@/components/quests/NFTVerificationQuest';
+import PathCompletionNftQuest from '@/components/quests/PathCompletionNftQuest';
 
 // Define the structure for individual quests within this path
 interface SolanaExplorerQuest extends QuestListItem {
@@ -19,7 +20,7 @@ interface SolanaExplorerQuest extends QuestListItem {
 
 const SolanaExplorerPathPage = () => {
   const { connected } = useWallet();
-  const [activeQuestId, setActiveQuestId] = useState<string>('connect-wallet'); // Default to first quest
+  const [activeQuestId, setActiveQuestId] = useState<string>('verify-wallet'); // Default to first quest
   const [completedQuests, setCompletedQuests] = useState<Record<string, boolean>>({});
   const [earnedXP, setEarnedXP] = useState<number>(0);
   const PATH_KEY = 'solanaExplorer';
@@ -43,34 +44,47 @@ const SolanaExplorerPathPage = () => {
     setEarnedXP(calculateEarnedXP(questsList, savedCompletions));
   }, []);
 
-  // Define quests with their XP values
+  // Define quests with their XP values - updated to match backend quest IDs
   const getQuestsList = () => [
     {
-      id: 'connect-wallet',
+      id: 'verify-wallet',
       title: '1. Connect Your Wallet',
       description: 'Connect your Solana wallet to get started with your learning journey.',
       component: WalletConnectQuest,
-      xp: 50,
+      xp: 100,
       props: { title: 'Connect Your Wallet' },
-      isComplete: !!completedQuests['connect-wallet']
+      isComplete: !!completedQuests['verify-wallet']
     },
     {
-      id: 'fund-wallet',
-      title: '2. Fund Your Wallet',
-      description: 'Get some SOL from the faucet to start interacting with the Solana network.',
+      id: 'explore-transaction-1',
+      title: '2. Explore a Transaction',
+      description: 'Learn how to read Solana transaction details and explore the blockchain.',
       component: FaucetQuest,
       xp: 150,
       props: { minRequiredSOL: 0.01 },
-      isComplete: !!completedQuests['fund-wallet']
+      isComplete: !!completedQuests['explore-transaction-1']
     },
     {
-      id: 'verify-og-nft',
-      title: '3. Mint and Verify OG NFT',
-      description: 'Claim your exclusive SolQuest OG NFT and verify ownership.',
+      id: 'visit-x-og',
+      title: '3. Follow Us on X',
+      description: 'Follow SolQuest on X (Twitter) and join our community.',
       component: NFTVerificationQuest,
-      xp: 300,
-      props: { title: 'Mint and Verify SolQuest OG NFT' },
-      isComplete: !!completedQuests['verify-og-nft']
+      xp: 100,
+      props: { title: 'Follow SolQuest on X' },
+      isComplete: !!completedQuests['visit-x-og']
+    },
+    {
+      id: 'mint-completion-nft',
+      title: '4. Mint Completion Certificate',
+      description: 'Mint your Solana Explorer Path completion certificate NFT.',
+      component: PathCompletionNftQuest,
+      xp: 150,
+      props: { 
+        pathId: 'solana-foundations',
+        pathName: 'Solana Explorer Path',
+        title: 'Mint Completion Certificate'
+      },
+      isComplete: !!completedQuests['mint-completion-nft']
     }
   ];
 

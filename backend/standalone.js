@@ -84,7 +84,7 @@ const addXpToUser = (walletAddress, amount, description) => {
 const checkPathCompletion = (userData, pathId) => {
   // Define quest requirements for each path
   const pathRequirements = {
-    'solana-foundations': ['verify-wallet', 'explore-transaction-1', 'visit-x-og'],
+    'solana-foundations': ['verify-wallet', 'explore-transaction-1', 'visit-x-og', 'mint-completion-nft'],
     'substreams-path': [
       'substreams-intro', 'substreams-setup', 'substreams-basic',
       'substreams-transform', 'substreams-store', 'substreams-sink',
@@ -171,8 +171,17 @@ app.get('/api/quests', (req, res) => {
       shortDescription: 'Follow SolQuest on X (Twitter)',
       difficulty: 'beginner',
       xpReward: 100,
-      path: 'solquest-og',
-      order: 1
+      path: 'solana-foundations',
+      order: 3
+    },
+    {
+      id: 'mint-completion-nft',
+      title: 'Mint Completion Certificate',
+      shortDescription: 'Mint your Solana Explorer Path completion certificate NFT',
+      difficulty: 'beginner',
+      xpReward: 150,
+      path: 'solana-foundations',
+      order: 4
     }
   ];
   
@@ -186,7 +195,7 @@ app.get('/api/quests/paths', (req, res) => {
       id: 'solana-foundations',
       title: 'Solana Explorer Path',
       description: "Dive deep into Solana's core concepts, learn to navigate the ecosystem, and complete foundational quests, starting with community engagement.",
-      questCount: 3,
+      questCount: 4,
       totalXp: 500,
       isLocked: false,
       graphicType: 'image',

@@ -8,7 +8,6 @@ import { useRouter } from 'next/navigation';
 import { ArrowRightIcon, ArrowPathIcon, UserCircleIcon, TrophyIcon, SparklesIcon, ArrowTopRightOnSquareIcon as ExternalLinkIcon, CheckCircleIcon as CheckCircleSolidIcon } from '@heroicons/react/24/solid';
 import { useAuth } from '@/context/AuthContext';
 import Image from 'next/image';
-import PathCompletionNft from '@/components/PathCompletionNft';
 
 // Define learning path type
 interface LearningPath {
@@ -66,7 +65,7 @@ const STATIC_LEARNING_PATHS: LearningPath[] = [
     title: 'Solana Explorer Path',
     shortTitle: 'Solana Explorer',
     description: "Dive deep into Solana's core concepts, learn to navigate the ecosystem, and complete foundational quests, starting with community engagement.",
-    questCount: 3,
+    questCount: 4,
     difficulty: 'Beginner',
     pathSlug: 'solana-foundations',
     totalXp: 500,
@@ -81,7 +80,7 @@ const STATIC_LEARNING_PATHS: LearningPath[] = [
     rewardTags: [
       { text: '+0.1 SOL (Bonus)', variant: 'ethereum' }, 
       { text: '+500 XP', variant: 'points' },
-      { text: 'OG NFT Reward', variant: 'generic' }
+      { text: 'Completion NFT', variant: 'generic' }
     ],
     statusTextOverride: 'Production Ready',
     pathKey: 'solanaExplorer',
@@ -628,27 +627,6 @@ export default function HomePage() {
           )}
         </div>
       </section>
-
-      {/* Path Completion NFT Section */}
-      {isAuthenticated && (
-        <section className="py-8 mb-8 bg-gray-800/30 rounded-xl p-6">
-          <div className="text-center mb-8">
-            <h2 className="text-3xl font-bold mb-3 text-white">Path Completion NFT</h2>
-            <p className="text-gray-400 max-w-2xl mx-auto">Claim your NFT for completing a learning path</p>
-          </div>
-
-          <div className="grid gap-6 md:grid-cols-2">
-            {productionPaths.map((path) => (
-              <PathCompletionNft 
-                key={path.id}
-                pathId={path.id}
-                pathName={path.title}
-                pathDescription={path.description}
-              />
-            ))}
-          </div>
-        </section>
-      )}
     </div>
   );
 } 

@@ -6,6 +6,7 @@ import { useWallet, useConnection } from '@solana/wallet-adapter-react';
 import { LAMPORTS_PER_SOL } from '@solana/web3.js';
 import { UserCircleIcon, SparklesIcon, ArrowRightOnRectangleIcon, ArrowPathIcon } from '@heroicons/react/24/solid'; // Added disconnect icon and refresh icon
 import Image from 'next/image'; // Import Next Image for wallet icon
+import { Connection } from '@solana/web3.js';
 
 // Dynamically import the WalletMultiButton for the disconnected state
 const WalletMultiButtonDynamic = dynamic(
@@ -76,22 +77,52 @@ export function HeaderWalletButton() {
 
     // Function to fetch SOL balance
     const fetchSolBalance = useCallback(async () => {
-        if (!connected || !publicKey || !connection) {
+        if (!connected || !publicKey) {
             setSolBalance(null);
             return;
         }
+        
         try {
             console.log('[HeaderWallet] Fetching SOL balance for:', publicKey.toString());
-            const balanceLamports = await connection.getBalance(publicKey);
-            const balanceSOL = balanceLamports / LAMPORTS_PER_SOL;
-            console.log('[HeaderWallet] Balance fetched:', balanceSOL, 'SOL');
-            setSolBalance(balanceSOL);
+            
+            // Try multiple RPC endpoints for better reliability
+            const rpcEndpoints = [
+                process.env.NEXT_PUBLIC_HELIUS_RPC_URL,
+                'https://api.mainnet-beta.solana.com',
+                'https://solana-mainnet.rpc.extrnode.com',
+                'https://mainnet.rpcpool.com'
+            ].filter((endpoint): endpoint is string => Boolean(endpoint));
+            
+            let balanceSOL = null;
+            let lastError = null;
+            
+            for (const endpoint of rpcEndpoints) {
+                try {
+                    console.log(`[HeaderWallet] Trying RPC endpoint: ${endpoint}`);
+                    const tempConnection = new Connection(endpoint, 'confirmed');
+                    const balanceLamports = await tempConnection.getBalance(publicKey);
+                    balanceSOL = balanceLamports / LAMPORTS_PER_SOL;
+                    console.log('[HeaderWallet] Balance fetched successfully:', balanceSOL, 'SOL');
+                    break; // Success, exit loop
+                } catch (endpointError) {
+                    console.warn(`[HeaderWallet] Failed to fetch from ${endpoint}:`, endpointError);
+                    lastError = endpointError;
+                    continue; // Try next endpoint
+                }
+            }
+            
+            if (balanceSOL !== null) {
+                setSolBalance(balanceSOL);
+                setError(null);
+            } else {
+                throw lastError || new Error('All RPC endpoints failed');
+            }
         } catch (err) {
             console.error('Header: Error fetching SOL balance:', err);
             setSolBalance(null);
             setError("Couldn't load balance.");
         }
-    }, [connected, publicKey, connection]);
+    }, [connected, publicKey]);
 
     // Effect to check auth token on mount and connection change
     useEffect(() => {
@@ -125,23 +156,29 @@ export function HeaderWalletButton() {
         }
     }, [connected, authToken, publicKey, fetchUserProfile, fetchSolBalance]); // Rerun if connection, auth, or pubkey changes
 
-    // Auto-refresh balance every 30 seconds when connected
+    // Auto-refresh balance every 15 seconds when connected
     useEffect(() => {
-        if (!connected || !publicKey || !connection) return;
+        if (!connected || !publicKey) return;
 
         const refreshInterval = setInterval(() => {
             console.log('[HeaderWallet] Auto-refreshing balance...');
             fetchSolBalance();
-        }, 30000); // Refresh every 30 seconds
+        }, 15000); // Refresh every 15 seconds
 
         return () => clearInterval(refreshInterval);
-    }, [connected, publicKey, connection, fetchSolBalance]);
+    }, [connected, publicKey, fetchSolBalance]);
 
     // Listen for account changes to refresh balance immediately
     useEffect(() => {
-        if (!connected || !publicKey || !connection) return;
+        if (!connected || !publicKey) return;
 
-        const subscriptionId = connection.onAccountChange(
+        // Create a connection for the account change listener
+        const listenerConnection = new Connection(
+            process.env.NEXT_PUBLIC_HELIUS_RPC_URL || 'https://api.mainnet-beta.solana.com',
+            'confirmed'
+        );
+
+        const subscriptionId = listenerConnection.onAccountChange(
             publicKey,
             (accountInfo) => {
                 console.log('[HeaderWallet] Account changed, refreshing balance...');
@@ -152,10 +189,10 @@ export function HeaderWalletButton() {
 
         return () => {
             if (subscriptionId) {
-                connection.removeAccountChangeListener(subscriptionId);
+                listenerConnection.removeAccountChangeListener(subscriptionId);
             }
         };
-    }, [connected, publicKey, connection, fetchSolBalance]);
+    }, [connected, publicKey, fetchSolBalance]);
 
     if (!connected) {
         // Show the standard connect button if wallet is not connected
