@@ -8,6 +8,7 @@ import { useRouter } from 'next/navigation';
 import { ArrowRightIcon, ArrowPathIcon, UserCircleIcon, TrophyIcon, SparklesIcon, ArrowTopRightOnSquareIcon as ExternalLinkIcon, CheckCircleIcon as CheckCircleSolidIcon } from '@heroicons/react/24/solid';
 import { useAuth } from '@/context/AuthContext';
 import Image from 'next/image';
+import PathCompletionNft from '@/components/PathCompletionNft';
 
 // Define learning path type
 interface LearningPath {
@@ -627,6 +628,27 @@ export default function HomePage() {
           )}
         </div>
       </section>
+
+      {/* Path Completion NFT Section */}
+      {isAuthenticated && (
+        <section className="py-8 mb-8 bg-gray-800/30 rounded-xl p-6">
+          <div className="text-center mb-8">
+            <h2 className="text-3xl font-bold mb-3 text-white">Path Completion NFT</h2>
+            <p className="text-gray-400 max-w-2xl mx-auto">Claim your NFT for completing a learning path</p>
+          </div>
+
+          <div className="grid gap-6 md:grid-cols-2">
+            {productionPaths.map((path) => (
+              <PathCompletionNft 
+                key={path.id}
+                pathId={path.id}
+                pathName={path.title}
+                pathDescription={path.description}
+              />
+            ))}
+          </div>
+        </section>
+      )}
     </div>
   );
 } 

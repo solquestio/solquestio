@@ -37,6 +37,8 @@ const getUserData = (walletAddress) => {
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
       ownsOgNft: false,
+      eligiblePathNfts: [], // Paths user can mint NFTs for
+      mintedPathNfts: [], // Paths user has already minted NFTs for
       xpHistory: [],
       social: {
         github: null,
@@ -76,6 +78,53 @@ const addXpToUser = (walletAddress, amount, description) => {
   });
   
   return updatedUser;
+};
+
+// Helper function to check path completion
+const checkPathCompletion = (userData, pathId) => {
+  // Define quest requirements for each path
+  const pathRequirements = {
+    'solana-foundations': ['verify-wallet', 'explore-transaction-1', 'visit-x-og'],
+    'substreams-path': [
+      'substreams-intro', 'substreams-setup', 'substreams-basic',
+      'substreams-transform', 'substreams-store', 'substreams-sink',
+      'substreams-advanced', 'substreams-deploy', 'substreams-optimize'
+    ]
+  };
+  
+  const requiredQuests = pathRequirements[pathId] || [];
+  const completedQuests = userData.completedQuestIds || [];
+  
+  // Check if all required quests are completed
+  const isCompleted = requiredQuests.every(questId => completedQuests.includes(questId));
+  
+  return {
+    isCompleted,
+    requiredQuests,
+    completedCount: requiredQuests.filter(questId => completedQuests.includes(questId)).length,
+    totalCount: requiredQuests.length
+  };
+};
+
+// Helper function to add path completion Nft
+const addPathCompletionNft = (walletAddress, pathId) => {
+  const userData = getUserData(walletAddress);
+  const pathCompletion = checkPathCompletion(userData, pathId);
+  
+  if (!pathCompletion.isCompleted) {
+    return null;
+  }
+  
+  // Add to eligible NFTs if not already there
+  const eligibleNfts = userData.eligiblePathNfts || [];
+  if (!eligibleNfts.includes(pathId)) {
+    const updatedUser = updateUserData(walletAddress, {
+      eligiblePathNfts: [...eligibleNfts, pathId]
+    });
+    return updatedUser;
+  }
+  
+  return userData;
 };
 
 // Basic health check route
@@ -373,6 +422,119 @@ app.get('/api/health', (req, res) => {
     timestamp: new Date().toISOString(),
     version: '1.0.0',
     environment: process.env.NODE_ENV || 'development'
+  });
+});
+
+// Path completion status endpoint
+app.get('/api/paths/:pathId/completion', (req, res) => {
+  const { pathId } = req.params;
+  
+  // Get authorization header
+  const authHeader = req.headers.authorization;
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    return res.status(401).json({ message: 'Authorization token required' });
+  }
+  
+  // Extract wallet address from token
+  const token = authHeader.split(' ')[1];
+  const tokenParts = token.split('-');
+  const walletAddress = tokenParts[tokenParts.length - 1];
+  
+  if (!walletAddress) {
+    return res.status(401).json({ message: 'Invalid token' });
+  }
+  
+  const userData = getUserData(walletAddress);
+  const pathCompletion = checkPathCompletion(userData, pathId);
+  
+  const response = {
+    pathId,
+    ...pathCompletion,
+    canMintNft: pathCompletion.isCompleted && !userData.mintedPathNfts?.includes(pathId),
+    hasEligibleNft: userData.eligiblePathNfts?.includes(pathId) || false,
+    hasMintedNft: userData.mintedPathNfts?.includes(pathId) || false
+  };
+  
+  res.json(response);
+});
+
+// NFT minting endpoint
+app.post('/api/paths/:pathId/mint-nft', (req, res) => {
+  const { pathId } = req.params;
+  const { transactionSignature } = req.body;
+  
+  // Get authorization header
+  const authHeader = req.headers.authorization;
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    return res.status(401).json({ message: 'Authorization token required' });
+  }
+  
+  // Extract wallet address from token
+  const token = authHeader.split(' ')[1];
+  const tokenParts = token.split('-');
+  const walletAddress = tokenParts[tokenParts.length - 1];
+  
+  if (!walletAddress) {
+    return res.status(401).json({ message: 'Invalid token' });
+  }
+  
+  const userData = getUserData(walletAddress);
+  const pathCompletion = checkPathCompletion(userData, pathId);
+  
+  // Validate eligibility
+  if (!pathCompletion.isCompleted) {
+    return res.status(400).json({ 
+      message: 'Path not completed. Complete all quests first.',
+      completion: pathCompletion
+    });
+  }
+  
+  if (userData.mintedPathNfts?.includes(pathId)) {
+    return res.status(400).json({ 
+      message: 'NFT already minted for this path'
+    });
+  }
+  
+  // In a real implementation, you would:
+  // 1. Verify the transaction signature
+  // 2. Check that 0.001 SOL was paid
+  // 3. Actually mint the NFT on-chain
+  
+  // For now, simulate successful minting
+  const mintedNfts = userData.mintedPathNfts || [];
+  const eligibleNfts = userData.eligiblePathNfts || [];
+  
+  const updatedUser = updateUserData(walletAddress, {
+    mintedPathNfts: [...mintedNfts, pathId],
+    eligiblePathNfts: eligibleNfts.includes(pathId) ? eligibleNfts : [...eligibleNfts, pathId]
+  });
+  
+  // Add XP bonus for minting NFT
+  const finalUser = addXpToUser(walletAddress, 50, `Minted ${pathId} completion NFT`);
+  
+  // Path names for response
+  const pathNames = {
+    'solana-foundations': 'Solana Explorer Path',
+    'substreams-path': 'The Graph Substreams on Solana'
+  };
+  
+  res.json({
+    message: 'NFT minted successfully!',
+    pathId,
+    pathName: pathNames[pathId] || pathId,
+    nftMetadata: {
+      name: `${pathNames[pathId] || pathId} - Completion Certificate`,
+      description: `Certification of completion for ${pathNames[pathId] || pathId} on SolQuest.io`,
+      image: `/nft-certificates/${pathId}.png`,
+      attributes: [
+        { trait_type: 'Path', value: pathNames[pathId] || pathId },
+        { trait_type: 'Completion Date', value: new Date().toISOString().split('T')[0] },
+        { trait_type: 'Quests Completed', value: pathCompletion.totalCount },
+        { trait_type: 'Platform', value: 'SolQuest.io' }
+      ]
+    },
+    user: finalUser,
+    transactionSignature: transactionSignature || 'mock-tx-signature-' + Date.now()
   });
 });
 
