@@ -932,55 +932,45 @@ export default function ProfilePage() {
             <XpIcon className="w-5 h-5 text-yellow-400" />
             XP History
           </h3>
-          <div className="space-y-4">
-            {userProfile?.xpHistory?.map((entry: { description: string; timestamp: string; amount: number }, index: number) => (
-              <div key={index} className="flex items-center justify-between p-4 bg-dark-card-secondary rounded-lg border border-white/10">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-full bg-yellow-500/20 flex items-center justify-center">
-                    <XpIcon className="w-5 h-5 text-yellow-400" />
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium text-gray-100">{entry.description}</p>
-                    <p className="text-xs text-gray-400">{new Date(entry.timestamp).toLocaleDateString()}</p>
-                  </div>
-                </div>
-                <span className="text-sm font-semibold text-yellow-400">+{entry.amount} XP</span>
-              </div>
-            ))}
-            {(!userProfile?.xpHistory || userProfile.xpHistory.length === 0) && (
-              <p className="text-gray-500 text-center py-4">No XP history available yet.</p>
-            )}
-          </div>
-        </div>
-
-        {/* Completed Quests Section */}
-        <div className="bg-dark-card rounded-xl shadow-lg p-6 border border-white/10">
-          <h3 className="text-xl font-semibold text-gray-100 mb-4 flex items-center gap-2">
-            <CheckCircleIcon className="w-5 h-5 text-green-400" />
-            Completed Quests
-          </h3>
-          {completedQuests.length > 0 ? (
-            <div className="space-y-3">
-              {completedQuests.map((quest) => (
-                <div key={quest.id} className="bg-dark-card-secondary rounded-lg p-4 border border-white/10">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <h4 className="font-medium text-gray-100">{quest.title}</h4>
-                      <p className="text-sm text-gray-400 mt-1">{quest.description}</p>
+          <div className="space-y-3">
+            {userProfile?.xpHistory && userProfile.xpHistory.length > 0 ? (
+              userProfile.xpHistory
+                .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()) // Sort by newest first
+                .map((entry: { description: string; timestamp: string; amount: number }, index: number) => (
+                  <div key={index} className="flex items-center justify-between p-4 bg-dark-card-secondary rounded-lg border border-white/10 hover:border-yellow-500/30 transition-colors">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-full bg-yellow-500/20 flex items-center justify-center">
+                        <XpIcon className="w-5 h-5 text-yellow-400" />
+                      </div>
+                      <div>
+                        <p className="text-sm font-medium text-gray-100">{entry.description}</p>
+                        <p className="text-xs text-gray-400">
+                          {new Date(entry.timestamp).toLocaleDateString('en-US', {
+                            year: 'numeric',
+                            month: 'short',
+                            day: 'numeric',
+                            hour: '2-digit',
+                            minute: '2-digit'
+                          })}
+                        </p>
+                      </div>
                     </div>
                     <div className="flex items-center gap-2">
-                      <span className="text-xs font-semibold bg-purple-500/20 text-purple-300 px-2 py-0.5 rounded-full">
-                        {quest.xpReward} XP
-                      </span>
-                      <CheckCircleIcon className="w-5 h-5 text-green-400" />
+                      <span className="text-lg font-bold text-yellow-400">+{entry.amount}</span>
+                      <span className="text-xs text-yellow-400/70">XP</span>
                     </div>
                   </div>
+                ))
+            ) : (
+              <div className="text-center py-8">
+                <div className="w-16 h-16 rounded-full bg-yellow-500/10 flex items-center justify-center mx-auto mb-4">
+                  <XpIcon className="w-8 h-8 text-yellow-400/50" />
                 </div>
-              ))}
-            </div>
-          ) : (
-            <p className="text-gray-500 text-center py-4">No quests completed yet. Start your journey!</p>
-          )}
+                <p className="text-gray-500 text-sm">No XP history yet.</p>
+                <p className="text-gray-600 text-xs mt-1">Complete quests or check in daily to start earning XP!</p>
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </SkeletonTheme>
