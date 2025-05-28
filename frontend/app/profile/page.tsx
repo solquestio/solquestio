@@ -730,9 +730,6 @@ export default function ProfilePage() {
                 {usernameSuccessMessage && (
                   <p className="text-green-500 text-xs mt-1">{usernameSuccessMessage}</p>
                 )}
-                {publicKey && (
-                  <p className="text-xs text-gray-400 font-mono">{publicKey.toString()}</p>
-                )}
                 {userProfile?.ownsOgNft && (
                   <span className="inline-flex items-center text-xs font-semibold bg-purple-500/20 text-purple-300 px-2 py-0.5 rounded-full border border-purple-500/30">
                     <SparklesIcon className="h-3 w-3 mr-1"/> OG NFT Holder
