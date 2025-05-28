@@ -126,6 +126,11 @@ export function HeaderWalletButton() {
 
     // Effect to check auth token on mount and connection change
     useEffect(() => {
+        // Clear any cached network settings that might cause devnet balance
+        localStorage.removeItem('solana-network');
+        localStorage.removeItem('fallback-rpc-endpoint');
+        localStorage.setItem('solquestio-network', 'mainnet');
+        
         const token = localStorage.getItem(AUTH_TOKEN_KEY);
         if (connected && token) {
             setAuthToken(token);
