@@ -139,8 +139,163 @@ app.get('/api/users', (req, res) => {
     const limitedResults = mockLeaderboard.slice(0, limitNum);
     
     res.json(limitedResults);
+  } else if (path === 'me') {
+    // Mock user profile data
+    const mockUserProfile = {
+      id: '1',
+      walletAddress: '8nnLuLdFuN8zRHzgRwaukS1V8Bzqj1S5eZULu31aqKSM',
+      username: 'Unnamed User',
+      completedQuestIds: [],
+      xp: 3,
+      lastCheckedInAt: new Date().toISOString(),
+      checkInStreak: 1,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+      ownsOgNft: false,
+      xpHistory: [
+        {
+          description: 'Daily check-in',
+          timestamp: new Date().toISOString(),
+          amount: 3
+        }
+      ],
+      social: {
+        github: null,
+        twitter: null
+      }
+    };
+    
+    res.json(mockUserProfile);
   } else {
     res.json([]);
+  }
+});
+
+// User profile update endpoint
+app.put('/api/users', (req, res) => {
+  const { path } = req.query;
+  const { username } = req.body;
+  
+  if (path === 'me') {
+    // Validate username
+    if (!username || username.trim().length < 3) {
+      return res.status(400).json({
+        message: 'Username must be at least 3 characters long'
+      });
+    }
+    
+    if (username.trim().length > 15) {
+      return res.status(400).json({
+        message: 'Username cannot exceed 15 characters'
+      });
+    }
+    
+    // Mock successful update
+    const updatedProfile = {
+      id: '1',
+      walletAddress: '8nnLuLdFuN8zRHzgRwaukS1V8Bzqj1S5eZULu31aqKSM',
+      username: username.trim(),
+      completedQuestIds: [],
+      xp: 3,
+      lastCheckedInAt: new Date().toISOString(),
+      checkInStreak: 1,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+      ownsOgNft: false,
+      xpHistory: [
+        {
+          description: 'Daily check-in',
+          timestamp: new Date().toISOString(),
+          amount: 3
+        }
+      ],
+      social: {
+        github: null,
+        twitter: null
+      }
+    };
+    
+    res.json(updatedProfile);
+  } else {
+    res.status(404).json({ message: 'Endpoint not found' });
+  }
+});
+
+// Auth verification endpoint
+app.post('/api/auth', (req, res) => {
+  const { action } = req.query;
+  
+  if (action === 'verify') {
+    const { walletAddress, signature, message } = req.body;
+    
+    if (!walletAddress || !signature || !message) {
+      return res.status(400).json({
+        message: 'Missing required fields: walletAddress, signature, message'
+      });
+    }
+    
+    // Mock successful authentication
+    const mockToken = 'mock-jwt-token-' + Date.now();
+    const mockUser = {
+      id: '1',
+      walletAddress: walletAddress,
+      username: 'Unnamed User',
+      completedQuestIds: [],
+      xp: 3,
+      lastCheckedInAt: new Date().toISOString(),
+      checkInStreak: 1,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+      ownsOgNft: false,
+      xpHistory: [
+        {
+          description: 'Daily check-in',
+          timestamp: new Date().toISOString(),
+          amount: 3
+        }
+      ],
+      social: {
+        github: null,
+        twitter: null
+      }
+    };
+    
+    res.json({
+      token: mockToken,
+      user: mockUser,
+      message: 'Authentication successful'
+    });
+  } else {
+    res.status(400).json({ message: 'Invalid action. Use ?action=verify' });
+  }
+});
+
+// Daily check-in endpoint
+app.post('/api/users', (req, res) => {
+  const { path } = req.query;
+  
+  if (path === 'check-in') {
+    // Mock successful check-in
+    const xpAwarded = Math.floor(Math.random() * 5) + 1; // 1-5 XP
+    
+    res.json({
+      message: 'Check-in successful!',
+      xpAwarded: xpAwarded,
+      user: {
+        id: '1',
+        walletAddress: '8nnLuLdFuN8zRHzgRwaukS1V8Bzqj1S5eZULu31aqKSM',
+        username: 'Unnamed User',
+        completedQuestIds: [],
+        xp: 3 + xpAwarded,
+        lastCheckedInAt: new Date().toISOString(),
+        checkInStreak: 2,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+        ownsOgNft: false
+      }
+    });
+  } else {
+    res.status(404).json({ message: 'Endpoint not found' });
   }
 });
 

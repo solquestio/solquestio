@@ -376,7 +376,7 @@ export default function ProfilePage() {
     }
     
     try {
-      const response = await fetch(`${BACKEND_URL}/api/users/me`, {
+      const response = await fetch(`${BACKEND_URL}/api/users?path=me`, {
         method: 'PUT',
         headers: { 
           'Content-Type': 'application/json',
@@ -602,7 +602,7 @@ export default function ProfilePage() {
       if (!authToken) return;
       
       try {
-        const response = await fetch(`${BACKEND_URL}/api/users/me`, {
+        const response = await fetch(`${BACKEND_URL}/api/users?path=me`, {
           method: 'GET',
           headers: { 'Authorization': `Bearer ${authToken}` }
         });

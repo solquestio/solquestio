@@ -70,7 +70,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     setIsLoading(true);
     setError(null);
     try {
-      const response = await fetch(`${BACKEND_URL}/api/users/me`, {
+      const response = await fetch(`${BACKEND_URL}/api/users?path=me`, {
         method: 'GET',
         headers: { 'Authorization': `Bearer ${token}` },
       });
