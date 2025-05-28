@@ -225,13 +225,22 @@ export default function PathCompletionNftQuest({
         <div className="flex items-center justify-between mb-2">
           <span className="text-sm text-gray-300">Path Progress</span>
           <span className="text-sm text-gray-300">
-            {completionData.completedCount}/{completionData.totalCount} quests
+            {/* For Solana Foundations, show progress toward the first 3 quests (excluding the mint quest itself) */}
+            {pathId === 'solana-foundations' ? (
+              `${Math.min(completionData.completedCount, 3)}/3 quests`
+            ) : (
+              `${completionData.completedCount}/${completionData.totalCount} quests`
+            )}
           </span>
         </div>
         <div className="w-full bg-gray-700 rounded-full h-3">
           <div 
             className="bg-gradient-to-r from-purple-500 to-blue-500 h-3 rounded-full transition-all duration-300"
-            style={{ width: `${(completionData.completedCount / completionData.totalCount) * 100}%` }}
+            style={{ 
+              width: pathId === 'solana-foundations' 
+                ? `${Math.min(100, (Math.min(completionData.completedCount, 3) / 3) * 100)}%`
+                : `${(completionData.completedCount / completionData.totalCount) * 100}%`
+            }}
           ></div>
         </div>
       </div>
@@ -288,15 +297,30 @@ export default function PathCompletionNftQuest({
         ) : (
           <div className="space-y-4">
             <div className="text-gray-400">
-              <p className="text-lg">Complete all quests to unlock NFT minting</p>
+              {/* More specific text for Solana Foundations path */}
+              {pathId === 'solana-foundations' ? (
+                <p className="text-lg">Complete 3 quests to unlock NFT minting</p>
+              ) : (
+                <p className="text-lg">Complete all quests to unlock NFT minting</p>
+              )}
               <p className="text-sm mt-2">
-                Progress: {completionData.completedCount} of {completionData.totalCount} quests completed
+                {/* For Solana Foundations, show progress toward the first 3 quests */}
+                {pathId === 'solana-foundations' ? (
+                  `Progress: ${Math.min(completionData.completedCount, 3)} of 3 quests completed`
+                ) : (
+                  `Progress: ${completionData.completedCount} of ${completionData.totalCount} quests completed`
+                )}
               </p>
             </div>
             
             <div className="bg-gray-800/50 border border-gray-600/50 rounded-lg p-4">
               <p className="text-gray-400 text-sm">
-                🔒 Complete the remaining quests in this path to unlock your certificate NFT.
+                {/* More specific text for Solana Foundations path */}
+                {pathId === 'solana-foundations' ? (
+                  `🔒 Complete the first 3 quests in this path to unlock your certificate NFT.`
+                ) : (
+                  `🔒 Complete the remaining quests in this path to unlock your certificate NFT.`
+                )}
               </p>
             </div>
           </div>

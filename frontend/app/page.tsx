@@ -270,7 +270,7 @@ const renderLearningPath = (path: LearningPath) => {
         <p className="text-gray-400 text-sm mb-3 h-10 line-clamp-2">{path.description}</p>
         
         <div className="flex flex-wrap gap-2 mb-3">
-          {path.rewardTags?.slice(0, 3).map((tag, index) => (
+          {path.rewardTags?.map((tag, index) => (
             <span
               key={index}
               className={`text-sm px-2 py-1 rounded-full font-medium flex items-center gap-1

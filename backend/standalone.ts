@@ -75,7 +75,7 @@ app.get('/api/quests/paths', (req: Request, res: Response) => {
       id: 'solana-foundations',
       title: 'Solana Explorer Path',
       description: "Dive deep into Solana's core concepts, learn to navigate the ecosystem, and complete foundational quests, starting with community engagement.",
-      questCount: 7,
+      questCount: 3,
       totalXp: 1650,
       isLocked: false,
       graphicType: 'image',
