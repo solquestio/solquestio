@@ -51,7 +51,7 @@ const SolanaExplorerPathPage = () => {
       title: '1. Connect Your Wallet',
       description: 'Connect your Solana wallet to get started with your learning journey.',
       component: WalletConnectQuest,
-      xp: 100,
+      xp: 0, // XP only awarded on path completion
       props: { title: 'Connect Your Wallet' },
       isComplete: !!completedQuests['verify-wallet']
     },
@@ -60,7 +60,7 @@ const SolanaExplorerPathPage = () => {
       title: '2. Explore a Transaction',
       description: 'Learn how to read Solana transaction details and explore the blockchain.',
       component: FaucetQuest,
-      xp: 150,
+      xp: 0, // XP only awarded on path completion
       props: { minRequiredSOL: 0.01 },
       isComplete: !!completedQuests['explore-transaction-1']
     },
@@ -69,16 +69,16 @@ const SolanaExplorerPathPage = () => {
       title: '3. Follow Us on X',
       description: 'Follow SolQuest on X (Twitter) and join our community.',
       component: NFTVerificationQuest,
-      xp: 100,
+      xp: 0, // XP only awarded on path completion
       props: { title: 'Follow SolQuest on X' },
       isComplete: !!completedQuests['visit-x-og']
     },
     {
       id: 'mint-completion-nft',
       title: '4. Mint Completion Certificate',
-      description: 'Mint your Solana Explorer Path completion certificate NFT.',
+      description: 'Mint your Solana Explorer Path completion certificate NFT and earn all 500 XP!',
       component: PathCompletionNftQuest,
-      xp: 150,
+      xp: 500, // All path XP awarded here
       props: { 
         pathId: 'solana-foundations',
         pathName: 'Solana Explorer Path',

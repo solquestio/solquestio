@@ -504,6 +504,14 @@ app.post('/api/paths/:pathId/mint-nft', (req, res) => {
     });
   }
   
+  // Calculate total XP for the path
+  const pathXpRewards = {
+    'solana-foundations': 500, // 4 quests total XP
+    'substreams-path': 2150    // 9 quests total XP
+  };
+  
+  const totalPathXp = pathXpRewards[pathId] || 0;
+  
   // In a real implementation, you would:
   // 1. Verify the transaction signature
   // 2. Check that 0.001 SOL was paid
@@ -518,33 +526,74 @@ app.post('/api/paths/:pathId/mint-nft', (req, res) => {
     eligiblePathNfts: eligibleNfts.includes(pathId) ? eligibleNfts : [...eligibleNfts, pathId]
   });
   
-  // Add XP bonus for minting NFT
-  const finalUser = addXpToUser(walletAddress, 50, `Minted ${pathId} completion NFT`);
-  
-  // Path names for response
-  const pathNames = {
-    'solana-foundations': 'Solana Explorer Path',
-    'substreams-path': 'The Graph Substreams on Solana'
-  };
+  // Award all the path XP when NFT is minted
+  const finalUser = addXpToUser(walletAddress, totalPathXp, `Completed ${pathId === 'solana-foundations' ? 'Solana Explorer Path' : 'Substreams Path'} - Certification NFT minted`);
   
   res.json({
     message: 'NFT minted successfully!',
-    pathId,
-    pathName: pathNames[pathId] || pathId,
-    nftMetadata: {
-      name: `${pathNames[pathId] || pathId} - Completion Certificate`,
-      description: `Certification of completion for ${pathNames[pathId] || pathId} on SolQuest.io`,
-      image: `/nft-certificates/${pathId}.png`,
-      attributes: [
-        { trait_type: 'Path', value: pathNames[pathId] || pathId },
-        { trait_type: 'Completion Date', value: new Date().toISOString().split('T')[0] },
-        { trait_type: 'Quests Completed', value: pathCompletion.totalCount },
-        { trait_type: 'Platform', value: 'SolQuest.io' }
-      ]
-    },
+    transactionSignature: transactionSignature || 'mock-tx-signature',
+    xpAwarded: totalPathXp,
     user: finalUser,
-    transactionSignature: transactionSignature || 'mock-tx-signature-' + Date.now()
+    nftDetails: {
+      pathId,
+      pathName: pathId === 'solana-foundations' ? 'Solana Explorer Path' : 'Substreams Path',
+      mintedAt: new Date().toISOString()
+    }
   });
+});
+
+// Quest completion endpoint
+app.post('/api/quests', (req, res) => {
+  const { path } = req.query;
+  
+  if (path === 'complete') {
+    // Get authorization header
+    const authHeader = req.headers.authorization;
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      return res.status(401).json({ message: 'Authorization token required' });
+    }
+    
+    // Extract wallet address from token
+    const token = authHeader.split(' ')[1];
+    const tokenParts = token.split('-');
+    const walletAddress = tokenParts[tokenParts.length - 1];
+    
+    if (!walletAddress) {
+      return res.status(401).json({ message: 'Invalid token' });
+    }
+    
+    const { questId } = req.body;
+    
+    if (!questId) {
+      return res.status(400).json({ message: 'Quest ID is required' });
+    }
+    
+    const userData = getUserData(walletAddress);
+    
+    // Check if quest is already completed
+    if (userData.completedQuestIds && userData.completedQuestIds.includes(questId)) {
+      return res.status(400).json({ message: 'Quest already completed' });
+    }
+    
+    // Mark quest as completed but DO NOT award XP
+    // XP will only be awarded when the full path is completed and NFT is minted
+    const completedQuestIds = userData.completedQuestIds || [];
+    const updatedUser = updateUserData(walletAddress, {
+      completedQuestIds: [...completedQuestIds, questId]
+    });
+    
+    console.log(`Quest ${questId} completed by ${walletAddress} - no XP awarded (XP only awarded on path completion)`);
+    
+    res.json({
+      message: 'Quest completed successfully',
+      questId,
+      xpAwarded: 0, // No XP for individual quests
+      user: updatedUser
+    });
+  } else {
+    // Return public quests
+    res.json(publicQuests);
+  }
 });
 
 // Start server

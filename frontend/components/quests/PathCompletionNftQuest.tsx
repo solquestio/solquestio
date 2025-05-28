@@ -32,19 +32,33 @@ export default function PathCompletionNftQuest({
   pathId, 
   pathName, 
   onQuestComplete,
-  xpReward = 50,
+  xpReward = 500, // Default to 500 XP for Solana Explorer Path
   title = "Mint Path Completion NFT"
 }: PathCompletionNftQuestProps) {
   const { authToken } = useAuth();
   const { connection } = useConnection();
   const { publicKey, sendTransaction } = useWallet();
   
-  const [completionData, setCompletionData] = useState<PathCompletionData | null>(null);
+  const [completionData, setCompletionData] = useState<PathCompletionData>({
+    pathId,
+    isCompleted: false,
+    requiredQuests: [],
+    completedCount: 0,
+    totalCount: 0,
+    canMintNft: false,
+    hasEligibleNft: false,
+    hasMintedNft: false
+  });
+  
   const [isLoading, setIsLoading] = useState(true);
   const [isMinting, setIsMinting] = useState(false);
   const [mintError, setMintError] = useState<string | null>(null);
-  const [mintSuccess, setMintSuccess] = useState<string | null>(null);
   const [isQuestComplete, setIsQuestComplete] = useState(false);
+  const [showSuccessAnimation, setShowSuccessAnimation] = useState(false);
+  const [xpAwarded, setXpAwarded] = useState<number>(0);
+
+  // Set the correct XP reward based on path
+  const totalPathXp = pathId === 'solana-foundations' ? 500 : pathId === 'substreams-path' ? 2150 : xpReward;
 
   // Fetch path completion status
   useEffect(() => {
@@ -84,7 +98,6 @@ export default function PathCompletionNftQuest({
     
     setIsMinting(true);
     setMintError(null);
-    setMintSuccess(null);
     
     try {
       // Create a simple payment transaction (0.001 SOL to a treasury wallet)
@@ -128,14 +141,20 @@ export default function PathCompletionNftQuest({
       }
       
       const mintData = await response.json();
-      setMintSuccess(`NFT minted successfully! Transaction: ${signature}`);
       
       // Mark quest as complete
       setIsQuestComplete(true);
-      setCompletionData(prev => prev ? { ...prev, canMintNft: false, hasMintedNft: true } : null);
+      setCompletionData(prev => ({
+        ...prev,
+        canMintNft: false,
+        hasMintedNft: true
+      }));
       
       // Call the quest completion callback
       onQuestComplete();
+      
+      setXpAwarded(totalPathXp);
+      setShowSuccessAnimation(true);
       
     } catch (error: any) {
       console.error('Error minting NFT:', error);
@@ -169,20 +188,35 @@ export default function PathCompletionNftQuest({
 
   return (
     <div className="bg-dark-card rounded-xl p-6 border border-white/10">
-      <div className="text-center mb-6">
-        <div className="w-20 h-20 bg-gradient-to-br from-purple-500 to-blue-500 rounded-full flex items-center justify-center mx-auto mb-4">
-          {isQuestComplete ? (
-            <TrophyIcon className="w-10 h-10 text-yellow-400" />
-          ) : (
-            <SparklesIcon className="w-10 h-10 text-white" />
-          )}
+      {/* Success Animation */}
+      {showSuccessAnimation && (
+        <div className="absolute inset-0 bg-gradient-to-r from-green-500/30 to-blue-500/30 flex items-center justify-center z-50 animate-pulse">
+          <div className="bg-gray-900/90 rounded-2xl p-8 flex flex-col items-center shadow-2xl transform animate-bounce-small">
+            <CheckCircleIcon className="w-16 h-16 text-green-400 mb-4" />
+            <h3 className="text-2xl font-bold text-white mb-2">Path Completed!</h3>
+            <p className="text-xl font-semibold text-green-400">+{xpAwarded} XP Earned!</p>
+            <p className="text-sm text-gray-300 mt-2">Certificate NFT Minted Successfully</p>
+          </div>
         </div>
-        <h2 className="text-2xl font-bold text-white mb-2">{title}</h2>
-        <p className="text-gray-400">
-          {isQuestComplete 
-            ? "Congratulations! You've completed this learning path and minted your certificate NFT."
-            : "Complete all quests in this path to mint your completion certificate NFT."
-          }
+      )}
+
+      {/* Quest Header */}
+      <div className="flex items-center justify-between mb-6 relative z-10">
+        <div className="flex items-center">
+          <TrophyIcon className="h-7 w-7 text-yellow-500 mr-3" />
+          <h2 className="text-2xl font-bold text-yellow-300">{title}</h2>
+        </div>
+        <div className="bg-yellow-900/40 px-4 py-2 rounded-full border border-yellow-500/50 text-yellow-300 font-semibold flex items-center">
+          <span className="text-yellow-400 mr-1">+{totalPathXp}</span> XP
+          <span className="text-xs ml-1 text-yellow-400/70">(Total Path Reward)</span>
+        </div>
+      </div>
+
+      {/* Description */}
+      <div className="mb-6 relative z-10">
+        <p className="text-gray-300 text-sm leading-relaxed">
+          Complete your learning journey by minting your {pathName} completion certificate NFT. 
+          <span className="text-yellow-400 font-medium"> You'll receive all {totalPathXp} XP for completing this entire learning path!</span>
         </p>
       </div>
 
@@ -215,7 +249,7 @@ export default function PathCompletionNftQuest({
                 🎉 You've successfully completed the {pathName} and minted your certificate NFT!
               </p>
               <p className="text-green-300 text-xs mt-2">
-                +{xpReward} XP earned for completing this quest
+                +{totalPathXp} XP earned for completing this quest
               </p>
             </div>
           </div>
@@ -269,12 +303,6 @@ export default function PathCompletionNftQuest({
         )}
         
         {/* Success/Error Messages */}
-        {mintSuccess && (
-          <div className="mt-4 p-3 bg-green-900/30 border border-green-700/50 rounded-lg">
-            <p className="text-green-400 text-sm">{mintSuccess}</p>
-          </div>
-        )}
-        
         {mintError && (
           <div className="mt-4 p-3 bg-red-900/30 border border-red-700/50 rounded-lg">
             <p className="text-red-400 text-sm">{mintError}</p>
