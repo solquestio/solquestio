@@ -438,6 +438,13 @@ export default function ProfilePage() {
       console.log('Check-in successful:', data);
       setLastXpAwarded(data.xpAwarded || null); 
 
+      // Update the user profile with the new data from backend
+      if (data.user) {
+        setUserProfile(data.user);
+        // Also update check-in status
+        setCheckInData(getCheckInStatus(data.user));
+      }
+
     } catch (err: any) {
       console.error('Check-in error:', err);
       setCheckInError(err.message || 'An error occurred during check-in.');

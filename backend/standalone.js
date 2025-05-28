@@ -16,7 +16,67 @@ app.use(cors({
     'http://localhost:3003',
     frontendUrl
   ],
+  credentials: true
 }));
+
+// Simple in-memory storage for user data
+const userStorage = new Map();
+
+// Helper function to get or create user data
+const getUserData = (walletAddress) => {
+  if (!userStorage.has(walletAddress)) {
+    // Create new user with default data
+    const newUser = {
+      id: Date.now().toString(),
+      walletAddress: walletAddress,
+      username: 'Unnamed User',
+      completedQuestIds: [],
+      xp: 0,
+      lastCheckedInAt: null,
+      checkInStreak: 0,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+      ownsOgNft: false,
+      xpHistory: [],
+      social: {
+        github: null,
+        twitter: null
+      }
+    };
+    userStorage.set(walletAddress, newUser);
+  }
+  return userStorage.get(walletAddress);
+};
+
+// Helper function to update user data
+const updateUserData = (walletAddress, updates) => {
+  const userData = getUserData(walletAddress);
+  const updatedUser = {
+    ...userData,
+    ...updates,
+    updatedAt: new Date().toISOString()
+  };
+  userStorage.set(walletAddress, updatedUser);
+  return updatedUser;
+};
+
+// Helper function to add XP and history entry
+const addXpToUser = (walletAddress, amount, description) => {
+  const userData = getUserData(walletAddress);
+  const newXp = userData.xp + amount;
+  const historyEntry = {
+    description,
+    timestamp: new Date().toISOString(),
+    amount
+  };
+  
+  const updatedUser = updateUserData(walletAddress, {
+    xp: newXp,
+    xpHistory: [historyEntry, ...userData.xpHistory]
+  });
+  
+  return updatedUser;
+};
 
 // Basic health check route
 app.get('/', (req, res) => {
@@ -140,32 +200,23 @@ app.get('/api/users', (req, res) => {
     
     res.json(limitedResults);
   } else if (path === 'me') {
-    // Mock user profile data
-    const mockUserProfile = {
-      id: '1',
-      walletAddress: '8nnLuLdFuN8zRHzgRwaukS1V8Bzqj1S5eZULu31aqKSM',
-      username: 'Unnamed User',
-      completedQuestIds: [],
-      xp: 3,
-      lastCheckedInAt: new Date().toISOString(),
-      checkInStreak: 1,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-      ownsOgNft: false,
-      xpHistory: [
-        {
-          description: 'Daily check-in',
-          timestamp: new Date().toISOString(),
-          amount: 3
-        }
-      ],
-      social: {
-        github: null,
-        twitter: null
-      }
-    };
+    // Get authorization header
+    const authHeader = req.headers.authorization;
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      return res.status(401).json({ message: 'Authorization token required' });
+    }
     
-    res.json(mockUserProfile);
+    // Extract wallet address from token
+    const token = authHeader.split(' ')[1];
+    const walletAddress = token.split('-')[3];
+    
+    if (!walletAddress) {
+      return res.status(401).json({ message: 'Invalid token' });
+    }
+    
+    // Get user data from storage
+    const userData = getUserData(walletAddress);
+    res.json(userData);
   } else {
     res.json([]);
   }
@@ -177,6 +228,20 @@ app.put('/api/users', (req, res) => {
   const { username } = req.body;
   
   if (path === 'me') {
+    // Get authorization header
+    const authHeader = req.headers.authorization;
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      return res.status(401).json({ message: 'Authorization token required' });
+    }
+    
+    // Extract wallet address from token
+    const token = authHeader.split(' ')[1];
+    const walletAddress = token.split('-')[3];
+    
+    if (!walletAddress) {
+      return res.status(401).json({ message: 'Invalid token' });
+    }
+    
     // Validate username
     if (!username || username.trim().length < 3) {
       return res.status(400).json({
@@ -190,30 +255,10 @@ app.put('/api/users', (req, res) => {
       });
     }
     
-    // Mock successful update
-    const updatedProfile = {
-      id: '1',
-      walletAddress: '8nnLuLdFuN8zRHzgRwaukS1V8Bzqj1S5eZULu31aqKSM',
-      username: username.trim(),
-      completedQuestIds: [],
-      xp: 3,
-      lastCheckedInAt: new Date().toISOString(),
-      checkInStreak: 1,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-      ownsOgNft: false,
-      xpHistory: [
-        {
-          description: 'Daily check-in',
-          timestamp: new Date().toISOString(),
-          amount: 3
-        }
-      ],
-      social: {
-        github: null,
-        twitter: null
-      }
-    };
+    // Update user data
+    const updatedProfile = updateUserData(walletAddress, {
+      username: username.trim()
+    });
     
     res.json(updatedProfile);
   } else {
@@ -235,34 +280,12 @@ app.post('/api/auth', (req, res) => {
     }
     
     // Mock successful authentication
-    const mockToken = 'mock-jwt-token-' + Date.now();
-    const mockUser = {
-      id: '1',
-      walletAddress: walletAddress,
-      username: 'Unnamed User',
-      completedQuestIds: [],
-      xp: 3,
-      lastCheckedInAt: new Date().toISOString(),
-      checkInStreak: 1,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-      ownsOgNft: false,
-      xpHistory: [
-        {
-          description: 'Daily check-in',
-          timestamp: new Date().toISOString(),
-          amount: 3
-        }
-      ],
-      social: {
-        github: null,
-        twitter: null
-      }
-    };
+    const mockToken = `mock-jwt-token-${Date.now()}-${walletAddress}`;
+    const userData = getUserData(walletAddress);
     
     res.json({
       token: mockToken,
-      user: mockUser,
+      user: userData,
       message: 'Authentication successful'
     });
   } else {
@@ -275,24 +298,65 @@ app.post('/api/users', (req, res) => {
   const { path } = req.query;
   
   if (path === 'check-in') {
-    // Mock successful check-in
-    const xpAwarded = Math.floor(Math.random() * 5) + 1; // 1-5 XP
+    // Get authorization header
+    const authHeader = req.headers.authorization;
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      return res.status(401).json({ message: 'Authorization token required' });
+    }
+    
+    // Extract wallet address from token
+    const token = authHeader.split(' ')[1];
+    const walletAddress = token.split('-')[3];
+    
+    if (!walletAddress) {
+      return res.status(401).json({ message: 'Invalid token' });
+    }
+    
+    const userData = getUserData(walletAddress);
+    const now = new Date();
+    const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    
+    // Check if already checked in today
+    if (userData.lastCheckedInAt) {
+      const lastCheckDate = new Date(userData.lastCheckedInAt);
+      if (lastCheckDate >= todayStart) {
+        return res.status(400).json({
+          message: 'Already checked in today',
+          user: userData
+        });
+      }
+    }
+    
+    // Calculate streak
+    let newStreak = 1;
+    if (userData.lastCheckedInAt) {
+      const yesterdayStart = new Date(todayStart);
+      yesterdayStart.setDate(todayStart.getDate() - 1);
+      const lastCheckDate = new Date(userData.lastCheckedInAt);
+      
+      if (lastCheckDate >= yesterdayStart) {
+        // Consecutive day, continue streak
+        newStreak = userData.checkInStreak + 1;
+      }
+      // If last check was before yesterday, streak resets to 1
+    }
+    
+    // Calculate XP based on streak (max 30 XP)
+    const xpAwarded = Math.min(newStreak, 30);
+    
+    // Update user data
+    const updatedUser = updateUserData(walletAddress, {
+      lastCheckedInAt: now.toISOString(),
+      checkInStreak: newStreak
+    });
+    
+    // Add XP and history entry
+    const finalUser = addXpToUser(walletAddress, xpAwarded, 'Daily check-in');
     
     res.json({
       message: 'Check-in successful!',
       xpAwarded: xpAwarded,
-      user: {
-        id: '1',
-        walletAddress: '8nnLuLdFuN8zRHzgRwaukS1V8Bzqj1S5eZULu31aqKSM',
-        username: 'Unnamed User',
-        completedQuestIds: [],
-        xp: 3 + xpAwarded,
-        lastCheckedInAt: new Date().toISOString(),
-        checkInStreak: 2,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-        ownsOgNft: false
-      }
+      user: finalUser
     });
   } else {
     res.status(404).json({ message: 'Endpoint not found' });
