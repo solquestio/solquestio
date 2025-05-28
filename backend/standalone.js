@@ -208,7 +208,8 @@ app.get('/api/users', (req, res) => {
     
     // Extract wallet address from token
     const token = authHeader.split(' ')[1];
-    const walletAddress = token.split('-')[3];
+    const tokenParts = token.split('-');
+    const walletAddress = tokenParts[tokenParts.length - 1];
     
     if (!walletAddress) {
       return res.status(401).json({ message: 'Invalid token' });
@@ -236,7 +237,8 @@ app.put('/api/users', (req, res) => {
     
     // Extract wallet address from token
     const token = authHeader.split(' ')[1];
-    const walletAddress = token.split('-')[3];
+    const tokenParts = token.split('-');
+    const walletAddress = tokenParts[tokenParts.length - 1];
     
     if (!walletAddress) {
       return res.status(401).json({ message: 'Invalid token' });
@@ -306,7 +308,8 @@ app.post('/api/users', (req, res) => {
     
     // Extract wallet address from token
     const token = authHeader.split(' ')[1];
-    const walletAddress = token.split('-')[3];
+    const tokenParts = token.split('-');
+    const walletAddress = tokenParts[tokenParts.length - 1];
     
     if (!walletAddress) {
       return res.status(401).json({ message: 'Invalid token' });
