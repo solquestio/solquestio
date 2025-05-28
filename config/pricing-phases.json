@@ -1,0 +1,22 @@
+{
+  "currentPhase": 0,
+  "totalMinted": 0,
+  "phases": [
+    {
+      "phase": 0,
+      "name": "Ultra-Simple Free Claiming",
+      "description": "Connect wallet + claim free NFT (no codes needed)",
+      "price": 0,
+      "maxNFTs": 10000,
+      "targetAudience": "Anyone with a Solana wallet",
+      "estimatedRevenue": 0,
+      "minted": 0,
+      "remaining": 10000,
+      "isActive": true,
+      "isCompleted": false,
+      "startDate": "2025-05-28T23:37:12.211Z",
+      "endDate": null
+    }
+  ],
+  "lastUpdated": "2025-05-28T23:37:12.213Z"
+}

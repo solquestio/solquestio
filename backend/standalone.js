@@ -596,6 +596,323 @@ app.post('/api/quests', (req, res) => {
   }
 });
 
+// Check OG NFT eligibility endpoint
+app.get('/api/og-nft/eligibility/:walletAddress', async (req, res) => {
+  try {
+    const { walletAddress } = req.params;
+    
+    // Validate wallet address
+    if (!walletAddress || walletAddress.length < 32) {
+      return res.status(400).json({ 
+        error: 'Invalid wallet address' 
+      });
+    }
+
+    // Check if NFT minting is available
+    try {
+      const { checkOGNFTEligibility, getOGCollectionStats } = require('./lib/nft-integration');
+      
+      const [eligibility, stats] = await Promise.all([
+        checkOGNFTEligibility(walletAddress),
+        getOGCollectionStats()
+      ]);
+
+      res.json({
+        eligible: eligibility.eligible,
+        reason: eligibility.reason,
+        collectionMint: eligibility.collectionMint,
+        stats: {
+          totalMinted: stats.totalMinted,
+          remaining: stats.remaining,
+          maxSupply: stats.maxSupply,
+          nextTokenId: stats.nextTokenId
+        },
+        mintingAvailable: stats.remaining > 0
+      });
+
+    } catch (nftError) {
+      console.log('NFT integration not available, returning mock data');
+      
+      // Fallback to mock data if NFT integration isn't set up
+      const userData = getUserData(walletAddress);
+      const hasOGNFT = userData.ownedNFTs?.includes('og-collection') || false;
+      
+      res.json({
+        eligible: !hasOGNFT,
+        reason: hasOGNFT ? 'Wallet already owns an OG NFT' : 'Eligible for minting',
+        collectionMint: null,
+        stats: {
+          totalMinted: 1250, // Mock data
+          remaining: 8750,
+          maxSupply: 10000,
+          nextTokenId: 1251
+        },
+        mintingAvailable: true,
+        mockData: true
+      });
+    }
+
+  } catch (error) {
+    console.error('Error checking OG NFT eligibility:', error);
+    res.status(500).json({ 
+      error: 'Failed to check eligibility',
+      details: error.message 
+    });
+  }
+});
+
+// Mint OG NFT endpoint (updated for ultra-simple free model)
+app.post('/api/og-nft/mint', async (req, res) => {
+  try {
+    const { walletAddress } = req.body;
+    
+    // Validate wallet address
+    if (!walletAddress || walletAddress.length < 32) {
+      return res.status(400).json({ 
+        error: 'Invalid wallet address' 
+      });
+    }
+
+    try {
+      const { mintOGNFT, checkOGNFTEligibility } = require('./lib/nft-integration');
+      
+      // Check basic eligibility (1 per wallet)
+      const eligibility = await checkOGNFTEligibility(walletAddress);
+      
+      if (!eligibility.eligible) {
+        return res.status(400).json({
+          error: 'Wallet not eligible for OG NFT claiming',
+          reason: eligibility.reason
+        });
+      }
+
+      // Ultra-simple: just mint the free NFT
+      const mintAttributes = [
+        {
+          trait_type: 'Mint Type',
+          value: 'Free Community Mint'
+        },
+        {
+          trait_type: 'Distribution',
+          value: 'Connect + Claim'
+        }
+      ];
+
+      // Mint the OG NFT (completely free)
+      const result = await mintOGNFT(
+        walletAddress,
+        null, // Auto-assign token ID
+        mintAttributes,
+        false // Don't skip ownership check
+      );
+
+      // Update user data to track the mint
+      const userData = getUserData(walletAddress);
+      const ownedNFTs = userData.ownedNFTs || [];
+      if (!ownedNFTs.includes('og-collection')) {
+        ownedNFTs.push('og-collection');
+        updateUserData(walletAddress, { ownedNFTs });
+      }
+
+      res.json({
+        success: true,
+        message: 'FREE OG NFT claimed successfully!',
+        nft: {
+          mintAddress: result.mintAddress,
+          tokenId: result.tokenId,
+          metadataUri: result.metadataUri,
+          recipient: result.recipient
+        },
+        transactionSignature: result.transactionSignature,
+        limitEnforced: result.limitEnforced,
+        mintType: 'free',
+        totalClaimed: result.totalClaimed || 1
+      });
+
+    } catch (nftError) {
+      console.log('NFT integration not available, using mock response');
+      
+      // Fallback to mock response if NFT integration isn't set up
+      const userData = getUserData(walletAddress);
+      const hasOGNFT = userData.ownedNFTs?.includes('og-collection') || false;
+      
+      if (hasOGNFT) {
+        return res.status(400).json({
+          error: 'Wallet already owns an OG NFT',
+          reason: 'Each wallet can only claim 1 free OG NFT'
+        });
+      }
+
+      // Mock successful mint
+      const mockTokenId = Math.floor(Math.random() * 10000) + 1;
+      const ownedNFTs = userData.ownedNFTs || [];
+      ownedNFTs.push('og-collection');
+      updateUserData(walletAddress, { ownedNFTs });
+
+      res.json({
+        success: true,
+        message: 'FREE OG NFT claimed successfully! (Mock)',
+        nft: {
+          mintAddress: `mock-mint-${mockTokenId}`,
+          tokenId: mockTokenId,
+          metadataUri: `https://arweave.net/mock-metadata-${mockTokenId}`,
+          recipient: walletAddress
+        },
+        transactionSignature: `mock-tx-${Date.now()}`,
+        limitEnforced: true,
+        mintType: 'free',
+        totalClaimed: mockTokenId,
+        mockData: true
+      });
+    }
+
+  } catch (error) {
+    console.error('Error claiming free OG NFT:', error);
+    res.status(500).json({ 
+      error: 'Failed to claim free OG NFT',
+      details: error.message 
+    });
+  }
+});
+
+// Get OG collection stats endpoint
+app.get('/api/og-nft/stats', async (req, res) => {
+  try {
+    try {
+      const { getOGCollectionStats } = require('./lib/nft-integration');
+      const stats = await getOGCollectionStats();
+      
+      res.json({
+        ...stats,
+        mintPrice: 0, // Free mint
+        mintType: 'Community Free Mint',
+        limitPerWallet: 1
+      });
+
+    } catch (nftError) {
+      console.log('NFT integration not available, returning mock stats');
+      
+      // Mock stats
+      res.json({
+        totalMinted: 1250,
+        nextTokenId: 1251,
+        maxSupply: 10000,
+        remaining: 8750,
+        mintPrice: 0,
+        mintType: 'Community Free Mint',
+        limitPerWallet: 1,
+        mockData: true
+      });
+    }
+
+  } catch (error) {
+    console.error('Error getting collection stats:', error);
+    res.status(500).json({ 
+      error: 'Failed to get collection stats',
+      details: error.message 
+    });
+  }
+});
+
+// Get leaderboard rewards info endpoint
+app.get('/api/leaderboard/rewards', async (req, res) => {
+  try {
+    const { simulateRank, walletAddress } = req.query;
+    
+    try {
+      const { getRewardTiers, simulateReward, calculateLeaderboardReward } = require('./lib/leaderboard-rewards');
+      const { getCollectionAddresses } = require('./lib/nft-integration');
+      
+      // Get reward tiers info
+      const rewardInfo = getRewardTiers();
+      
+      // If simulation requested
+      if (simulateRank) {
+        const rank = parseInt(simulateRank);
+        if (rank < 1 || rank > 10) {
+          return res.status(400).json({ error: 'Rank must be between 1 and 10' });
+        }
+        
+        // Simulate both scenarios
+        const withoutOG = simulateReward(rank, false);
+        const withOG = simulateReward(rank, true);
+        
+        return res.json({
+          ...rewardInfo,
+          simulation: {
+            rank,
+            withoutOGNFT: withoutOG,
+            withOGNFT: withOG,
+            difference: withOG.bonusAmount
+          }
+        });
+      }
+      
+      // If wallet address provided, calculate actual reward
+      if (walletAddress) {
+        const rank = parseInt(req.query.rank) || 1;
+        const collections = getCollectionAddresses();
+        
+        const actualReward = await calculateLeaderboardReward(
+          rank, 
+          walletAddress, 
+          collections.ogCollection
+        );
+        
+        return res.json({
+          ...rewardInfo,
+          userReward: actualReward
+        });
+      }
+      
+      // Return basic reward info
+      res.json(rewardInfo);
+      
+    } catch (error) {
+      console.log('Leaderboard rewards not available, returning mock data');
+      
+      // Mock reward tiers
+      const mockRewards = {
+        tiers: {
+          1: 5.0, 2: 3.0, 3: 2.0, 4: 1.5, 5: 1.0,
+          6: 0.8, 7: 0.6, 8: 0.5, 9: 0.4, 10: 0.3
+        },
+        ogBonus: '10%',
+        description: 'Monthly leaderboard rewards with 10% bonus for OG NFT holders',
+        example: {
+          rank1_base: '5.0 SOL',
+          rank1_with_og: '5.5 SOL',
+          bonus_amount: '0.5 SOL'
+        },
+        mockData: true
+      };
+      
+      if (simulateRank) {
+        const rank = parseInt(simulateRank);
+        const baseReward = mockRewards.tiers[rank] || 0;
+        const withOGReward = baseReward * 1.1;
+        const bonusAmount = withOGReward - baseReward;
+        
+        mockRewards.simulation = {
+          rank,
+          withoutOGNFT: { rank, baseReward, finalReward: baseReward, bonusAmount: 0, hasOGNFT: false },
+          withOGNFT: { rank, baseReward, finalReward: withOGReward, bonusAmount, hasOGNFT: true },
+          difference: bonusAmount
+        };
+      }
+      
+      res.json(mockRewards);
+    }
+    
+  } catch (error) {
+    console.error('Error getting leaderboard rewards:', error);
+    res.status(500).json({ 
+      error: 'Failed to get leaderboard rewards',
+      details: error.message 
+    });
+  }
+});
+
 // Start server
 app.listen(port, () => {
   console.log(`✅ Standalone server listening on port ${port}`);
