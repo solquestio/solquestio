@@ -3,301 +3,294 @@
 import { useState, useEffect } from 'react';
 import { useWallet } from '@solana/wallet-adapter-react';
 import { useRouter } from 'next/navigation';
-import Image from 'next/image';
 import dynamic from 'next/dynamic';
-import { Connection, PublicKey } from '@solana/web3.js';
-import { InformationCircleIcon, ArrowPathIcon } from '@heroicons/react/24/outline';
 
-// Constants
-const MAGIC_EDEN_COLLECTION_URL = "https://magiceden.io/collections/solquestio-og-nft"; // Replace with actual URL when published
-const NFT_COLLECTION_ADDRESS = "2rCAH2DF3UbBnRM9atpkQT7eVy9V5B9oXMYzziV8tyGv"; // Example address - replace with actual
-
-// NFT data interface
-interface NFTData {
-  tokenId: number;
-  mintDate: string;
-  metadataUrl: string;
-}
-
-// Dynamically import the OGNftCard component
-const OGNftCardDynamic = dynamic(
-  () => import('@/components/nft/OGNftCard'),
-  { ssr: false, loading: () => <div className="bg-gray-800/50 rounded-lg h-64 animate-pulse"></div> }
-);
-
-// Dynamically import the WalletMultiButton with no SSR
 const WalletMultiButtonDynamic = dynamic(
   async () => (await import('@solana/wallet-adapter-react-ui')).WalletMultiButton,
-  { ssr: false, loading: () => <button className="px-4 py-2 bg-gray-600 rounded-md">Loading Wallet...</button> }
+  { ssr: false }
 );
+
+const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:5000';
+
+interface NFTStats {
+  totalMinted: number;
+  remaining: number;
+  maxSupply: number;
+  mintPrice: number;
+  mintType: string;
+  limitPerWallet: number;
+}
+
+interface MintResult {
+  success: boolean;
+  message: string;
+  nft: {
+    mintAddress: string;
+    tokenId: number;
+    metadataUri: string;
+    recipient: string;
+  };
+  transactionSignature: string;
+  mintType: string;
+  totalClaimed: number;
+}
 
 export default function OGNFTClaim() {
   const { publicKey, connected } = useWallet();
-  const router = useRouter();
-  
-  const [loading, setLoading] = useState(false);
+  const [stats, setStats] = useState<NFTStats | null>(null);
+  const [claiming, setClaiming] = useState(false);
+  const [claimed, setClaimed] = useState(false);
   const [error, setError] = useState('');
-  const [hasNFT, setHasNFT] = useState(false);
-  const [nftData, setNftData] = useState<NFTData | null>(null);
-  
-  // Collection statistics (would come from API in production)
-  const [mintedCount] = useState(2372); // Example count
-  const [totalSupply] = useState(10000);
-  const [remainingCount] = useState(7628); // Example count
-  
-  const checkNFTOwnership = async () => {
-    if (!publicKey) return;
-    
-    try {
-      setLoading(true);
-      
-      // In a real implementation, this would check the blockchain:
-      // 1. Use the Metaplex JS SDK to fetch NFTs owned by this wallet
-      // 2. Filter by your collection address/symbol
-      // 3. Check if any NFT from your collection is owned by this wallet
-      
-      // Example implementation using Metaplex (pseudocode):
-      /*
-      const connection = new Connection(process.env.NEXT_PUBLIC_SOLANA_RPC_URL || "https://api.mainnet-beta.solana.com");
-      const metaplex = new Metaplex(connection);
-      const nfts = await metaplex.nfts().findAllByOwner({ owner: publicKey });
-      const hasCollectionNFT = nfts.some(nft => 
-        nft.collection?.address.toString() === NFT_COLLECTION_ADDRESS
-      );
-      
-      setHasNFT(hasCollectionNFT);
-      
-      if (hasCollectionNFT) {
-        // Find the specific NFT from the collection
-        const ourNft = nfts.find(nft => 
-          nft.collection?.address.toString() === NFT_COLLECTION_ADDRESS
-        );
-        
-        if (ourNft) {
-          setNftData({
-            tokenId: parseInt(ourNft.name.split('#')[1]) || 0,
-            mintDate: ourNft.mintedAt?.toISOString() || new Date().toISOString(),
-            metadataUrl: ourNft.uri
-          });
-        }
-      }
-      */
-      
-      // For demo purposes - using localStorage to simulate owning an NFT
-      const hasStoredNFT = localStorage.getItem(`solquest_nft_claimed_${publicKey.toString()}`);
-      
-      // Simulate API delay
-      await new Promise(resolve => setTimeout(resolve, 1500));
-      
-      if (hasStoredNFT === 'true') {
-        setHasNFT(true);
-        setNftData({
-          tokenId: Math.floor(Math.random() * 10000),
-          mintDate: new Date().toISOString(),
-          metadataUrl: 'https://solquest.io/api/nft/metadata/123'
-        });
-      } else {
-        setHasNFT(false);
-      }
-      
-      setLoading(false);
-    } catch (err: any) {
-      console.error('Error checking NFT ownership:', err);
-      setError(`Failed to verify NFT: ${err.message}`);
-      setLoading(false);
-    }
-  };
-  
-  // For demo purposes only - simulate having the NFT
-  const simulateHavingNFT = () => {
-    if (publicKey) {
-      localStorage.setItem(`solquest_nft_claimed_${publicKey.toString()}`, 'true');
-      checkNFTOwnership();
-    }
-  };
-  
+  const [mintResult, setMintResult] = useState<MintResult | null>(null);
+  const [loading, setLoading] = useState(true);
+  const router = useRouter();
+
+  // Load stats on component mount
+  useEffect(() => {
+    loadStats();
+  }, []);
+
+  // Check eligibility when wallet connects
   useEffect(() => {
     if (connected && publicKey) {
-      checkNFTOwnership();
+      checkEligibility();
+    } else {
+      setClaimed(false);
+      setError('');
+      setMintResult(null);
     }
   }, [connected, publicKey]);
 
+  const loadStats = async () => {
+    try {
+      const response = await fetch(`${BACKEND_URL}/api/og-nft/stats`);
+      const data = await response.json();
+      setStats(data);
+    } catch (error) {
+      console.error('Error loading stats:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const checkEligibility = async () => {
+    if (!publicKey) return;
+    
+    try {
+      const response = await fetch(`${BACKEND_URL}/api/og-nft/eligibility/${publicKey.toString()}`);
+      const data = await response.json();
+      
+      if (!data.eligible) {
+        setClaimed(true);
+        setError(data.reason || 'Already claimed');
+      } else {
+        setClaimed(false);
+        setError('');
+      }
+    } catch (error) {
+      console.error('Error checking eligibility:', error);
+      setError('Failed to check eligibility');
+    }
+  };
+
+  const handleClaim = async () => {
+    if (!publicKey || claiming) return;
+    
+    setClaiming(true);
+    setError('');
+    
+    try {
+      const response = await fetch(`${BACKEND_URL}/api/og-nft/mint`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          walletAddress: publicKey.toString()
+        }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        setClaimed(true);
+        setMintResult(data);
+        // Reload stats to show updated numbers
+        await loadStats();
+        // Redirect to dashboard after a few seconds
+        setTimeout(() => {
+          router.push('/dashboard');
+        }, 5000);
+      } else {
+        setError(data.error || 'Failed to claim NFT');
+      }
+    } catch (error) {
+      setError('Network error. Please try again.');
+    } finally {
+      setClaiming(false);
+    }
+  };
+
+  const progressPercentage = stats ? (stats.totalMinted / stats.maxSupply) * 100 : 0;
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-purple-900 via-blue-900 to-indigo-900 flex items-center justify-center p-4">
+        <div className="text-white text-xl">Loading...</div>
+      </div>
+    );
+  }
+
   return (
-    <div className="min-h-screen bg-gradient-to-b from-indigo-900 via-purple-900 to-black text-white">
-      {/* Hero section with NFT image and collection stats */}
-      <div className="relative w-full py-12 md:py-20">
-        <div className="container mx-auto px-4 flex flex-col items-center">
-          <div className="text-center mb-8">
-            <h1 className="text-4xl md:text-6xl font-bold mb-4">SolQuestio OG NFT</h1>
-            <p className="text-xl md:text-2xl mb-3">Exclusive limited NFT collection</p>
-            <p className="text-gray-300 mb-4">Claim your OG status in the SolQuestio ecosystem</p>
-            
-            <div className="flex flex-wrap justify-center gap-4 mt-6">
-              <div className="bg-indigo-900/30 border border-indigo-500/30 px-4 py-2 rounded-lg">
-                <p className="text-sm text-gray-300">Total Supply</p>
-                <p className="text-xl font-bold">{totalSupply.toLocaleString()}</p>
-              </div>
-              <div className="bg-indigo-900/30 border border-indigo-500/30 px-4 py-2 rounded-lg">
-                <p className="text-sm text-gray-300">Minted</p>
-                <p className="text-xl font-bold">{mintedCount.toLocaleString()}</p>
-              </div>
-              <div className="bg-indigo-900/30 border border-indigo-500/30 px-4 py-2 rounded-lg">
-                <p className="text-sm text-gray-300">Available</p>
-                <p className="text-xl font-bold">{remainingCount.toLocaleString()}</p>
-              </div>
-              <div className="bg-indigo-900/30 border border-indigo-500/30 px-4 py-2 rounded-lg">
-                <p className="text-sm text-gray-300">Price</p>
-                <p className="text-xl font-bold text-green-400">FREE</p>
-              </div>
-            </div>
+    <div className="min-h-screen bg-gradient-to-br from-purple-900 via-blue-900 to-indigo-900 flex items-center justify-center p-4">
+      <div className="max-w-2xl w-full">
+        {/* Hero Section */}
+        <div className="text-center mb-8">
+          <h1 className="text-5xl md:text-6xl font-bold text-white mb-4">
+            Claim Your FREE
+            <span className="bg-gradient-to-r from-yellow-400 to-orange-500 bg-clip-text text-transparent">
+              {' '}SolQuest OG NFT
+            </span>
+          </h1>
+          <p className="text-xl text-gray-300 mb-6">
+            10% XP boost + 10% leaderboard bonus forever!
+          </p>
+        </div>
+
+        {/* Live Stats */}
+        <div className="bg-white/10 backdrop-blur-lg rounded-2xl p-6 mb-8 text-center">
+          <div className="text-3xl font-bold text-white mb-2">
+            📊 {stats ? stats.totalMinted.toLocaleString() : '0'} / {stats ? stats.maxSupply.toLocaleString() : '10,000'} claimed
           </div>
-          
-          <div className="w-full max-w-md mx-auto">
-            {/* NFT card with styling container */}
-            <div className="transform hover:scale-105 transition-all duration-500 p-3 rounded-2xl bg-gradient-to-b from-indigo-500/20 to-purple-500/10 backdrop-blur-sm border border-white/10 shadow-xl">
-              <OGNftCardDynamic />
-            </div>
+          <div className="w-full bg-gray-700 rounded-full h-3 mb-4">
+            <div 
+              className="bg-gradient-to-r from-green-400 to-blue-500 h-3 rounded-full transition-all duration-500"
+              style={{ width: `${progressPercentage}%` }}
+            />
+          </div>
+          <div className="text-orange-400 font-semibold">
+            ⏰ Limited time - first come, first served!
           </div>
         </div>
-      </div>
-      
-      {/* Claim section */}
-      <div className="container mx-auto px-4 py-10 pb-20">
-        <div className="max-w-xl mx-auto bg-gray-900/70 backdrop-blur-sm rounded-xl overflow-hidden shadow-2xl border border-indigo-500/20">
-          <div className="p-6 md:p-8">
-            <h2 className="text-2xl md:text-3xl font-bold mb-6 text-center">Get Your OG NFT</h2>
-            
-            {!connected ? (
-              <div className="text-center py-8">
-                <p className="mb-4">Connect your wallet to verify NFT ownership</p>
-                <WalletMultiButtonDynamic className="!bg-indigo-600 !hover:bg-indigo-700 !rounded-lg !py-3 !border-none mx-auto" />
-              </div>
-            ) : hasNFT ? (
-              <div className="text-center py-8 bg-green-900/20 rounded-lg">
-                <h3 className="text-xl font-bold mb-2">You own a SolQuestio OG NFT!</h3>
-                <p className="mb-4">Thank you for being an early supporter of SolQuestio.</p>
-                
-                {/* Display NFT data - would come from blockchain in production */}
-                {nftData && (
-                  <div className="mb-4 bg-gray-800/50 p-4 rounded-lg text-left">
-                    <h4 className="font-medium text-green-400 mb-2">NFT Details:</h4>
-                    <div className="text-sm space-y-1">
-                      <p><span className="text-gray-400">Token ID:</span> {nftData.tokenId}</p>
-                      <p><span className="text-gray-400">Mint Date:</span> {new Date(nftData.mintDate).toLocaleString()}</p>
-                      <p><span className="text-gray-400">Blockchain:</span> Solana</p>
+
+        {/* Claim Section */}
+        <div className="bg-white/10 backdrop-blur-lg rounded-2xl p-8 text-center">
+          {!connected ? (
+            <>
+              <h2 className="text-2xl font-bold text-white mb-6">
+                Step 1: Connect Your Wallet
+              </h2>
+              <WalletMultiButtonDynamic className="!bg-gradient-to-r !from-purple-500 !to-pink-500 !text-white !font-bold !py-4 !px-8 !rounded-xl !text-lg hover:!from-purple-600 hover:!to-pink-600 transition-all" />
+            </>
+          ) : claimed ? (
+            <div className="text-center">
+              {mintResult ? (
+                <>
+                  <div className="text-6xl mb-4">🎉</div>
+                  <h2 className="text-3xl font-bold text-green-400 mb-4">
+                    Success! NFT Claimed
+                  </h2>
+                  <p className="text-gray-300 mb-6">
+                    Your SolQuest OG NFT #{mintResult.nft.tokenId} has been claimed!
+                  </p>
+                  <div className="space-y-2 text-left max-w-md mx-auto mb-6">
+                    <div className="flex items-center text-green-400">
+                      <span className="mr-2">✅</span> 10% XP boost on all quests
+                    </div>
+                    <div className="flex items-center text-green-400">
+                      <span className="mr-2">✅</span> 10% bonus on leaderboard rewards
+                    </div>
+                    <div className="flex items-center text-green-400">
+                      <span className="mr-2">✅</span> Exclusive Discord access
+                    </div>
+                    <div className="flex items-center text-green-400">
+                      <span className="mr-2">✅</span> Governance voting rights
                     </div>
                   </div>
-                )}
-                
-                <button 
-                  onClick={() => router.push('/profile')}
-                  className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-6 rounded-lg transition mr-2"
-                >
-                  View in Profile
-                </button>
-                
-                <button 
-                  onClick={() => window.open(MAGIC_EDEN_COLLECTION_URL, '_blank')}
-                  className="bg-purple-600 hover:bg-purple-700 text-white font-bold py-2 px-6 rounded-lg transition"
-                >
-                  View on Magic Eden
-                </button>
-              </div>
-            ) : (
-              <div>
-                <div className="flex items-center mb-6 p-3 bg-blue-900/30 border border-blue-500/30 rounded-lg">
-                  <InformationCircleIcon className="w-5 h-5 text-blue-400 mr-2 flex-shrink-0" />
-                  <p className="text-sm text-blue-200">
-                    Mint a SolQuestio OG NFT for FREE to prove your early support and unlock exclusive benefits!
+                  <div className="bg-gray-800/50 p-4 rounded-lg text-sm mb-6">
+                    <div className="flex justify-between mb-2">
+                      <span className="text-gray-400">Token ID:</span>
+                      <span className="text-white font-mono">#{mintResult.nft.tokenId}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-gray-400">Mint Address:</span>
+                      <span className="text-white font-mono text-xs">
+                        {mintResult.nft.mintAddress.slice(0, 8)}...{mintResult.nft.mintAddress.slice(-8)}
+                      </span>
+                    </div>
+                  </div>
+                  <p className="text-sm text-gray-400 mt-6">
+                    Redirecting to dashboard in 5 seconds...
+                  </p>
+                </>
+              ) : (
+                <div className="text-center">
+                  <div className="text-4xl mb-4">❌</div>
+                  <h2 className="text-2xl font-bold text-red-400 mb-4">
+                    Already Claimed
+                  </h2>
+                  <p className="text-gray-300">
+                    {error || 'You have already claimed your free OG NFT'}
                   </p>
                 </div>
-
-                {/* Requirements section */}
-                <div className="p-4 bg-purple-900/20 border border-purple-500/30 rounded-lg mb-6">
-                  <h3 className="text-lg font-semibold mb-3">Mint Requirements:</h3>
-                  <div className="flex items-center mb-2">
-                    <div className="w-5 h-5 rounded-full bg-blue-500 flex items-center justify-center mr-3">
-                      <svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 24 24">
-                        <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"></path>
-                      </svg>
-                    </div>
-                    <div>
-                      <p className="text-white">Follow <a href="https://x.com/SolQuestio" target="_blank" rel="noopener noreferrer" className="text-blue-400 hover:underline">@SolQuestio on X</a></p>
-                      <p className="text-xs text-gray-400">Show your support by following us on X (Twitter)</p>
-                    </div>
+              )}
+            </div>
+          ) : (
+            <>
+              <h2 className="text-2xl font-bold text-white mb-6">
+                Step 2: Claim Your FREE NFT
+              </h2>
+              {error && (
+                <div className="bg-red-500/20 border border-red-500 rounded-lg p-4 mb-6">
+                  <p className="text-red-400">{error}</p>
+                </div>
+              )}
+              <button
+                onClick={handleClaim}
+                disabled={claiming}
+                className="bg-gradient-to-r from-green-500 to-emerald-500 text-white font-bold py-4 px-12 rounded-xl text-xl hover:from-green-600 hover:to-emerald-600 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {claiming ? (
+                  <div className="flex items-center justify-center">
+                    <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-white mr-3"></div>
+                    Claiming...
                   </div>
-                </div>
-
-                {/* Benefits section */}
-                <div className="p-4 bg-indigo-900/20 border border-indigo-500/30 rounded-lg mb-6">
-                  <h3 className="text-lg font-semibold mb-3">OG NFT Benefits:</h3>
-                  <ul className="space-y-2 text-sm">
-                    <li className="flex items-start">
-                      <span className="inline-block w-4 h-4 bg-green-500 rounded-full mt-1 mr-2"></span>
-                      <span>Early supporter status in the SolQuestio community</span>
-                    </li>
-                    <li className="flex items-start">
-                      <span className="inline-block w-4 h-4 bg-green-500 rounded-full mt-1 mr-2"></span>
-                      <span>10% extra XP on all quests</span>
-                    </li>
-                    <li className="flex items-start">
-                      <span className="inline-block w-4 h-4 bg-green-500 rounded-full mt-1 mr-2"></span>
-                      <span>10% boost on SOL rewards</span>
-                    </li>
-                    <li className="flex items-start">
-                      <span className="inline-block w-4 h-4 bg-green-500 rounded-full mt-1 mr-2"></span>
-                      <span>Exclusive access to special quests and events</span>
-                    </li>
-                  </ul>
-                </div>
-                
-                <div className="text-center space-y-4">
-                  <a 
-                    href={MAGIC_EDEN_COLLECTION_URL}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-block w-full py-4 px-6 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 rounded-lg font-bold text-lg transition"
-                  >
-                    Mint FREE NFT
-                  </a>
-                  
-                  <p className="text-sm text-gray-400">
-                    Price: <span className="text-green-500 font-medium">FREE</span> (plus network fees)
-                  </p>
-                  
-                  {loading ? (
-                    <button disabled className="w-full mt-4 py-2 px-4 bg-gray-700 rounded-lg text-gray-300 flex items-center justify-center">
-                      <ArrowPathIcon className="w-5 h-5 mr-2 animate-spin" />
-                      Checking ownership...
-                    </button>
-                  ) : (
-                    <button 
-                      onClick={checkNFTOwnership}
-                      className="w-full mt-4 py-2 px-4 bg-gray-700 hover:bg-gray-600 rounded-lg text-gray-300 transition"
-                    >
-                      I already minted - Verify ownership
-                    </button>
-                  )}
-                  
-                  {/* For demo purposes only - remove in production */}
-                  {process.env.NODE_ENV === 'development' && (
-                    <button 
-                      onClick={simulateHavingNFT}
-                      className="block w-full mt-2 py-2 px-4 bg-gray-800 hover:bg-gray-700 rounded-lg text-gray-400 text-sm transition"
-                    >
-                      (Demo Only) Simulate Having NFT
-                    </button>
-                  )}
-                </div>
-                
-                {error && (
-                  <div className="mt-4 p-3 bg-red-900/30 border border-red-700 text-red-300 rounded-lg text-sm">
-                    {error}
-                  </div>
+                ) : (
+                  'Claim FREE NFT ⚡'
                 )}
-              </div>
-            )}
+              </button>
+              <p className="text-sm text-gray-400 mt-4">
+                No codes, no follows, no BS. Just claim!
+              </p>
+            </>
+          )}
+        </div>
+
+        {/* Benefits Section */}
+        <div className="mt-8 grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="bg-white/5 rounded-xl p-6">
+            <h3 className="text-lg font-bold text-yellow-400 mb-3">🚀 Platform Benefits</h3>
+            <ul className="space-y-2 text-sm text-gray-300">
+              <li>✅ 10% XP boost on all quests</li>
+              <li>✅ 10% leaderboard bonus (real SOL!)</li>
+              <li>✅ Early access to new features</li>
+              <li>✅ Exclusive #og-holders Discord</li>
+            </ul>
           </div>
+          <div className="bg-white/5 rounded-xl p-6">
+            <h3 className="text-lg font-bold text-blue-400 mb-3">💎 NFT Benefits</h3>
+            <ul className="space-y-2 text-sm text-gray-300">
+              <li>✅ Governance voting rights</li>
+              <li>✅ Special profile badge</li>
+              <li>✅ Tradeable on Magic Eden</li>
+              <li>✅ 5% royalties to creators</li>
+            </ul>
+          </div>
+        </div>
+
+        {/* Footer */}
+        <div className="text-center mt-8 text-sm text-gray-400">
+          <p>Limited to 1 NFT per wallet • Completely free • No catch!</p>
         </div>
       </div>
     </div>
