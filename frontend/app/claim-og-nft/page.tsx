@@ -11,7 +11,7 @@ const WalletMultiButtonDynamic = dynamic(
   { ssr: false }
 );
 
-const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || 'https://solquest-io-backend.vercel.app' || 'http://localhost:5000';
+const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || 'https://solquest.io/api' || 'http://localhost:5000';
 
 interface NFTStats {
   totalMinted: number;
@@ -127,15 +127,8 @@ export default function OGNFTClaim() {
       setStats(data);
     } catch (error) {
       console.error('Error loading stats:', error);
-      // Use fallback stats when backend is not available
-      setStats({
-        totalMinted: 1250,
-        remaining: 8750,
-        maxSupply: 10000,
-        mintPrice: 0.001,
-        mintType: 'Community Free Mint',
-        limitPerWallet: 1
-      });
+      // Don't set fake stats - leave stats as null to show loading state
+      setStats(null);
     } finally {
       setLoading(false);
     }
@@ -185,7 +178,7 @@ export default function OGNFTClaim() {
       
       // Create a transaction with a small fee to SolQuest treasury
       // This ensures the user actually interacts with the blockchain
-      const treasuryWallet = new PublicKey('11111111111111111111111111111111'); // Replace with actual treasury
+      const treasuryWallet = new PublicKey('7xKXtg2CW87d97TXJSDpbD5jBkheTqA83TZRuJosgAsU'); // SolQuest treasury
       
       const transaction = new Transaction().add(
         SystemProgram.transfer({
@@ -409,22 +402,31 @@ export default function OGNFTClaim() {
             <div className="bg-gradient-to-r from-purple-500/20 to-blue-500/20 backdrop-blur-xl rounded-3xl p-8 border border-white/20 shadow-2xl">
               <div className="text-center mb-6">
                 <h2 className="text-3xl font-bold text-white mb-4">📊 Live Mint Progress</h2>
+                
+                {!stats && !loading && (
+                  <div className="bg-orange-500/20 border border-orange-400/30 rounded-xl p-4 mb-6">
+                    <p className="text-orange-300 text-sm">
+                      ⚠️ Unable to connect to backend. Real statistics unavailable.
+                    </p>
+                  </div>
+                )}
+                
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
                   <div className="bg-white/10 rounded-2xl p-6 backdrop-blur">
                     <div className="text-4xl font-black text-green-400">
-                      <AnimatedCounter value={stats ? stats.totalMinted : 0} />
+                      {stats ? <AnimatedCounter value={stats.totalMinted} /> : '---'}
                     </div>
                     <div className="text-gray-300 font-medium">Minted</div>
                   </div>
                   <div className="bg-white/10 rounded-2xl p-6 backdrop-blur">
                     <div className="text-4xl font-black text-yellow-400">
-                      <AnimatedCounter value={stats ? stats.remaining : 10000} />
+                      {stats ? <AnimatedCounter value={stats.remaining} /> : '---'}
                     </div>
                     <div className="text-gray-300 font-medium">Remaining</div>
                   </div>
                   <div className="bg-white/10 rounded-2xl p-6 backdrop-blur">
                     <div className="text-4xl font-black text-purple-400">
-                      {stats ? stats.maxSupply.toLocaleString() : '10,000'}
+                      {stats ? stats.maxSupply.toLocaleString() : '---'}
                     </div>
                     <div className="text-gray-300 font-medium">Total Supply</div>
                   </div>
@@ -442,7 +444,7 @@ export default function OGNFTClaim() {
                   </div>
                   <div className="text-center mt-3">
                     <span className="text-2xl font-bold text-white">
-                      {progressPercentage.toFixed(2)}% Complete
+                      {stats ? `${progressPercentage.toFixed(2)}% Complete` : 'Loading...'}
                     </span>
                   </div>
                 </div>
@@ -590,12 +592,12 @@ export default function OGNFTClaim() {
                         {claiming ? (
                           <div className="flex items-center justify-center">
                             <div className="animate-spin rounded-full h-8 w-8 border-b-4 border-white mr-4"></div>
-                            SIGNING TRANSACTION...
+                            CLAIMING NFT...
                           </div>
                         ) : (
                           <div className="flex items-center justify-center">
                             <span className="text-3xl mr-3">⚡</span>
-                            SIGN TRANSACTION & CLAIM NFT
+                            CLAIM NFT
                             <span className="text-3xl ml-3">⚡</span>
                           </div>
                         )}
