@@ -48,6 +48,40 @@ const OGNftCard = () => {
     return (
         <div className="relative">
             <div className="bg-gray-800/70 backdrop-blur rounded-lg overflow-hidden border border-gray-600">
+                {/* Video Preview Section */}
+                <div className="relative">
+                    <div className="h-48 overflow-hidden">
+                        <video 
+                            autoPlay 
+                            loop 
+                            muted 
+                            playsInline
+                            className="w-full h-full object-cover"
+                        >
+                            <source src="/OGNFT.mp4" type="video/mp4" />
+                            {/* Fallback for browsers that don't support video */}
+                            <div className="w-full h-full bg-gradient-to-br from-purple-600 via-indigo-600 to-blue-600 flex items-center justify-center">
+                                <div className="text-center text-white">
+                                    <div className="text-4xl font-bold mb-2">OG</div>
+                                    <div className="text-lg">SolQuest NFT</div>
+                                </div>
+                            </div>
+                        </video>
+                    </div>
+                    
+                    {/* Magic Eden badge */}
+                    <div className="absolute top-2 right-2">
+                        <Link href={MAGIC_EDEN_COLLECTION_URL} target="_blank" rel="noopener noreferrer" className="block">
+                            <div className="bg-purple-600/90 backdrop-blur-sm rounded-md px-2 py-1 text-xs font-medium text-white flex items-center shadow-lg hover:bg-purple-700 transition-colors">
+                                <span className="mr-1">View on</span>
+                                <svg className="h-3 w-3" viewBox="0 0 25 25" fill="white" xmlns="http://www.w3.org/2000/svg">
+                                    <path d="M12.5 0L0 21.875H25L12.5 0ZM12.5 10.9375L8.59375 17.5H16.4062L12.5 10.9375Z"/>
+                                </svg>
+                            </div>
+                        </Link>
+                    </div>
+                </div>
+                
                 <div className="p-4">
                     <div className="text-center mb-3">
                         <h3 className="text-lg font-bold text-white mb-1">SolQuest OG</h3>
@@ -98,18 +132,6 @@ const OGNftCard = () => {
                             </Link>
                         </div>
                     </div>
-                </div>
-                
-                {/* Magic Eden badge */}
-                <div className="absolute top-2 right-2">
-                    <Link href={MAGIC_EDEN_COLLECTION_URL} target="_blank" rel="noopener noreferrer" className="block">
-                        <div className="bg-purple-600/90 backdrop-blur-sm rounded-md px-2 py-1 text-xs font-medium text-white flex items-center shadow-lg hover:bg-purple-700 transition-colors">
-                            <span className="mr-1">View on</span>
-                            <svg className="h-3 w-3" viewBox="0 0 25 25" fill="white" xmlns="http://www.w3.org/2000/svg">
-                                <path d="M12.5 0L0 21.875H25L12.5 0ZM12.5 10.9375L8.59375 17.5H16.4062L12.5 10.9375Z"/>
-                            </svg>
-                        </div>
-                    </Link>
                 </div>
             </div>
         </div>

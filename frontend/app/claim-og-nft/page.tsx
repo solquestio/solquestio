@@ -251,6 +251,86 @@ export default function OGNFTClaim() {
             </div>
           </div>
 
+          {/* NFT Preview Video Section */}
+          <div className="mb-12">
+            <div className="bg-gradient-to-br from-white/10 to-white/5 backdrop-blur-xl rounded-3xl p-8 border border-white/20 shadow-2xl">
+              <div className="text-center mb-8">
+                <h2 className="text-4xl font-bold text-white mb-4">🎥 Preview Your NFT</h2>
+                <p className="text-xl text-gray-300">See exactly what you'll get with the SolQuest OG NFT</p>
+              </div>
+              
+              <div className="flex flex-col lg:flex-row items-center gap-8">
+                {/* Video Preview */}
+                <div className="flex-shrink-0">
+                  <div className="w-80 h-80 rounded-2xl overflow-hidden border-4 border-purple-500/30 shadow-2xl shadow-purple-500/20">
+                    <video 
+                      autoPlay 
+                      loop 
+                      muted 
+                      playsInline
+                      className="w-full h-full object-cover"
+                    >
+                      <source src="/OGNFT.mp4" type="video/mp4" />
+                      {/* Fallback for browsers that don't support video */}
+                      <div className="w-full h-full bg-gradient-to-br from-purple-600 via-indigo-600 to-blue-600 flex items-center justify-center">
+                        <div className="text-center text-white">
+                          <div className="text-6xl font-bold mb-4">OG</div>
+                          <div className="text-2xl">SolQuest NFT</div>
+                        </div>
+                      </div>
+                    </video>
+                  </div>
+                </div>
+                
+                {/* NFT Benefits */}
+                <div className="flex-1 space-y-6">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {[
+                      { icon: '⚡', title: '10% XP Boost', desc: 'Accelerate your learning journey' },
+                      { icon: '💰', title: '10% SOL Bonus', desc: 'Extra rewards on leaderboard' },
+                      { icon: '👑', title: 'VIP Access', desc: 'Exclusive Discord channels' },
+                      { icon: '🗳️', title: 'Governance', desc: 'Vote on platform decisions' },
+                      { icon: '🎯', title: 'Exclusive Quests', desc: 'OG-only challenges' },
+                      { icon: '🔄', title: 'Tradeable', desc: 'List on Magic Eden' }
+                    ].map((benefit, idx) => (
+                      <div key={idx} className="bg-white/5 rounded-xl p-4 backdrop-blur border border-white/10">
+                        <div className="flex items-center gap-3">
+                          <span className="text-2xl">{benefit.icon}</span>
+                          <div>
+                            <h4 className="text-white font-bold">{benefit.title}</h4>
+                            <p className="text-gray-400 text-sm">{benefit.desc}</p>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                  
+                  <div className="bg-gradient-to-r from-purple-500/20 to-blue-500/20 rounded-xl p-6 border border-purple-400/30">
+                    <h3 className="text-2xl font-bold text-white mb-3">🎨 Unique Features</h3>
+                    <ul className="space-y-2 text-gray-300">
+                      <li className="flex items-center gap-2">
+                        <span className="text-green-400">✓</span>
+                        Animated 3D design with particle effects
+                      </li>
+                      <li className="flex items-center gap-2">
+                        <span className="text-green-400">✓</span>
+                        Limited to first 10,000 community members
+                      </li>
+                      <li className="flex items-center gap-2">
+                        <span className="text-green-400">✓</span>
+                        Permanent utility and benefits
+                      </li>
+                      <li className="flex items-center gap-2">
+                        <span className="text-green-400">✓</span>
+                        Verified on Magic Eden marketplace
+                      </li>
+                    </ul>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
           {/* Live Stats - Enhanced */}
           <div className="mb-12">
             <div className="bg-gradient-to-r from-purple-500/20 to-blue-500/20 backdrop-blur-xl rounded-3xl p-8 border border-white/20 shadow-2xl">
