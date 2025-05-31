@@ -171,16 +171,22 @@ export const NFTVerificationQuest: React.FC<NFTVerificationQuestProps> = ({
 
           <div className="bg-gradient-to-br from-indigo-900/30 to-purple-900/30 border border-indigo-500/30 rounded-lg p-6 flex flex-col md:flex-row items-center gap-6">
             <div className="rounded-lg overflow-hidden flex-shrink-0 w-full md:w-48 h-48 relative">
-              <div style={{ position: 'absolute', width: '100%', height: '100%', background: 'linear-gradient(45deg, rgba(76, 29, 149, 0.5), rgba(124, 58, 237, 0.5))' }}></div>
-              <div className="absolute inset-0 flex items-center justify-center">
-                <Image 
-                  src="/images/nft/og-nft-preview.svg" 
-                  alt="SolQuest OG NFT" 
-                  width={192} 
-                  height={192}
-                  className="object-cover rounded-lg"
-                />
-              </div>
+              <video 
+                autoPlay 
+                loop 
+                muted 
+                playsInline
+                className="w-full h-full object-cover rounded-lg"
+              >
+                <source src="/OGNFT.mp4" type="video/mp4" />
+                {/* Fallback for browsers that don't support video */}
+                <div className="w-full h-full bg-gradient-to-br from-purple-600 via-indigo-600 to-blue-600 flex items-center justify-center rounded-lg">
+                  <div className="text-center text-white">
+                    <div className="text-2xl font-bold mb-2">OG</div>
+                    <div className="text-sm">SolQuest NFT</div>
+                  </div>
+                </div>
+              </video>
             </div>
             
             <div className="flex-grow">

@@ -224,14 +224,26 @@ export default function PathCompletionNftQuest({
       <div className="mb-6 relative z-10">
         <div className="bg-gray-800/50 border border-gray-600/50 rounded-lg p-4">
           <div className="flex items-center gap-4">
-            {/* NFT Preview Image */}
+            {/* NFT Preview Video */}
             <div className="flex-shrink-0">
-              <div className="w-20 h-20 bg-gradient-to-br from-yellow-500 via-purple-500 to-blue-500 rounded-lg flex items-center justify-center relative overflow-hidden">
-                <div className="absolute inset-0 bg-gradient-to-br from-yellow-400/20 via-purple-400/20 to-blue-400/20"></div>
-                <div className="relative z-10 text-center">
-                  <TrophyIcon className="w-8 h-8 text-white mb-1" />
-                  <div className="text-xs text-white font-bold">CERT</div>
-                </div>
+              <div className="w-24 h-24 rounded-lg overflow-hidden relative">
+                <video 
+                  autoPlay 
+                  loop 
+                  muted 
+                  playsInline
+                  className="w-full h-full object-cover"
+                  style={{ borderRadius: '0.5rem' }}
+                >
+                  <source src="/solquestnft.mp4" type="video/mp4" />
+                  {/* Fallback for browsers that don't support video */}
+                  <div className="w-full h-full bg-gradient-to-br from-yellow-500 via-purple-500 to-blue-500 flex items-center justify-center">
+                    <div className="text-center">
+                      <TrophyIcon className="w-8 h-8 text-white mb-1" />
+                      <div className="text-xs text-white font-bold">CERT</div>
+                    </div>
+                  </div>
+                </video>
               </div>
             </div>
             
