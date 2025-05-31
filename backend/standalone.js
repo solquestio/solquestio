@@ -158,8 +158,8 @@ app.get('/api/quests', (req, res) => {
     },
     {
       id: 'explore-transaction-1',
-      title: 'Explore a Transaction',
-      shortDescription: 'Learn how to read Solana transaction details',
+      title: 'Fund Your Wallet',
+      shortDescription: 'Ensure your wallet has the minimum SOL balance required',
       difficulty: 'beginner',
       xpReward: 150,
       path: 'solana-foundations',
@@ -167,8 +167,8 @@ app.get('/api/quests', (req, res) => {
     },
     {
       id: 'visit-x-og',
-      title: 'Follow Us on X',
-      shortDescription: 'Follow SolQuest on X (Twitter)',
+      title: 'Mint SolQuest OG NFT',
+      shortDescription: 'Mint your exclusive SolQuest OG NFT for permanent benefits',
       difficulty: 'beginner',
       xpReward: 100,
       path: 'solana-foundations',

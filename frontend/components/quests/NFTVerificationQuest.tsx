@@ -4,11 +4,21 @@ import { ArrowTopRightOnSquareIcon, ArrowPathIcon, LockClosedIcon } from '@heroi
 import Link from 'next/link';
 import Image from 'next/image';
 
+const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:5000';
+
 interface NFTVerificationQuestProps {
   onQuestComplete: () => void;
   xpReward?: number;
   title?: string;
   questId?: string;
+}
+
+interface NFTStats {
+  totalMinted: number;
+  maxSupply: number;
+  remaining: number;
+  mintPrice: number;
+  mintType: string;
 }
 
 export const NFTVerificationQuest: React.FC<NFTVerificationQuestProps> = ({ 
@@ -22,33 +32,37 @@ export const NFTVerificationQuest: React.FC<NFTVerificationQuestProps> = ({
   const [isVerifying, setIsVerifying] = useState(false);
   const [verificationError, setVerificationError] = useState<string | null>(null);
   const [isVerified, setIsVerified] = useState(false);
-  const [totalSupply] = useState(10000);
-  const [mintedCount, setMintedCount] = useState(0);
-  const [remainingForUsers, setRemainingForUsers] = useState(5000);
-  const [mintPrice] = useState(0);
+  const [nftStats, setNftStats] = useState<NFTStats | null>(null);
+  const [isLoadingStats, setIsLoadingStats] = useState(true);
   const [hasPromoCode, setHasPromoCode] = useState(false);
   const [promoCode, setPromoCode] = useState('');
   const [showPromoCodeInput, setShowPromoCodeInput] = useState(false);
   const [twitterFollowed, setTwitterFollowed] = useState(false);
 
-  // Mock fetch NFT data - in a real implementation this would call an API
+  // Fetch real NFT data from backend
   useEffect(() => {
-    // Simulate API call to get mint status
-    const fetchMintStatus = async () => {
+    const fetchNFTStats = async () => {
       try {
-        // In production, replace with actual API call
-        await new Promise(resolve => setTimeout(resolve, 1000));
-        
-        // Simulated data - in production this would be real data from your NFT contract
-        const randomMinted = Math.floor(Math.random() * 3500) + 1500; // Between 1500-5000
-        setMintedCount(randomMinted);
-        setRemainingForUsers(5000 - (randomMinted - 0)); // Assuming all minted so far are from user allocation
+        setIsLoadingStats(true);
+        const response = await fetch(`${BACKEND_URL}/api/og-nft/stats`);
+        const data = await response.json();
+        setNftStats(data);
       } catch (error) {
-        console.error("Error fetching mint status:", error);
+        console.error("Error fetching NFT stats:", error);
+        // Fallback to default values if API fails
+        setNftStats({
+          totalMinted: 0,
+          maxSupply: 10000,
+          remaining: 10000,
+          mintPrice: 0,
+          mintType: 'Community Free Mint'
+        });
+      } finally {
+        setIsLoadingStats(false);
       }
     };
     
-    fetchMintStatus();
+    fetchNFTStats();
   }, []);
 
   // Mock verification for demo - will need to be replaced with actual NFT verification
@@ -173,24 +187,39 @@ export const NFTVerificationQuest: React.FC<NFTVerificationQuestProps> = ({
               <h3 className="text-xl font-bold text-white mb-2">SolQuest OG NFT</h3>
               <p className="text-gray-300 mb-3">Mint your exclusive OG NFT to receive permanent benefits.</p>
               
-              <div className="bg-purple-900/30 border border-purple-500/30 rounded-lg px-4 py-3 mb-3">
-                <div className="flex justify-between mb-1">
-                  <span className="text-gray-300">Total supply</span>
-                  <span className="text-white font-bold">{totalSupply.toLocaleString()}</span>
+              {isLoadingStats ? (
+                <div className="bg-purple-900/30 border border-purple-500/30 rounded-lg px-4 py-3 mb-3">
+                  <div className="animate-pulse space-y-2">
+                    <div className="h-4 bg-gray-700 rounded w-3/4"></div>
+                    <div className="h-4 bg-gray-700 rounded w-1/2"></div>
+                    <div className="h-4 bg-gray-700 rounded w-2/3"></div>
+                    <div className="h-4 bg-gray-700 rounded w-1/2"></div>
+                  </div>
                 </div>
-                <div className="flex justify-between mb-1">
-                  <span className="text-gray-300">Minted so far</span>
-                  <span className="text-white font-bold">{mintedCount.toLocaleString()}</span>
+              ) : nftStats ? (
+                <div className="bg-purple-900/30 border border-purple-500/30 rounded-lg px-4 py-3 mb-3">
+                  <div className="flex justify-between mb-1">
+                    <span className="text-gray-300">Total supply</span>
+                    <span className="text-white font-bold">{nftStats.maxSupply.toLocaleString()}</span>
+                  </div>
+                  <div className="flex justify-between mb-1">
+                    <span className="text-gray-300">Minted so far</span>
+                    <span className="text-white font-bold">{nftStats.totalMinted.toLocaleString()}</span>
+                  </div>
+                  <div className="flex justify-between mb-1">
+                    <span className="text-gray-300">Available for users</span>
+                    <span className="text-white font-bold">{nftStats.remaining.toLocaleString()}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-300">Distribution model</span>
+                    <span className="text-white font-bold">{nftStats.mintType}</span>
+                  </div>
                 </div>
-                <div className="flex justify-between mb-1">
-                  <span className="text-gray-300">Available for users</span>
-                  <span className="text-white font-bold">{remainingForUsers.toLocaleString()}</span>
+              ) : (
+                <div className="bg-red-900/30 border border-red-500/30 rounded-lg px-4 py-3 mb-3">
+                  <p className="text-red-400 text-sm">Failed to load NFT statistics</p>
                 </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-300">Reserved for giveaways</span>
-                  <span className="text-white font-bold">5,000</span>
-                </div>
-              </div>
+              )}
               
               <div className="bg-blue-900/30 border border-blue-500/30 rounded-lg p-3 mb-4">
                 <div className="flex justify-between items-center">

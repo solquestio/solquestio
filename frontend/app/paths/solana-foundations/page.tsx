@@ -57,8 +57,8 @@ const SolanaExplorerPathPage = () => {
     },
     {
       id: 'explore-transaction-1',
-      title: '2. Explore a Transaction',
-      description: 'Learn how to read Solana transaction details and explore the blockchain.',
+      title: '2. Fund Your Wallet',
+      description: 'Ensure your wallet has the minimum SOL balance to interact with the Solana blockchain.',
       component: FaucetQuest,
       xp: 0, // XP only awarded on path completion
       props: { minRequiredSOL: 0.01 },
@@ -66,11 +66,11 @@ const SolanaExplorerPathPage = () => {
     },
     {
       id: 'visit-x-og',
-      title: '3. Follow Us on X',
-      description: 'Follow SolQuest on X (Twitter) and join our community.',
+      title: '3. Mint SolQuest OG NFT',
+      description: 'Mint your exclusive SolQuest OG NFT to unlock permanent benefits and community access.',
       component: NFTVerificationQuest,
       xp: 0, // XP only awarded on path completion
-      props: { title: 'Follow SolQuest on X' },
+      props: { title: 'Mint SolQuest OG NFT' },
       isComplete: !!completedQuests['visit-x-og']
     },
     {
