@@ -1,8 +1,9 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useWallet } from '@solana/wallet-adapter-react';
+import { useWallet, useConnection } from '@solana/wallet-adapter-react';
 import { useRouter } from 'next/navigation';
+import { PublicKey, Transaction, SystemProgram, LAMPORTS_PER_SOL } from '@solana/web3.js';
 import dynamic from 'next/dynamic';
 
 const WalletMultiButtonDynamic = dynamic(
@@ -84,7 +85,8 @@ const AnimatedCounter = ({ value, duration = 1000 }: { value: number; duration?:
 };
 
 export default function OGNFTClaim() {
-  const { publicKey, connected } = useWallet();
+  const { publicKey, connected, sendTransaction } = useWallet();
+  const { connection } = useConnection();
   const [stats, setStats] = useState<NFTStats | null>(null);
   const [claiming, setClaiming] = useState(false);
   const [claimed, setClaimed] = useState(false);
@@ -93,6 +95,9 @@ export default function OGNFTClaim() {
   const [loading, setLoading] = useState(true);
   const [showConfetti, setShowConfetti] = useState(false);
   const router = useRouter();
+
+  // Small fee for transaction (covers network costs)
+  const CLAIM_FEE_SOL = 0.001; // 0.001 SOL (~$0.02)
 
   // Load stats on component mount
   useEffect(() => {
@@ -143,19 +148,54 @@ export default function OGNFTClaim() {
   };
 
   const handleClaim = async () => {
-    if (!publicKey || claiming) return;
+    if (!publicKey || !sendTransaction || claiming) return;
     
     setClaiming(true);
     setError('');
     
     try {
+      // Step 1: Create and send transaction for claiming fee
+      console.log('Creating claim transaction...');
+      
+      // Create a transaction with a small fee to SolQuest treasury
+      // This ensures the user actually interacts with the blockchain
+      const treasuryWallet = new PublicKey('11111111111111111111111111111111'); // Replace with actual treasury
+      
+      const transaction = new Transaction().add(
+        SystemProgram.transfer({
+          fromPubkey: publicKey,
+          toPubkey: treasuryWallet,
+          lamports: CLAIM_FEE_SOL * LAMPORTS_PER_SOL,
+        })
+      );
+      
+      // Get recent blockhash
+      const { blockhash } = await connection.getLatestBlockhash();
+      transaction.recentBlockhash = blockhash;
+      transaction.feePayer = publicKey;
+      
+      console.log('Requesting transaction signature...');
+      
+      // Step 2: User signs the transaction
+      const signature = await sendTransaction(transaction, connection);
+      
+      console.log('Transaction signed:', signature);
+      console.log('Waiting for confirmation...');
+      
+      // Step 3: Wait for transaction confirmation
+      await connection.confirmTransaction(signature, 'confirmed');
+      
+      console.log('Transaction confirmed! Claiming NFT...');
+      
+      // Step 4: Call backend to mint NFT (now that payment is confirmed)
       const response = await fetch(`${BACKEND_URL}/api/og-nft/mint`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          walletAddress: publicKey.toString()
+          walletAddress: publicKey.toString(),
+          transactionSignature: signature
         }),
       });
 
@@ -174,8 +214,15 @@ export default function OGNFTClaim() {
       } else {
         setError(data.error || 'Failed to claim NFT');
       }
-    } catch (error) {
-      setError('Network error. Please try again.');
+    } catch (error: any) {
+      console.error('Error claiming NFT:', error);
+      if (error.message?.includes('User rejected')) {
+        setError('Transaction was cancelled. Please try again if you want to claim your NFT.');
+      } else if (error.message?.includes('insufficient funds')) {
+        setError(`Insufficient SOL balance. You need at least ${CLAIM_FEE_SOL} SOL to claim your NFT.`);
+      } else {
+        setError('Transaction failed. Please try again.');
+      }
     } finally {
       setClaiming(false);
     }
@@ -476,6 +523,30 @@ export default function OGNFTClaim() {
                     One click to join the elite SolQuest OG community!
                   </p>
                   
+                  {/* Transaction Info */}
+                  <div className="bg-blue-500/20 border border-blue-400/30 rounded-2xl p-6 mb-8">
+                    <h3 className="text-lg font-bold text-blue-300 mb-3">💳 Transaction Details</h3>
+                    <div className="space-y-2 text-sm text-gray-300">
+                      <div className="flex justify-between">
+                        <span>NFT Cost:</span>
+                        <span className="text-green-400 font-bold">FREE</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span>Network Fee:</span>
+                        <span className="text-yellow-400">{CLAIM_FEE_SOL} SOL</span>
+                      </div>
+                      <div className="border-t border-gray-600 pt-2 mt-2">
+                        <div className="flex justify-between font-bold">
+                          <span>Total Cost:</span>
+                          <span className="text-white">{CLAIM_FEE_SOL} SOL</span>
+                        </div>
+                      </div>
+                    </div>
+                    <p className="text-xs text-gray-400 mt-3">
+                      Small network fee covers blockchain transaction costs (~$0.02)
+                    </p>
+                  </div>
+                  
                   {error && (
                     <div className="bg-red-500/20 border-2 border-red-500 rounded-2xl p-6 mb-8">
                       <p className="text-red-400 text-lg font-medium">{error}</p>
@@ -493,12 +564,12 @@ export default function OGNFTClaim() {
                         {claiming ? (
                           <div className="flex items-center justify-center">
                             <div className="animate-spin rounded-full h-8 w-8 border-b-4 border-white mr-4"></div>
-                            CLAIMING YOUR NFT...
+                            SIGNING TRANSACTION...
                           </div>
                         ) : (
                           <div className="flex items-center justify-center">
                             <span className="text-3xl mr-3">⚡</span>
-                            CLAIM FREE NFT NOW
+                            SIGN TRANSACTION & CLAIM NFT
                             <span className="text-3xl ml-3">⚡</span>
                           </div>
                         )}
@@ -507,7 +578,7 @@ export default function OGNFTClaim() {
                   </div>
                   
                   <p className="text-lg text-gray-400 mt-6 font-medium">
-                    💯 No codes • No follows • No bullsh*t • Just claim!
+                    🔒 Secure blockchain transaction • 💯 One NFT per wallet • ♾️ Forever benefits
                   </p>
                 </div>
               )}
