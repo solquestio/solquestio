@@ -185,7 +185,7 @@ export default function OGNFTClaim() {
       
       // Create a transaction with a small fee to SolQuest treasury
       // This ensures the user actually interacts with the blockchain
-      const treasuryWallet = new PublicKey('7xKXtg2CW87d97TXJSDpbD5jBkheTqA83TZRuJosgAsU'); // SolQuest treasury
+      const treasuryWallet = new PublicKey('8nnLuLdrUN96HuZgRwumkSJV8BzqJj55mZULu3iaqKSM'); // SolQuest treasury
       
       const transaction = new Transaction().add(
         SystemProgram.transfer({

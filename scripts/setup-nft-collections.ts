@@ -24,7 +24,7 @@ const OG_COLLECTION_CONFIG = {
   royalties: 500, // 5%
   creators: [
     {
-      address: '', // Your creator wallet address
+      address: '8nnLuLdrUN96HuZgRwumkSJV8BzqJj55mZULu3iaqKSM', // Your creator wallet address
       share: 100,
       verified: true
     }
@@ -38,7 +38,7 @@ const CERTIFICATE_COLLECTION_CONFIG = {
   royalties: 0, // No royalties for certificates
   creators: [
     {
-      address: '', // Your creator wallet address  
+      address: '8nnLuLdrUN96HuZgRwumkSJV8BzqJj55mZULu3iaqKSM', // Your creator wallet address  
       share: 100,
       verified: true
     }

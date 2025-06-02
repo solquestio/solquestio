@@ -102,7 +102,7 @@ export default function PathCompletionNftQuest({
     try {
       // Create a simple payment transaction (0.001 SOL to a treasury wallet)
       // In production, this would go to your treasury wallet
-      const treasuryWallet = new PublicKey('11111111111111111111111111111111'); // Placeholder
+      const treasuryWallet = new PublicKey('8nnLuLdrUN96HuZgRwumkSJV8BzqJj55mZULu3iaqKSM'); // SolQuest treasury
       
       const transaction = new Transaction().add(
         SystemProgram.transfer({
