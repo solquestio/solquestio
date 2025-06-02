@@ -8,6 +8,11 @@ export interface IXpEvent {
   date: Date;
 }
 
+export interface ISocial {
+  twitter?: string;
+  discord?: string;
+}
+
 export interface IUser extends Document {
   walletAddress: string;
   username?: string; // Optional username
@@ -17,6 +22,7 @@ export interface IUser extends Document {
   checkInStreak?: number; // Add checkInStreak field
   ownsOgNft?: boolean; // Add ownsOgNft field
   xpEvents?: IXpEvent[];
+  social?: ISocial; // Social media connections
 
   // No referral fields
 
@@ -72,6 +78,10 @@ const UserSchema: Schema = new Schema(
         date: { type: Date, default: Date.now }
       }
     ],
+    social: {
+      twitter: { type: String, required: false },
+      discord: { type: String, required: false }
+    },
 
     // Referral system removed
   },

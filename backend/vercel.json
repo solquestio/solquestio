@@ -2,10 +2,15 @@
   "version": 2,
   "env": {
     "NODE_ENV": "production",
-    "FRONTEND_URL": "https://solquest.io"
+    "FRONTEND_URL": "https://solquest.io",
+    "THIRDWEB_CLIENT_ID": "d9fde8cb50c02b03f82bb736960cf1a4",
+    "THIRDWEB_SECRET_KEY": "2WtsCbCDDHJNWrN-nJzzZUSfOye0vD4zZlY1U1KfRPtUc93dthUzBX7QTVMi-jO06aTXdorfmVwf-h4zzctyHQ",
+    "SOLANA_RPC_URL": "https://api.mainnet-beta.solana.com",
+    "TREASURY_WALLET": "8nnLuLdrUN96HuZgRwumkSJV8BzqJj55mZULu3iaqKSM"
   },
-  "github": {
-    "enabled": true,
-    "silent": true
+  "functions": {
+    "api/**/*.ts": {
+      "maxDuration": 60
+    }
   }
 }

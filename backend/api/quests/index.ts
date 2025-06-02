@@ -27,7 +27,13 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   // Handle /api/quests/complete
   if (req.method === 'POST' && path === 'complete') {
     // Get the authenticated user
-    const user = await getTokenUser(req);
+    const authHeader = req.headers.authorization;
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      return res.status(401).json({ error: 'Authentication required' });
+    }
+    
+    const token = authHeader.split(' ')[1];
+    const user = await getTokenUser(token);
     if (!user) {
       return res.status(401).json({ error: 'Authentication required' });
     }
@@ -59,14 +65,15 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       // Add XP to user
       user.xp = (user.xp || 0) + xpToAward;
       
-      // Add XP history entry
-      if (!user.xpHistory) {
-        user.xpHistory = [];
+      // Add XP events entry
+      if (!user.xpEvents) {
+        user.xpEvents = [];
       }
       
-      user.xpHistory.push({
+      user.xpEvents.push({
+        type: 'quest_completion',
         description: `Completed "${quest.title}" quest`,
-        timestamp: new Date(),
+        date: new Date(),
         amount: xpToAward
       });
       
