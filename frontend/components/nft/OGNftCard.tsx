@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import styles from './OGNftCard.module.css';
 
-const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:5000';
+const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || 'https://api.solquest.io';
 const MAGIC_EDEN_COLLECTION_URL = "https://magiceden.io/collections/solquestio-og-nft";
 
 interface NFTStats {

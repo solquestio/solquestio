@@ -27,5 +27,29 @@
         }
       ]
     }
+  ],
+  "functions": {
+    "app/**/*.js": {
+      "runtime": "nodejs18.x"
+    }
+  },
+  "build": {
+    "env": {
+      "NEXT_PUBLIC_BACKEND_URL": "https://api.solquest.io",
+      "NEXT_PUBLIC_HELIUS_RPC_URL": "https://mainnet.helius-rpc.com/?api-key=0abb48db-ebdd-4297-aa63-5f4d79234d9e"
+    }
+  },
+  "rewrites": [
+    {
+      "source": "/paths/:pathId",
+      "destination": "/paths/:pathId"
+    }
+  ],
+  "redirects": [
+    {
+      "source": "/quests",
+      "destination": "/paths",
+      "permanent": false
+    }
   ]
 } 

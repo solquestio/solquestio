@@ -45,7 +45,7 @@ interface AuthContextType {
 
 // --- Constants ---
 const AUTH_TOKEN_KEY = 'solquest_auth_token';
-const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:5000';
+const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || 'https://api.solquest.io';
 const SIGN_IN_MESSAGE_TEMPLATE = (wallet: string, timestamp: number) => 
   `Sign in to SolQuest.io\n\nWallet: ${wallet}\nTimestamp: ${timestamp}`;
 

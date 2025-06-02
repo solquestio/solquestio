@@ -7,7 +7,7 @@ import { useAuth } from '@/context/AuthContext';
 import { CheckCircleIcon, SparklesIcon, ArrowPathIcon } from '@heroicons/react/24/solid';
 import Image from 'next/image';
 
-const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:5000';
+const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || 'https://api.solquest.io';
 const MINT_COST_SOL = 0.001; // 0.001 SOL for minting
 
 interface PathCompletionData {

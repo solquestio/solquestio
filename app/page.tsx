@@ -46,7 +46,7 @@ const OGNftCardDynamic = dynamic(
   { ssr: false, loading: () => <div className="bg-gray-800/50 rounded-lg h-64 animate-pulse"></div> }
 );
 
-const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:5000';
+const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || 'https://api.solquest.io';
 
 // Define static learning paths
 const STATIC_LEARNING_PATHS: LearningPath[] = [

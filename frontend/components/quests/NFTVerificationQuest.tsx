@@ -4,7 +4,7 @@ import { ArrowTopRightOnSquareIcon, ArrowPathIcon, LockClosedIcon } from '@heroi
 import Link from 'next/link';
 import Image from 'next/image';
 
-const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:5000';
+const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || 'https://api.solquest.io';
 
 interface NFTVerificationQuestProps {
   onQuestComplete: () => void;

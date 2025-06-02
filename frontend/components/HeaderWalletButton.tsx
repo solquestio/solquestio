@@ -39,7 +39,7 @@ interface UserProfile {
 }
 
 // --- Constants --- 
-const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:5000';
+const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || 'https://api.solquest.io';
 const AUTH_TOKEN_KEY = 'solquest_auth_token';
 
 export function HeaderWalletButton() {

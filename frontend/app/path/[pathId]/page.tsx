@@ -38,7 +38,7 @@ interface UserProfile { // Needed for updating state after quest completion
 }
 
 // Constants
-const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:5000';
+const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || 'https://api.solquest.io';
 const AUTH_TOKEN_KEY = 'solquest_auth_token';
 const FUND_WALLET_QUEST_ID = 'fund-wallet';
 const EXPLORE_TRANSACTION_QUEST_ID = 'explore-transaction-1'; // Add quest ID constant

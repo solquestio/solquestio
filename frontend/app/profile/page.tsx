@@ -31,7 +31,7 @@ interface Quest {
 }
 
 // Define the backend API endpoint
-const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:5000';
+const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || 'https://api.solquest.io';
 
 // Quest IDs (match backend)
 const FUND_WALLET_QUEST_ID = 'fund-wallet';

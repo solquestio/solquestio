@@ -11,7 +11,7 @@ const WalletMultiButtonDynamic = dynamic(
   { ssr: false }
 );
 
-const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || 'https://solquest.io/api' || 'http://localhost:5000';
+const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || 'https://api.solquest.io';
 
 interface NFTStats {
   totalMinted: number;

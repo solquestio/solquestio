@@ -29,7 +29,7 @@ interface LeaderboardUser {
 }
 
 // Backend URL
-const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:5000';
+const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || 'https://api.solquest.io';
 console.log("Using backend URL:", BACKEND_URL);
 
 // Helper function to shorten wallet address
