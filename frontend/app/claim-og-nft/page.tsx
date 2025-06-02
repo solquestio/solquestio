@@ -174,18 +174,38 @@ export default function OGNFTClaim() {
   };
 
   const handleClaim = async () => {
-    if (!publicKey || !sendTransaction || claiming) return;
+    console.log('handleClaim: Starting claim process');
     
+    if (!publicKey || !sendTransaction || claiming) {
+      console.log('handleClaim: Early return - missing requirements', { publicKey: !!publicKey, sendTransaction: !!sendTransaction, claiming });
+      return;
+    }
+    
+    // Additional validation checks
+    if (!connection) {
+      console.log('handleClaim: No connection available');
+      setError('Connection to Solana network not available. Please refresh the page.');
+      return;
+    }
+    
+    if (!connected) {
+      console.log('handleClaim: Wallet not connected');
+      setError('Wallet not connected. Please connect your wallet first.');
+      return;
+    }
+    
+    console.log('handleClaim: All validations passed, starting claim');
     setClaiming(true);
     setError('');
     
     try {
       // Step 1: Create and send transaction for claiming fee
-      console.log('Creating claim transaction...');
+      console.log('handleClaim: Creating claim transaction...');
       
       // Create a transaction with a small fee to SolQuest treasury
       // This ensures the user actually interacts with the blockchain
       const treasuryWallet = new PublicKey('8nnLuLdrUN96HuZgRwumkSJV8BzqJj55mZULu3iaqKSM'); // SolQuest treasury
+      console.log('handleClaim: Treasury wallet created');
       
       const transaction = new Transaction().add(
         SystemProgram.transfer({
@@ -194,24 +214,37 @@ export default function OGNFTClaim() {
           lamports: CLAIM_FEE_SOL * LAMPORTS_PER_SOL,
         })
       );
+      console.log('handleClaim: Transaction created');
       
       // Get recent blockhash
+      console.log('handleClaim: Getting recent blockhash...');
       const { blockhash } = await connection.getLatestBlockhash();
       transaction.recentBlockhash = blockhash;
       transaction.feePayer = publicKey;
+      console.log('handleClaim: Transaction configured with blockhash');
       
-      console.log('Requesting transaction signature...');
+      console.log('handleClaim: Requesting transaction signature...');
       
       // Step 2: User signs the transaction
       const signature = await sendTransaction(transaction, connection);
+      console.log('handleClaim: Transaction signed:', signature);
       
-      console.log('Transaction signed:', signature);
-      console.log('Waiting for confirmation...');
+      console.log('handleClaim: Waiting for confirmation...');
       
       // Step 3: Wait for transaction confirmation
-      await connection.confirmTransaction(signature, 'confirmed');
+      console.log('handleClaim: Confirming transaction...');
+      const confirmation = await connection.confirmTransaction({
+        signature,
+        blockhash,
+        lastValidBlockHeight: (await connection.getLatestBlockhash()).lastValidBlockHeight,
+      }, 'confirmed');
       
-      console.log('Transaction confirmed! Claiming NFT...');
+      if (confirmation.value.err) {
+        throw new Error(`Transaction failed: ${confirmation.value.err}`);
+      }
+      console.log('handleClaim: Transaction confirmed successfully');
+      
+      console.log('handleClaim: Calling backend to mint NFT...');
       
       // Step 4: Call backend to mint NFT (now that payment is confirmed)
       const response = await fetch(`${BACKEND_URL}/api/og-nft?action=mint`, {
@@ -225,31 +258,59 @@ export default function OGNFTClaim() {
         }),
       });
 
-      const data = await response.json();
+      console.log('handleClaim: Backend response received', response.status);
 
-      if (response.ok) {
+      if (!response.ok) {
+        throw new Error(`API Error: ${response.status} ${response.statusText}`);
+      }
+
+      const data = await response.json();
+      console.log('handleClaim: API Response:', data);
+
+      // Handle both API response formats
+      if (data.success === true || (data.nft && data.message)) {
+        console.log('handleClaim: NFT claim successful');
         setClaimed(true);
         setMintResult(data);
         setShowConfetti(true);
         // Reload stats to show updated numbers
-        await loadStats();
+        try {
+          console.log('handleClaim: Reloading stats...');
+          await loadStats();
+        } catch (statsError) {
+          console.warn('handleClaim: Failed to reload stats:', statsError);
+        }
         // Redirect to dashboard after a few seconds
+        console.log('handleClaim: Setting up redirect timer');
         setTimeout(() => {
-          router.push('/dashboard');
+          try {
+            console.log('handleClaim: Redirecting to dashboard');
+            router.push('/dashboard');
+          } catch (routerError) {
+            console.error('handleClaim: Router error:', routerError);
+            // Fallback to window.location if router fails
+            window.location.href = '/dashboard';
+          }
         }, 8000);
       } else {
-        setError(data.error || 'Failed to claim NFT');
+        console.log('handleClaim: NFT claim failed', data);
+        setError(data.error || data.message || 'Failed to claim NFT');
       }
     } catch (error: any) {
-      console.error('Error claiming NFT:', error);
+      console.error('handleClaim: Error during claim process:', error);
       if (error.message?.includes('User rejected')) {
         setError('Transaction was cancelled. Please try again if you want to claim your NFT.');
       } else if (error.message?.includes('insufficient funds')) {
         setError(`Insufficient SOL balance. You need at least ${CLAIM_FEE_SOL} SOL to claim your NFT.`);
+      } else if (error.name === 'WalletSignTransactionError') {
+        setError('Wallet transaction failed. Please make sure your wallet is unlocked and try again.');
+      } else if (error.message?.includes('API Error')) {
+        setError('Backend service unavailable. Please try again later.');
       } else {
-        setError('Transaction failed. Please try again.');
+        setError(`Transaction failed: ${error.message || 'Unknown error'}`);
       }
     } finally {
+      console.log('handleClaim: Claim process finished');
       setClaiming(false);
     }
   };
