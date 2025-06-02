@@ -27,7 +27,14 @@ const OGNftCard = () => {
         try {
             const response = await fetch(`${BACKEND_URL}/api/og-nft?action=stats`);
             const data = await response.json();
-            setStats(data);
+            
+            // Handle the new API format that returns data.stats
+            if (data.success && data.stats) {
+                setStats(data.stats);
+            } else {
+                // Handle direct format for backwards compatibility
+                setStats(data);
+            }
         } catch (error) {
             console.error('Error loading NFT stats:', error);
             // Fallback to initial values

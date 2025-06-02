@@ -124,7 +124,14 @@ export default function OGNFTClaim() {
       }
       
       const data = await response.json();
-      setStats(data);
+      
+      // Handle the new API format that returns data.stats
+      if (data.success && data.stats) {
+        setStats(data.stats);
+      } else {
+        // Handle direct format for backwards compatibility
+        setStats(data);
+      }
     } catch (error) {
       console.error('Error loading stats:', error);
       // Don't set fake stats - leave stats as null to show loading state

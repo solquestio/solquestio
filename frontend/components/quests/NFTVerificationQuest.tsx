@@ -46,7 +46,14 @@ export const NFTVerificationQuest: React.FC<NFTVerificationQuestProps> = ({
         setIsLoadingStats(true);
         const response = await fetch(`${BACKEND_URL}/api/og-nft?action=stats`);
         const data = await response.json();
-        setNftStats(data);
+        
+        // Handle the new API format that returns data.stats
+        if (data.success && data.stats) {
+          setNftStats(data.stats);
+        } else {
+          // Handle direct format for backwards compatibility
+          setNftStats(data);
+        }
       } catch (error) {
         console.error("Error fetching NFT stats:", error);
         // Fallback to default values if API fails
