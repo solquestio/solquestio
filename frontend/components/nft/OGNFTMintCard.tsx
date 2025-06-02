@@ -19,7 +19,6 @@ interface OGNFTEligibility {
     nextTokenId: number;
   };
   mintingAvailable: boolean;
-  mockData?: boolean;
 }
 
 interface MintResult {
@@ -33,7 +32,6 @@ interface MintResult {
   };
   transactionSignature: string;
   limitEnforced: boolean;
-  mockData?: boolean;
 }
 
 export default function OGNFTMintCard() {
@@ -150,11 +148,6 @@ export default function OGNFTMintCard() {
             <p className="text-sm text-gray-400">Exclusive community collection</p>
           </div>
         </div>
-        {eligibility?.mockData && (
-          <div className="bg-yellow-500/20 text-yellow-300 px-2 py-1 rounded text-xs">
-            Demo Mode
-          </div>
-        )}
       </div>
 
       {/* Collection Stats */}

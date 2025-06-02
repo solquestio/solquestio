@@ -25,15 +25,18 @@ interface NFTStats {
 interface MintResult {
   success: boolean;
   message: string;
-  nft: {
+  nftData?: string;
+  attributes?: any[];
+  // Legacy format support
+  nft?: {
     mintAddress: string;
     tokenId: number;
     metadataUri: string;
     recipient: string;
   };
-  transactionSignature: string;
-  mintType: string;
-  totalClaimed: number;
+  transactionSignature?: string;
+  mintType?: string;
+  totalClaimed?: number;
 }
 
 // Floating particles component
@@ -117,21 +120,14 @@ export default function OGNFTClaim() {
 
   const loadStats = async () => {
     try {
-      const response = await fetch(`${BACKEND_URL}/api/og-nft?action=stats`);
+      const response = await fetch(`${BACKEND_URL}/api/og-nft/stats`);
       
       if (!response.ok) {
         throw new Error('Backend not available');
       }
       
       const data = await response.json();
-      
-      // Handle the new API format that returns data.stats
-      if (data.success && data.stats) {
-        setStats(data.stats);
-      } else {
-        // Handle direct format for backwards compatibility
-        setStats(data);
-      }
+      setStats(data);
     } catch (error) {
       console.error('Error loading stats:', error);
       // Don't set fake stats - leave stats as null to show loading state
@@ -145,7 +141,7 @@ export default function OGNFTClaim() {
     if (!publicKey) return;
     
     try {
-      const response = await fetch(`${BACKEND_URL}/api/og-nft?action=eligibility&walletAddress=${publicKey.toString()}`);
+      const response = await fetch(`${BACKEND_URL}/api/og-nft/eligibility/${publicKey.toString()}`);
       
       if (!response.ok) {
         // If backend is not available, assume user is eligible
@@ -247,7 +243,7 @@ export default function OGNFTClaim() {
       console.log('handleClaim: Calling backend to mint NFT...');
       
       // Step 4: Call backend to mint NFT (now that payment is confirmed)
-      const response = await fetch(`${BACKEND_URL}/api/og-nft?action=mint`, {
+      const response = await fetch(`${BACKEND_URL}/api/og-nft/mint`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -268,7 +264,7 @@ export default function OGNFTClaim() {
       console.log('handleClaim: API Response:', data);
 
       // Handle both API response formats
-      if (data.success === true || (data.nft && data.message)) {
+      if (data.success === true || data.nft) {
         console.log('handleClaim: NFT claim successful');
         setClaimed(true);
         setMintResult(data);
@@ -284,12 +280,12 @@ export default function OGNFTClaim() {
         console.log('handleClaim: Setting up redirect timer');
         setTimeout(() => {
           try {
-            console.log('handleClaim: Redirecting to dashboard');
-            router.push('/dashboard');
+            console.log('handleClaim: Redirecting to main page');
+            router.push('/');
           } catch (routerError) {
             console.error('handleClaim: Router error:', routerError);
             // Fallback to window.location if router fails
-            window.location.href = '/dashboard';
+            window.location.href = '/';
           }
         }, 8000);
       } else {
@@ -471,14 +467,6 @@ export default function OGNFTClaim() {
               <div className="text-center mb-6">
                 <h2 className="text-3xl font-bold text-white mb-4">📊 Live Mint Progress</h2>
                 
-                {!stats && !loading && (
-                  <div className="bg-orange-500/20 border border-orange-400/30 rounded-xl p-4 mb-6">
-                    <p className="text-orange-300 text-sm">
-                      ⚠️ Unable to connect to backend. Real statistics unavailable.
-                    </p>
-                  </div>
-                )}
-                
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
                   <div className="bg-white/10 rounded-2xl p-6 backdrop-blur">
                     <div className="text-4xl font-black text-green-400">
@@ -545,7 +533,17 @@ export default function OGNFTClaim() {
                         SUCCESS! NFT CLAIMED
                       </h2>
                       <p className="text-2xl text-gray-300 mb-8">
-                        Your SolQuest OG NFT #{mintResult.nft.tokenId} has been successfully claimed!
+                        Your SolQuest OG NFT has been successfully claimed!
+                        {mintResult.nftData && (
+                          <span className="block text-lg text-yellow-400 mt-2 font-mono">
+                            Token: {mintResult.nftData}
+                          </span>
+                        )}
+                        {mintResult.nft?.tokenId && (
+                          <span className="block text-lg text-yellow-400 mt-2">
+                            #{mintResult.nft.tokenId}
+                          </span>
+                        )}
                       </p>
                       
                       {/* NFT Details Card */}
@@ -572,19 +570,35 @@ export default function OGNFTClaim() {
                           <div className="space-y-4">
                             <h3 className="text-2xl font-bold text-blue-400 mb-4">🏷️ NFT Details</h3>
                             <div className="bg-gray-800/50 p-6 rounded-xl space-y-3">
-                              <div className="flex justify-between">
-                                <span className="text-gray-400">Token ID:</span>
-                                <span className="text-white font-mono text-xl">#{mintResult.nft.tokenId}</span>
-                              </div>
-                              <div className="flex justify-between">
-                                <span className="text-gray-400">Mint Address:</span>
-                                <span className="text-white font-mono text-sm">
-                                  {mintResult.nft.mintAddress.slice(0, 8)}...{mintResult.nft.mintAddress.slice(-8)}
-                                </span>
-                              </div>
+                              {mintResult.nft?.tokenId && (
+                                <div className="flex justify-between">
+                                  <span className="text-gray-400">Token ID:</span>
+                                  <span className="text-white font-mono text-xl">#{mintResult.nft.tokenId}</span>
+                                </div>
+                              )}
+                              {mintResult.nftData && (
+                                <div className="flex justify-between">
+                                  <span className="text-gray-400">NFT Data:</span>
+                                  <span className="text-white font-mono text-sm">
+                                    {mintResult.nftData}
+                                  </span>
+                                </div>
+                              )}
+                              {mintResult.nft?.mintAddress && (
+                                <div className="flex justify-between">
+                                  <span className="text-gray-400">Mint Address:</span>
+                                  <span className="text-white font-mono text-sm">
+                                    {mintResult.nft.mintAddress.slice(0, 8)}...{mintResult.nft.mintAddress.slice(-8)}
+                                  </span>
+                                </div>
+                              )}
                               <div className="flex justify-between">
                                 <span className="text-gray-400">Rarity:</span>
-                                <span className="text-yellow-400 font-bold">OG Founder</span>
+                                <span className="text-yellow-400 font-bold">Rare (1 of 10,000)</span>
+                              </div>
+                              <div className="flex justify-between">
+                                <span className="text-gray-400">Status:</span>
+                                <span className="text-green-400 font-bold">Successfully Minted</span>
                               </div>
                             </div>
                           </div>
@@ -593,7 +607,7 @@ export default function OGNFTClaim() {
                       
                       <div className="bg-blue-500/20 rounded-2xl p-6 border border-blue-400/30">
                         <p className="text-lg text-blue-300 font-medium">
-                          🚀 Redirecting to your dashboard in 8 seconds...
+                          🚀 Redirecting to main page in 8 seconds...
                         </p>
                       </div>
                     </>

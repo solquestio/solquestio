@@ -295,7 +295,7 @@ class NFTMinter {
           },
           {
             trait_type: 'Rarity',
-            value: finalTokenId <= 100 ? 'Legendary' : finalTokenId <= 1000 ? 'Rare' : 'Common'
+            value: 'Rare'
           },
           {
             trait_type: 'Mint Type',
