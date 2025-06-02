@@ -24,7 +24,7 @@ export default function ClaimPage() {
     if (!publicKey) return;
     
     try {
-      const response = await fetch(`/api/og-nft/eligibility/${publicKey.toString()}`);
+      const response = await fetch(`/api/og-nft?action=eligibility&walletAddress=${publicKey.toString()}`);
       const data = await response.json();
       
       if (!data.eligible) {
@@ -43,7 +43,7 @@ export default function ClaimPage() {
     setError('');
     
     try {
-      const response = await fetch('/api/og-nft/mint', {
+      const response = await fetch('/api/og-nft?action=mint', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

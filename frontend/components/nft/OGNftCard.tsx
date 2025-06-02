@@ -25,7 +25,7 @@ const OGNftCard = () => {
 
     const loadStats = async () => {
         try {
-            const response = await fetch(`${BACKEND_URL}/api/og-nft/stats`);
+            const response = await fetch(`${BACKEND_URL}/api/og-nft?action=stats`);
             const data = await response.json();
             setStats(data);
         } catch (error) {

@@ -62,7 +62,7 @@ export default function OGNFTMintCard() {
     setError(null);
 
     try {
-      const response = await fetch(`${BACKEND_URL}/api/og-nft/eligibility/${publicKey.toString()}`);
+      const response = await fetch(`${BACKEND_URL}/api/og-nft?action=eligibility&walletAddress=${publicKey.toString()}`);
       const data = await response.json();
 
       if (!response.ok) {
@@ -85,7 +85,7 @@ export default function OGNFTMintCard() {
     setError(null);
 
     try {
-      const response = await fetch(`${BACKEND_URL}/api/og-nft/mint`, {
+      const response = await fetch(`${BACKEND_URL}/api/og-nft?action=mint`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
