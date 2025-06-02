@@ -14,6 +14,10 @@ app.use(cors({
     'http://localhost:3001', 
     'http://localhost:3002',
     'http://localhost:3003',
+    'https://www.solquest.io',
+    'https://solquest.io',
+    'https://solquestio.vercel.app',
+    'https://solquestio-sol-quests-projects.vercel.app',
     frontendUrl
   ],
   credentials: true
