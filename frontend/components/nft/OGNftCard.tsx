@@ -18,37 +18,29 @@ interface NFTStats {
 const OGNftCard = () => {
     const [stats, setStats] = useState<NFTStats | null>(null);
     const [loading, setLoading] = useState(true);
+    const [isLoadingStats, setIsLoadingStats] = useState(true);
 
     useEffect(() => {
-        loadStats();
-    }, []);
-
-    const loadStats = async () => {
-        try {
-            const response = await fetch(`${BACKEND_URL}/api/og-nft?action=stats`);
-            const data = await response.json();
-            
-            // Handle the new API format that returns data.stats
-            if (data.success && data.stats) {
-                setStats(data.stats);
-            } else {
-                // Handle direct format for backwards compatibility
-                setStats(data);
+        const fetchNFTStats = async () => {
+            try {
+                setIsLoadingStats(true);
+                const response = await fetch(`${BACKEND_URL}/api/og-nft?action=stats`);
+                const data = await response.json();
+                
+                if (data) {
+                    setStats(data);
+                }
+            } catch (error) {
+                console.error("Error fetching NFT stats:", error);
+                // Show warning message when backend unavailable
+                setStats(null);
+            } finally {
+                setIsLoadingStats(false);
             }
-        } catch (error) {
-            console.error('Error loading NFT stats:', error);
-            // Fallback to initial values
-            setStats({
-                totalMinted: 0,
-                maxSupply: 10000,
-                remaining: 10000,
-                mintPrice: 0,
-                mintType: 'Community Free Mint'
-            });
-        } finally {
-            setLoading(false);
-        }
-    };
+        };
+        
+        fetchNFTStats();
+    }, []);
 
     const progressPercentage = stats ? (stats.totalMinted / stats.maxSupply) * 100 : 0;
 
@@ -100,7 +92,7 @@ const OGNftCard = () => {
                         </div>
                         
                         {/* Stats */}
-                        {loading ? (
+                        {isLoadingStats ? (
                             <div className="text-sm text-gray-400">Loading stats...</div>
                         ) : (
                             <div className="space-y-2">

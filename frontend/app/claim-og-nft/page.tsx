@@ -120,7 +120,7 @@ export default function OGNFTClaim() {
 
   const loadStats = async () => {
     try {
-      const response = await fetch(`${BACKEND_URL}/api/og-nft/stats`);
+      const response = await fetch(`${BACKEND_URL}/api/og-nft?action=stats`);
       
       if (!response.ok) {
         throw new Error('Backend not available');
@@ -141,7 +141,7 @@ export default function OGNFTClaim() {
     if (!publicKey) return;
     
     try {
-      const response = await fetch(`${BACKEND_URL}/api/og-nft/eligibility/${publicKey.toString()}`);
+      const response = await fetch(`${BACKEND_URL}/api/og-nft?action=eligibility&walletAddress=${publicKey.toString()}`);
       
       if (!response.ok) {
         // If backend is not available, assume user is eligible
@@ -243,7 +243,7 @@ export default function OGNFTClaim() {
       console.log('handleClaim: Calling backend to mint NFT...');
       
       // Step 4: Call backend to mint NFT (now that payment is confirmed)
-      const response = await fetch(`${BACKEND_URL}/api/og-nft/mint`, {
+      const response = await fetch(`${BACKEND_URL}/api/og-nft?action=mint`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
