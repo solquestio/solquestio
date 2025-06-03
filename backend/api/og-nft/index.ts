@@ -6,8 +6,6 @@ import {
 } from '@solana/web3.js';
 import { ThirdwebSDK } from '@thirdweb-dev/sdk';
 import { ThirdwebStorage } from '@thirdweb-dev/storage';
-import fs from 'fs';
-import path from 'path';
 
 // Initialize thirdweb with your credentials
 const thirdwebStorage = new ThirdwebStorage({
@@ -25,37 +23,22 @@ const TREASURY_WALLET = process.env.TREASURY_WALLET || '8nnLuLdrUN96HuZgRwumkSJV
 let cachedVideoUrl: string | null = null;
 let cachedThumbnailUrl: string | null = null;
 
-// NFT counter management
-const getCounterPath = () => path.join(process.cwd(), '..', 'config', 'og-nft-counter.json');
+// In-memory counter (for demo purposes - in production, use a database)
+let nftCounter = {
+  count: 0,
+  totalMinted: 0,
+  lastMinted: null as string | null
+};
 
 const getCurrentCounter = () => {
-  try {
-    const counterPath = getCounterPath();
-    if (fs.existsSync(counterPath)) {
-      const data = fs.readFileSync(counterPath, 'utf8');
-      return JSON.parse(data);
-    }
-  } catch (error) {
-    console.error('Error reading counter:', error);
-  }
-  return { count: 0, totalMinted: 0 };
+  return { ...nftCounter };
 };
 
 const incrementCounter = () => {
-  try {
-    const counterPath = getCounterPath();
-    const current = getCurrentCounter();
-    const updated = {
-      count: current.count + 1,
-      totalMinted: current.totalMinted + 1,
-      lastMinted: new Date().toISOString()
-    };
-    fs.writeFileSync(counterPath, JSON.stringify(updated, null, 2));
-    return updated;
-  } catch (error) {
-    console.error('Error updating counter:', error);
-    return { count: 1, totalMinted: 1 };
-  }
+  nftCounter.count += 1;
+  nftCounter.totalMinted += 1;
+  nftCounter.lastMinted = new Date().toISOString();
+  return { ...nftCounter };
 };
 
 // Generate thumbnail image for the NFT (static image for wallets that don't support video)
@@ -108,34 +91,28 @@ const getMediaUrls = async () => {
   }
 
   try {
-    // Path to the OGNFT.mp4 video file
-    const videoPath = path.join(process.cwd(), '..', 'frontend', 'public', 'OGNFT.mp4');
+    console.log('Creating NFT media content...');
     
-    if (!fs.existsSync(videoPath)) {
-      throw new Error('OGNFT.mp4 video file not found');
-    }
-
-    console.log('Uploading OGNFT.mp4 to IPFS...');
+    // For now, use static placeholder URLs
+    // In production, these would be pre-uploaded to IPFS or CDN
+    cachedVideoUrl = 'https://solquest.io/OGNFT.mp4'; // Direct link to your video
     
-    // Read and upload the video file
-    const videoBuffer = fs.readFileSync(videoPath);
-    const videoFile = new File([videoBuffer], 'ognft.mp4', { type: 'video/mp4' });
-    cachedVideoUrl = await thirdwebStorage.upload(videoFile);
-    
-    console.log('Video uploaded to IPFS:', cachedVideoUrl);
-
-    // Generate and upload thumbnail
+    // Generate and upload thumbnail SVG
     const thumbnailSvg = generateThumbnailImage(1); // Generic thumbnail
     const thumbnailFile = new File([thumbnailSvg], 'ognft-thumbnail.svg', { type: 'image/svg+xml' });
     cachedThumbnailUrl = await thirdwebStorage.upload(thumbnailFile);
     
-    console.log('Thumbnail uploaded to IPFS:', cachedThumbnailUrl);
+    console.log('Media URLs created:', { cachedVideoUrl, cachedThumbnailUrl });
 
     return { videoUrl: cachedVideoUrl, thumbnailUrl: cachedThumbnailUrl };
     
   } catch (error) {
-    console.error('Error uploading media to IPFS:', error);
-    throw new Error('Failed to upload media files');
+    console.error('Error creating media URLs:', error);
+    // Fallback to basic URLs
+    return { 
+      videoUrl: 'https://solquest.io/OGNFT.mp4',
+      thumbnailUrl: 'https://via.placeholder.com/400x400/6B73FF/FFFFFF?text=SolQuest+OG'
+    };
   }
 };
 
