@@ -2,26 +2,26 @@ import { VercelRequest, VercelResponse } from '@vercel/node';
 import { 
   Connection, 
   PublicKey, 
-  LAMPORTS_PER_SOL
+  LAMPORTS_PER_SOL,
+  Keypair,
+  clusterApiUrl
 } from '@solana/web3.js';
-import { ThirdwebSDK } from '@thirdweb-dev/sdk';
-import { ThirdwebStorage } from '@thirdweb-dev/storage';
+import { Metaplex, keypairIdentity } from '@metaplex-foundation/js';
 
-// Initialize thirdweb with your credentials
-const thirdwebStorage = new ThirdwebStorage({
-  clientId: process.env.THIRDWEB_CLIENT_ID || 'd9fde8cb50c02b03f82bb736960cf1a4',
-  secretKey: process.env.THIRDWEB_SECRET_KEY || '2WtsCbCDDHJNWrN-nJzzZUSfOye0vD4zZlY1U1KfRPtUc93dthUzBX7QTVMi-jO06aTXdorfmVwf-h4zzctyHQ'
-});
-
-const RPC_ENDPOINT = process.env.SOLANA_RPC_URL || 'https://api.mainnet-beta.solana.com';
+const RPC_ENDPOINT = process.env.SOLANA_RPC_URL || clusterApiUrl('devnet');
 const connection = new Connection(RPC_ENDPOINT, 'confirmed');
 
 // Treasury wallet (your wallet)
 const TREASURY_WALLET = process.env.TREASURY_WALLET || '8nnLuLdrUN96HuZgRwumkSJV8BzqJj55mZULu3iaqKSM';
 
-// Cache for uploaded media URLs
-let cachedVideoUrl: string | null = null;
-let cachedThumbnailUrl: string | null = null;
+// Collection configuration for devnet
+const COLLECTION_CONFIG = {
+  collectionMint: '6ped9Hv838DrR499rv34wtRkY9kkQjx2YbsNYmyXW3kp', // From our created collection
+  network: 'devnet'
+};
+
+// Collection wallet keypair (in production, store securely)
+const COLLECTION_WALLET_SECRET = [35,241,171,83,237,60,248,140,11,93,90,80,49,235,19,91,151,10,185,2,198,116,182,101,16,67,108,171,181,15,172,242,191,167,103,6,177,119,44,160,121,146,191,172,239,132,242,87,157,219,97,246,186,231,53,114,148,2,255,119,245,156,231,109];
 
 // In-memory counter (for demo purposes - in production, use a database)
 let nftCounter = {
@@ -41,149 +41,55 @@ const incrementCounter = () => {
   return { ...nftCounter };
 };
 
-// Generate thumbnail image for the NFT (static image for wallets that don't support video)
-const generateThumbnailImage = (tokenId: number) => {
-  return `
-    <svg width="400" height="400" xmlns="http://www.w3.org/2000/svg">
-      <defs>
-        <linearGradient id="grad" x1="0%" y1="0%" x2="100%" y2="100%">
-          <stop offset="0%" style="stop-color:#FF6B6B;stop-opacity:1" />
-          <stop offset="100%" style="stop-color:#4ECDC4;stop-opacity:1" />
-        </linearGradient>
-      </defs>
-      
-      <!-- Background -->
-      <rect width="400" height="400" fill="url(#grad)" />
-      
-      <!-- SolQuest Logo Area -->
-      <circle cx="200" cy="160" r="60" fill="rgba(255,255,255,0.2)" stroke="rgba(255,255,255,0.5)" stroke-width="2"/>
-      
-      <!-- Title -->
-      <text x="200" y="120" text-anchor="middle" font-family="Arial, sans-serif" font-size="24" font-weight="bold" fill="white">
-        SolQuest
-      </text>
-      <text x="200" y="145" text-anchor="middle" font-family="Arial, sans-serif" font-size="16" fill="rgba(255,255,255,0.9)">
-        OG NFT
-      </text>
-      
-      <!-- Token ID -->
-      <text x="200" y="250" text-anchor="middle" font-family="Arial, sans-serif" font-size="48" font-weight="bold" fill="white">
-        #${tokenId}
-      </text>
-      
-      <!-- Badge -->
-      <rect x="150" y="280" width="100" height="30" rx="15" fill="rgba(255,255,255,0.3)"/>
-      <text x="200" y="300" text-anchor="middle" font-family="Arial, sans-serif" font-size="14" font-weight="bold" fill="white">
-        RARE
-      </text>
-      
-      <!-- Video Play Icon -->
-      <circle cx="200" cy="320" r="20" fill="rgba(255,255,255,0.4)" stroke="rgba(255,255,255,0.6)" stroke-width="2"/>
-      <polygon points="195,315 195,325 205,320" fill="white"/>
-    </svg>
-  `;
-};
-
-// Upload media files to IPFS (only once, then cache)
-const getMediaUrls = async () => {
-  if (cachedVideoUrl && cachedThumbnailUrl) {
-    return { videoUrl: cachedVideoUrl, thumbnailUrl: cachedThumbnailUrl };
-  }
-
+// Real NFT minting function
+const mintRealNFT = async (recipientAddress: string, tokenId: number) => {
   try {
-    console.log('Creating NFT media content...');
+    // Load collection wallet
+    const collectionWallet = Keypair.fromSecretKey(new Uint8Array(COLLECTION_WALLET_SECRET));
     
-    // For now, use static placeholder URLs
-    // In production, these would be pre-uploaded to IPFS or CDN
-    cachedVideoUrl = 'https://solquest.io/OGNFT.mp4'; // Direct link to your video
+    // Setup Metaplex
+    const metaplex = Metaplex.make(connection).use(keypairIdentity(collectionWallet));
     
-    // Generate and upload thumbnail SVG
-    const thumbnailSvg = generateThumbnailImage(1); // Generic thumbnail
-    const thumbnailFile = new File([thumbnailSvg], 'ognft-thumbnail.svg', { type: 'image/svg+xml' });
-    cachedThumbnailUrl = await thirdwebStorage.upload(thumbnailFile);
+    console.log(`Minting NFT #${tokenId} to ${recipientAddress}...`);
     
-    console.log('Media URLs created:', { cachedVideoUrl, cachedThumbnailUrl });
-
-    return { videoUrl: cachedVideoUrl, thumbnailUrl: cachedThumbnailUrl };
-    
-  } catch (error) {
-    console.error('Error creating media URLs:', error);
-    // Fallback to basic URLs
-    return { 
-      videoUrl: 'https://solquest.io/OGNFT.mp4',
-      thumbnailUrl: 'https://via.placeholder.com/400x400/6B73FF/FFFFFF?text=SolQuest+OG'
-    };
-  }
-};
-
-// Create comprehensive NFT metadata with video
-const createNFTMetadata = async (tokenId: number) => {
-  try {
-    // Get the uploaded video and thumbnail URLs
-    const { videoUrl, thumbnailUrl } = await getMediaUrls();
-    
-    // Create metadata object
-    const metadata = {
+    // Create the NFT
+    const { nft } = await metaplex.nfts().create({
       name: `SolQuest OG #${tokenId}`,
-      description: `SolQuest OG NFT #${tokenId} - Your exclusive access pass to the SolQuest ecosystem. This rare collectible grants you special privileges, early access to new features, and marks you as an original community member.`,
-      image: thumbnailUrl, // Static thumbnail for wallets that don't support video
-      animation_url: videoUrl, // The actual OGNFT.mp4 video
-      external_url: "https://solquest.io",
-      attributes: [
+      symbol: 'SQOG',
+      uri: 'https://solquest.io/OGNFT.mp4',
+      sellerFeeBasisPoints: 500,
+      tokenOwner: new PublicKey(recipientAddress),
+      collection: new PublicKey(COLLECTION_CONFIG.collectionMint),
+      creators: [
         {
-          trait_type: "Collection",
-          value: "SolQuest OG"
-        },
-        {
-          trait_type: "Rarity",
-          value: "Rare"
-        },
-        {
-          trait_type: "Token ID",
-          value: tokenId.toString()
-        },
-        {
-          trait_type: "Generation",
-          value: "Genesis"
-        },
-        {
-          trait_type: "Utility",
-          value: "Access Pass"
-        },
-        {
-          trait_type: "Media Type",
-          value: "Video"
+          address: new PublicKey(TREASURY_WALLET),
+          share: 100,
+          verified: true
         }
-      ],
-      properties: {
-        creators: [
-          {
-            address: TREASURY_WALLET,
-            verified: true,
-            share: 100
-          }
-        ]
-      },
-      seller_fee_basis_points: 500, // 5% royalty
-      collection: {
-        name: "SolQuest OG Collection",
-        family: "SolQuest"
-      }
-    };
-    
-    // Upload metadata to IPFS
-    const metadataUri = await thirdwebStorage.upload(metadata);
-    
+      ]
+    });
+
+    // Verify the NFT as part of the collection
+    await metaplex.nfts().verifyCollection({
+      mintAddress: nft.address,
+      collectionMintAddress: new PublicKey(COLLECTION_CONFIG.collectionMint),
+      isSizedCollection: true
+    });
+
+    console.log(`NFT #${tokenId} minted successfully: ${nft.address.toString()}`);
+
     return {
-      metadata,
-      metadataUri,
-      videoUrl,
-      thumbnailUrl
+      mintAddress: nft.address.toString(),
+      metadataAddress: nft.metadataAddress.toString(),
+      tokenId: tokenId,
+      name: `SolQuest OG #${tokenId}`,
+      collection: COLLECTION_CONFIG.collectionMint,
+      recipient: recipientAddress
     };
-    
+
   } catch (error) {
-    console.error('Error creating NFT metadata:', error);
-    throw new Error('Failed to create NFT metadata');
+    console.error('Real NFT minting error:', error);
+    throw new Error(`Failed to mint real NFT: ${error instanceof Error ? error.message : 'Unknown error'}`);
   }
 };
 
@@ -288,33 +194,14 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
         console.log(`Creating NFT #${tokenId} for wallet ${mintWallet}`);
 
-        // Create NFT with video artwork and metadata
-        const { metadata, metadataUri, videoUrl, thumbnailUrl } = await createNFTMetadata(tokenId);
-
-        console.log(`NFT #${tokenId} metadata created:`, {
-          metadataUri,
-          videoUrl,
-          thumbnailUrl
-        });
-
-        // Generate a unique mint address (in real implementation, this would be the actual Solana mint)
-        const mintAddress = `SolQuest${tokenId.toString().padStart(6, '0')}${mintWallet.slice(-4)}`;
+        // Real NFT minting
+        const nftData = await mintRealNFT(mintWallet, tokenId);
 
         // Return success response with real NFT data
         return res.status(200).json({
           success: true,
           message: `SolQuest OG NFT #${tokenId} minted successfully!`,
-          nft: {
-            mintAddress: mintAddress,
-            tokenId: tokenId,
-            metadataUri: metadataUri,
-            videoUrl: videoUrl,
-            thumbnailUrl: thumbnailUrl,
-            recipient: mintWallet,
-            name: metadata.name,
-            description: metadata.description,
-            attributes: metadata.attributes
-          },
+          nft: nftData,
           transactionSignature: transactionSignature,
           limitEnforced: true,
           mintType: 'paid',
