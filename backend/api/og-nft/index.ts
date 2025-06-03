@@ -8,27 +8,36 @@ import {
 } from '@solana/web3.js';
 import { Metaplex, keypairIdentity } from '@metaplex-foundation/js';
 
-const RPC_ENDPOINT = process.env.SOLANA_RPC_URL || clusterApiUrl('devnet');
+const RPC_ENDPOINT = process.env.SOLANA_RPC_URL || clusterApiUrl('mainnet-beta');
 const connection = new Connection(RPC_ENDPOINT, 'confirmed');
 
 // Treasury wallet (your wallet)
 const TREASURY_WALLET = process.env.TREASURY_WALLET || '8nnLuLdrUN96HuZgRwumkSJV8BzqJj55mZULu3iaqKSM';
 
-// Collection configuration for devnet
+// Collection configuration for mainnet
 const COLLECTION_CONFIG = {
-  collectionMint: '6ped9Hv838DrR499rv34wtRkY9kkQjx2YbsNYmyXW3kp', // From our created collection
-  network: 'devnet'
+  collectionMint: process.env.COLLECTION_MINT || 'H8SDMgDmKyrNZ61CGAVqYPX8v9UQ95f7f8b9hRY8bXxk', // Mainnet collection address
+  network: 'mainnet-beta'
 };
 
-// Collection wallet keypair (in production, store securely)
-const COLLECTION_WALLET_SECRET = [35,241,171,83,237,60,248,140,11,93,90,80,49,235,19,91,151,10,185,2,198,116,182,101,16,67,108,171,181,15,172,242,191,167,103,6,177,119,44,160,121,146,191,172,239,132,242,87,157,219,97,246,186,231,53,114,148,2,255,119,245,156,231,109];
+// Collection wallet keypair (in production, use environment variable)
+// For now, we'll need to get this from the user's wallet
+const COLLECTION_WALLET_SECRET = process.env.COLLECTION_WALLET_SECRET 
+  ? JSON.parse(process.env.COLLECTION_WALLET_SECRET)
+  : null;
 
-// In-memory counter (for demo purposes - in production, use a database)
+// Note: In production, the user should set COLLECTION_WALLET_SECRET environment variable
+// with their wallet's private key array for NFT minting authority
+
+// In-memory counter and wallet tracking (for demo purposes - in production, use a database)
 let nftCounter = {
   count: 0,
   totalMinted: 0,
   lastMinted: null as string | null
 };
+
+// Track wallets that have already minted (in production, use a database)
+let mintedWallets = new Set<string>();
 
 const getCurrentCounter = () => {
   return { ...nftCounter };
@@ -41,14 +50,33 @@ const incrementCounter = () => {
   return { ...nftCounter };
 };
 
+const hasWalletMinted = (walletAddress: string): boolean => {
+  return mintedWallets.has(walletAddress);
+};
+
+const markWalletAsMinted = (walletAddress: string): void => {
+  mintedWallets.add(walletAddress);
+};
+
 // Real NFT minting function
 const mintRealNFT = async (recipientAddress: string, tokenId: number) => {
   try {
     console.log(`Starting NFT mint process for token ${tokenId} to ${recipientAddress}`);
     
+    // Check if collection wallet secret is available
+    if (!COLLECTION_WALLET_SECRET) {
+      throw new Error('Collection wallet secret not configured. Set COLLECTION_WALLET_SECRET environment variable.');
+    }
+    
     // Load collection wallet
     const collectionWallet = Keypair.fromSecretKey(new Uint8Array(COLLECTION_WALLET_SECRET));
     console.log(`Collection wallet loaded: ${collectionWallet.publicKey.toString()}`);
+    
+    // Verify this is the expected wallet
+    if (collectionWallet.publicKey.toString() !== TREASURY_WALLET) {
+      console.log(`Expected wallet: ${TREASURY_WALLET}, got: ${collectionWallet.publicKey.toString()}`);
+      // Continue anyway but log the mismatch
+    }
     
     // Setup Metaplex
     console.log(`Connecting to ${RPC_ENDPOINT}`);
@@ -145,12 +173,21 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         return res.status(400).json({ error: 'Invalid wallet address' });
       }
 
-      // TODO: Check if wallet already minted (query blockchain or database)
-      // For now, assume eligible
+      // Check if wallet already minted
+      const alreadyMinted = hasWalletMinted(walletAddress);
+      
+      if (alreadyMinted) {
+        return res.status(200).json({
+          eligible: false,
+          reason: 'Wallet has already minted an OG NFT (limit: 1 per wallet)',
+          collectionMint: COLLECTION_CONFIG.collectionMint
+        });
+      }
+
       return res.status(200).json({
         eligible: true,
         reason: 'Eligible for OG NFT',
-        collectionMint: 'SolQuest-OG-Collection'
+        collectionMint: COLLECTION_CONFIG.collectionMint
       });
     }
 
@@ -164,6 +201,14 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
       if (!transactionSignature) {
         return res.status(400).json({ error: 'Transaction signature is required' });
+      }
+
+      // Check if wallet already minted (enforce 1 per wallet limit)
+      if (hasWalletMinted(mintWallet)) {
+        return res.status(400).json({ 
+          error: 'Wallet has already minted an OG NFT. Limit: 1 per wallet.',
+          alreadyMinted: true
+        });
       }
 
       try {
@@ -209,6 +254,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           // Real NFT minting
           const nftData = await mintRealNFT(mintWallet, tokenId);
 
+          // Mark wallet as minted (enforce 1 per wallet limit)
+          markWalletAsMinted(mintWallet);
+
           // Return success response with real NFT data
           return res.status(200).json({
             success: true,
@@ -227,6 +275,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
         } catch (mintError) {
           console.error('Real minting failed, returning fallback response:', mintError);
+          
+          // Mark wallet as minted even in fallback mode (maintain limit enforcement)
+          markWalletAsMinted(mintWallet);
           
           // Fallback to mock response if real minting fails
           const mockMintAddress = `SolQuest${tokenId.toString().padStart(6, '0')}${mintWallet.slice(-4)}`;

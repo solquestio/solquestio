@@ -98,7 +98,7 @@ export default function OGNFTClaim() {
   const [loading, setLoading] = useState(true);
   const [showConfetti, setShowConfetti] = useState(false);
   const router = useRouter();
-
+  
   // Small fee for transaction (covers network costs)
   const CLAIM_FEE_SOL = 0.001; // 0.001 SOL (~$0.02)
 
@@ -141,31 +141,34 @@ export default function OGNFTClaim() {
     if (!publicKey) return;
     
     try {
+      console.log('Checking eligibility for wallet:', publicKey.toString());
       const response = await fetch(`${BACKEND_URL}/api/og-nft?action=eligibility&walletAddress=${publicKey.toString()}`);
       
       if (!response.ok) {
-        // If backend is not available, assume user is eligible
-        console.log('Backend not available, assuming user is eligible');
-        setClaimed(false);
-        setError('');
+        console.warn('Backend not available or error:', response.status);
+        // Don't assume anything - keep current state
         return;
       }
       
       const data = await response.json();
+      console.log('Eligibility response:', data);
       
       if (!data.eligible) {
+        console.log('Wallet not eligible:', data.reason);
         setClaimed(true);
         setError(data.reason || 'Already claimed');
+        // Clear any previous mint result to show the "already claimed" state
+        setMintResult(null);
       } else {
+        console.log('Wallet is eligible');
         setClaimed(false);
         setError('');
+        setMintResult(null);
       }
     } catch (error) {
       console.error('Error checking eligibility:', error);
-      // Don't show error to user immediately, assume they're eligible
-      // This allows the page to work even if backend is down
-      setClaimed(false);
-      setError('');
+      // On network error, don't change the current state
+      // This prevents showing claim button when we can't verify eligibility
     }
   };
 
@@ -276,18 +279,8 @@ export default function OGNFTClaim() {
         } catch (statsError) {
           console.warn('handleClaim: Failed to reload stats:', statsError);
         }
-        // Redirect to dashboard after a few seconds
-        console.log('handleClaim: Setting up redirect timer');
-        setTimeout(() => {
-          try {
-            console.log('handleClaim: Redirecting to main page');
-            router.push('/');
-          } catch (routerError) {
-            console.error('handleClaim: Router error:', routerError);
-            // Fallback to window.location if router fails
-            window.location.href = '/';
-          }
-        }, 8000);
+        // Stay on the claim page - user can navigate manually if they want
+        console.log('handleClaim: NFT claim completed successfully');
       } else {
         console.log('handleClaim: NFT claim failed', data);
         setError(data.error || data.message || 'Failed to claim NFT');
@@ -350,9 +343,9 @@ export default function OGNFTClaim() {
               }}
             >
               🎉
-            </div>
+              </div>
           ))}
-        </div>
+              </div>
       )}
 
       <div className="relative z-10 min-h-screen flex items-center justify-center p-4">
@@ -361,7 +354,7 @@ export default function OGNFTClaim() {
           <div className="text-center mb-12">
             <div className="animate-pulse mb-6">
               <div className="text-8xl mb-4">🏆</div>
-            </div>
+              </div>
             <h1 className="text-6xl md:text-8xl font-black text-white mb-6 leading-tight">
               Claim Your
               <span className="block bg-gradient-to-r from-yellow-400 via-orange-500 to-red-500 bg-clip-text text-transparent animate-pulse">
@@ -380,7 +373,7 @@ export default function OGNFTClaim() {
               </p>
             </div>
           </div>
-
+          
           {/* NFT Preview Video Section */}
           <div className="mb-12">
             <div className="bg-gradient-to-br from-white/10 to-white/5 backdrop-blur-xl rounded-3xl p-8 border border-white/20 shadow-2xl">
@@ -456,11 +449,11 @@ export default function OGNFTClaim() {
                       </li>
                     </ul>
                   </div>
-                </div>
-              </div>
             </div>
           </div>
-
+        </div>
+      </div>
+      
           {/* Live Stats - Enhanced */}
           <div className="mb-12">
             <div className="bg-gradient-to-r from-purple-500/20 to-blue-500/20 backdrop-blur-xl rounded-3xl p-8 border border-white/20 shadow-2xl">
@@ -600,26 +593,47 @@ export default function OGNFTClaim() {
                                 <span className="text-gray-400">Status:</span>
                                 <span className="text-green-400 font-bold">Successfully Minted</span>
                               </div>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                      
+                    </div>
+                    </div>
+                  </div>
+                </div>
+
                       <div className="bg-blue-500/20 rounded-2xl p-6 border border-blue-400/30">
-                        <p className="text-lg text-blue-300 font-medium">
-                          🚀 Redirecting to main page in 8 seconds...
-                        </p>
+                        <div className="flex items-center justify-center space-x-4">
+                          <p className="text-lg text-blue-300 font-medium">
+                            🎉 NFT successfully claimed! You can now explore SolQuest or check your wallet.
+                          </p>
+                          <button 
+                            onClick={() => window.open('https://solquest.io', '_blank')}
+                            className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors"
+                          >
+                            Explore SolQuest
+                          </button>
+                        </div>
                       </div>
                     </>
                   ) : (
                     <div className="text-center">
-                      <div className="text-6xl mb-6">❌</div>
-                      <h2 className="text-3xl font-bold text-red-400 mb-4">
-                        Already Claimed
+                      <div className="text-6xl mb-6">🔒</div>
+                      <h2 className="text-3xl font-bold text-orange-400 mb-4">
+                        NFT Already Claimed
                       </h2>
-                      <p className="text-xl text-gray-300">
-                        {error || 'You have already claimed your free OG NFT'}
+                      <p className="text-xl text-gray-300 mb-6">
+                        {error || 'This wallet has already claimed its free OG NFT'}
                       </p>
+                      <div className="bg-orange-500/20 rounded-2xl p-6 border border-orange-400/30">
+                        <p className="text-orange-300 text-lg">
+                          🚫 <strong>Limit: 1 NFT per wallet</strong> - This helps ensure fair distribution to the community
+                        </p>
+                      </div>
+                      <div className="mt-6">
+                        <button 
+                          onClick={() => window.open('https://solquest.io', '_blank')}
+                          className="bg-purple-600 hover:bg-purple-700 text-white px-8 py-3 rounded-lg transition-colors"
+                        >
+                          Back to SolQuest
+                        </button>
+                      </div>
                     </div>
                   )}
                 </div>
@@ -664,7 +678,7 @@ export default function OGNFTClaim() {
                   )}
                   
                   <div className="transform hover:scale-105 transition-transform">
-                    <button
+                    <button 
                       onClick={handleClaim}
                       disabled={claiming}
                       className="bg-gradient-to-r from-green-500 to-emerald-500 text-white font-black py-6 px-16 rounded-2xl text-2xl hover:from-green-600 hover:to-emerald-600 transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-2xl relative overflow-hidden"
@@ -693,8 +707,8 @@ export default function OGNFTClaim() {
                 </div>
               )}
             </div>
-          </div>
-
+                </div>
+                
           {/* Enhanced Benefits Grid */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
             {[

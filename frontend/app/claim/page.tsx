@@ -59,9 +59,7 @@ export default function ClaimPage() {
         setClaimed(true);
         setTotalClaimed(prev => prev + 1);
         // Show success animation/confetti here
-        setTimeout(() => {
-          router.push('/dashboard'); // Redirect to dashboard
-        }, 3000);
+        // Stay on claim page - no automatic redirect
       } else {
         setError(data.error || 'Failed to claim NFT');
       }
@@ -139,7 +137,7 @@ export default function ClaimPage() {
                 </div>
               </div>
               <p className="text-sm text-gray-400 mt-6">
-                Redirecting to dashboard in 3 seconds...
+                🎉 Welcome to the SolQuest OG community!
               </p>
             </div>
           ) : (
